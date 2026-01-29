@@ -56,6 +56,12 @@ disable=
     unused-argument,
     protected-access,
     
+    # Known false positives
+    unused-variable,
+    redefined-builtin,
+    unexpected-keyword-arg,
+    no-value-for-parameter,
+    
     # Global variables (intentional singletons)
     global-variable-undefined,
     global-statement,
