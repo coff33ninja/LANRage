@@ -4,8 +4,12 @@ import asyncio
 
 import pytest
 
-from core.task_manager import (TaskManager, cancel_all_background_tasks,
-                               create_background_task, get_task_manager)
+from core.task_manager import (
+    TaskManager,
+    cancel_all_background_tasks,
+    create_background_task,
+    get_task_manager,
+)
 
 
 @pytest.fixture
