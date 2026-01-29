@@ -1,6 +1,7 @@
 """Tests for metrics collector"""
 
 import asyncio
+import platform
 import time
 from collections import deque
 
@@ -15,8 +16,9 @@ def metrics():
     """Create a metrics collector instance"""
     config = Config.load()
     collector = MetricsCollector(config)
-    # Use asyncio for potential async operations
-    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    # Use Windows-specific event loop policy only on Windows
+    if platform.system() == "Windows":
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     return collector
 
 
