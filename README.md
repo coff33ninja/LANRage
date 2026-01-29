@@ -5,7 +5,7 @@
   
   **Tagline**: *If it runs on LAN, it runs on LANrage.*
   
-  [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+  [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](CHANGELOG.md)
   [![Test Coverage](https://img.shields.io/badge/coverage-88%25-brightgreen.svg)](docs/TESTING.md)
