@@ -1,0 +1,44 @@
+{
+  "fifa": {
+    "name": "EA Sports FC (FIFA)",
+    "executable": "FC*.exe",
+    "ports": [3659, 9565, 9570, 9000],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "EA Sports FC - Soccer simulation",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "nba2k": {
+    "name": "NBA 2K Series",
+    "executable": "NBA2K*.exe",
+    "ports": [27015, 27016, 27017],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "NBA 2K - Basketball simulation",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "madden": {
+    "name": "Madden NFL",
+    "executable": "Madden*.exe",
+    "ports": [3659, 9565, 9570],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Madden NFL - Football simulation",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  }
+}

@@ -13,8 +13,17 @@ game_profiles/
 ├── party.json                   # Party/Casual games
 ├── competitive.json             # Competitive games
 ├── strategy.json                # Strategy/RTS games
+├── fps.json                     # First-person shooter games
+├── racing.json                  # Racing/Driving games
+├── rpg.json                     # Role-playing games
+├── moba.json                    # MOBA games
+├── sports.json                  # Sports games
+├── horror.json                  # Horror games
 └── custom/                      # User-added custom profiles
-    └── my_game.json
+    ├── call_of_duty.json
+    ├── far_cry.json
+    ├── need_for_speed.json
+    └── example.json
 ```
 
 ## Profile Format
@@ -119,6 +128,42 @@ Example: `game_profiles/custom/my_game.json`
 - **Bandwidth**: Low
 - **Priority**: High
 - **Examples**: Age of Empires II, Warcraft III
+
+### FPS (First-Person Shooter)
+- **Latency**: Critical (every ms counts)
+- **Bandwidth**: High
+- **Priority**: High
+- **Examples**: Valorant, Apex Legends, COD Warzone, Battlefield, Halo Infinite, Overwatch
+
+### Racing
+- **Latency**: Critical (precision timing)
+- **Bandwidth**: High
+- **Priority**: High
+- **Examples**: Forza Horizon, Gran Turismo, Assetto Corsa, iRacing, Trackmania
+
+### RPG (Role-Playing Games)
+- **Latency**: Medium
+- **Bandwidth**: Medium to High
+- **Priority**: Medium
+- **Examples**: Diablo IV, Path of Exile, Divinity: Original Sin 2, Baldur's Gate 3, Monster Hunter
+
+### MOBA (Multiplayer Online Battle Arena)
+- **Latency**: Critical (competitive gameplay)
+- **Bandwidth**: High
+- **Priority**: High
+- **Examples**: League of Legends, Dota 2, Smite
+
+### Sports
+- **Latency**: High (timing matters)
+- **Bandwidth**: High
+- **Priority**: High
+- **Examples**: EA Sports FC (FIFA), NBA 2K, Madden NFL
+
+### Horror
+- **Latency**: Medium to High
+- **Bandwidth**: Low to Medium
+- **Priority**: Medium to High
+- **Examples**: Dead by Daylight, The Forest, Lethal Company, Content Warning
 
 ## Tips
 

@@ -1,0 +1,58 @@
+{
+  "dead_by_daylight": {
+    "name": "Dead by Daylight",
+    "executable": "DeadByDaylight.exe",
+    "ports": [27015, 27016, 7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Dead by Daylight - Asymmetric horror",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "the_forest": {
+    "name": "The Forest",
+    "executable": "TheForest.exe",
+    "ports": [27015, 27016, 8766],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "The Forest - Survival horror co-op",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "lethal_company": {
+    "name": "Lethal Company",
+    "executable": "Lethal Company.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Lethal Company - Co-op horror",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "content_warning": {
+    "name": "Content Warning",
+    "executable": "Content Warning.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Content Warning - Co-op horror filming",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

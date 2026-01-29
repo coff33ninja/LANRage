@@ -234,15 +234,15 @@ All core features implemented, tested, and documented:
 - ✅ Performance optimization (all targets met)
 - ✅ One-click setup (90 seconds)
 
-### Supported Games (27)
+### Supported Games (53+)
 
-**Strategy/RTS**:
+**Strategy/RTS (4)**:
 - Minecraft Java Edition
 - Terraria
 - Age of Empires II
 - Warcraft III
 
-**Survival/Crafting**:
+**Survival/Crafting (7)**:
 - Rust
 - ARK: Survival Evolved
 - 7 Days to Die
@@ -251,7 +251,7 @@ All core features implemented, tested, and documented:
 - Valheim
 - Factorio
 
-**Co-op/Action**:
+**Co-op/Action (6)**:
 - Deep Rock Galactic
 - Risk of Rain 2
 - Payday 2
@@ -259,7 +259,7 @@ All core features implemented, tested, and documented:
 - Vermintide 2
 - Left 4 Dead 2
 
-**Party/Casual**:
+**Party/Casual (7)**:
 - Phasmophobia
 - Among Us
 - Fall Guys
@@ -268,10 +268,48 @@ All core features implemented, tested, and documented:
 - Stardew Valley
 - Don't Starve Together
 
-**Competitive**:
+**Competitive (3)**:
 - Counter-Strike: Global Offensive
 - Rocket League
 - Brawlhalla
+
+**FPS (6)**:
+- Valorant
+- Apex Legends
+- Call of Duty: Warzone
+- Battlefield Series
+- Halo Infinite
+- Overwatch 2
+
+**Racing (5)**:
+- Forza Horizon Series
+- Gran Turismo 7
+- Assetto Corsa
+- iRacing
+- Trackmania
+
+**RPG (5)**:
+- Diablo IV
+- Path of Exile
+- Divinity: Original Sin 2
+- Baldur's Gate 3
+- Monster Hunter World
+
+**MOBA (3)**:
+- League of Legends
+- Dota 2
+- Smite
+
+**Sports (3)**:
+- EA Sports FC (FIFA)
+- NBA 2K Series
+- Madden NFL
+
+**Horror (4)**:
+- Dead by Daylight
+- The Forest
+- Lethal Company
+- Content Warning
 
 Plus support for custom game profiles via JSON!
 

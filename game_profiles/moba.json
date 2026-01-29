@@ -1,0 +1,44 @@
+{
+  "league_of_legends": {
+    "name": "League of Legends",
+    "executable": "League of Legends.exe",
+    "ports": [5000, 5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008, 5009],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "League of Legends - MOBA",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "dota2": {
+    "name": "Dota 2",
+    "executable": "dota2.exe",
+    "ports": [27015, 27016, 27017, 27018, 27019, 27020],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Dota 2 - MOBA on Source engine",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "smite": {
+    "name": "Smite",
+    "executable": "Smite.exe",
+    "ports": [9000, 9001, 9002],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Smite - Third-person MOBA",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  }
+}

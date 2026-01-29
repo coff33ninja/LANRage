@@ -2,6 +2,229 @@
 
 Common issues and solutions for LANrage.
 
+## Troubleshooting Flowcharts
+
+Visual guides for diagnosing common issues. Follow the flowchart paths to quickly identify and resolve problems.
+
+### Connection Issues Flowchart
+
+```mermaid
+flowchart TD
+    Start([Connection Problem]) --> CanCreate{Can create<br/>party?}
+    
+    CanCreate -->|No| CheckInternet[Check internet<br/>connection]
+    CheckInternet --> Internet{Internet<br/>working?}
+    Internet -->|No| FixInternet[Fix internet<br/>connection]
+    Internet -->|Yes| CheckFirewall[Check firewall<br/>settings]
+    CheckFirewall --> AllowLANrage[Allow LANrage<br/>through firewall]
+    
+    CanCreate -->|Yes| CanJoin{Can join<br/>party?}
+    CanJoin -->|No| CheckPartyID[Verify Party ID<br/>is correct]
+    CheckPartyID --> HostRunning{Is host<br/>running?}
+    HostRunning -->|No| StartHost[Ask host to<br/>start LANrage]
+    HostRunning -->|Yes| RecreateParty[Recreate party<br/>with new ID]
+    
+    CanJoin -->|Yes| PeerConnect{Can connect<br/>to peers?}
+    PeerConnect -->|No| CheckNAT[Check NAT type<br/>in web UI]
+    CheckNAT --> NATType{NAT type?}
+    NATType -->|Open/Moderate| CheckPorts[Check UDP port<br/>51820 open]
+    NATType -->|Strict/Symmetric| UseRelay[Use relay server<br/>automatic fallback]
+    CheckPorts --> OpenPorts[Open firewall<br/>for UDP 51820]
+    
+    PeerConnect -->|Yes| HighLatency{High<br/>latency?}
+    HighLatency -->|Yes| CheckConnection[Check connection<br/>type in UI]
+    CheckConnection --> ConnType{Direct or<br/>Relayed?}
+    ConnType -->|Direct| OptimizeNetwork[Optimize network:<br/>- Close bandwidth apps<br/>- Use wired connection<br/>- Check for congestion]
+    ConnType -->|Relayed| TryDirect[Try forcing<br/>direct connection]
+    
+    HighLatency -->|No| Success([✅ Connected<br/>Successfully])
+    
+    FixInternet --> Start
+    AllowLANrage --> Start
+    StartHost --> CanJoin
+    RecreateParty --> CanJoin
+    UseRelay --> PeerConnect
+    OpenPorts --> PeerConnect
+    OptimizeNetwork --> Success
+    TryDirect --> Success
+```
+
+### Game Detection Flowchart
+
+```mermaid
+flowchart TD
+    Start([Game Not Detected]) --> CheckSupported{Is game<br/>supported?}
+    
+    CheckSupported -->|Not Sure| CheckProfiles[Check game_profiles/<br/>directory]
+    CheckProfiles --> InProfiles{Game in<br/>profiles?}
+    
+    CheckSupported -->|Yes| GameRunning{Is game<br/>running?}
+    InProfiles -->|Yes| GameRunning
+    
+    GameRunning -->|No| StartGame[Start the game<br/>first]
+    StartGame --> Detected{Game<br/>detected?}
+    
+    GameRunning -->|Yes| CheckProcess[Check process name<br/>matches profile]
+    CheckProcess --> ProcessMatch{Process<br/>matches?}
+    
+    ProcessMatch -->|No| UpdateProfile[Update profile with<br/>correct process name]
+    UpdateProfile --> RestartLANrage[Restart LANrage]
+    
+    ProcessMatch -->|Yes| Detected
+    
+    InProfiles -->|No| CreateCustom[Create custom<br/>profile]
+    CreateCustom --> CustomSteps[1. Create JSON in<br/>game_profiles/custom/<br/>2. Add game details<br/>3. Restart LANrage]
+    CustomSteps --> Detected
+    
+    Detected -->|Yes| Success([✅ Game Detected<br/>& Optimized])
+    Detected -->|No| RequestSupport[Request game support<br/>on GitHub]
+    RequestSupport --> UseGeneric[Use generic mode<br/>for now]
+    
+    UseGeneric --> ManualConfig[Manual configuration:<br/>- Set ports manually<br/>- Enable broadcast if needed<br/>- Adjust MTU if needed]
+    ManualConfig --> Success
+```
+
+### High Latency Troubleshooting
+
+```mermaid
+flowchart TD
+    Start([High Latency]) --> Measure[Measure latency<br/>in Statistics]
+    Measure --> LatencyLevel{Latency<br/>level?}
+    
+    LatencyLevel -->|<10ms| Normal([✅ Normal<br/>for gaming])
+    LatencyLevel -->|10-50ms| Acceptable[Acceptable but<br/>can improve]
+    LatencyLevel -->|>50ms| Problem[Problematic<br/>needs fixing]
+    
+    Acceptable --> CheckType1[Check connection<br/>type in UI]
+    Problem --> CheckType2[Check connection<br/>type in UI]
+    
+    CheckType1 --> ConnType1{Connection<br/>type?}
+    CheckType2 --> ConnType2{Connection<br/>type?}
+    
+    ConnType1 -->|Direct| DirectOpt[Direct connection<br/>optimization]
+    ConnType2 -->|Direct| DirectOpt
+    
+    DirectOpt --> CheckBase[Check base latency<br/>ping peer's real IP]
+    CheckBase --> BaseHigh{Base latency<br/>high?}
+    
+    BaseHigh -->|Yes| NetworkIssue[Network issue:<br/>- ISP problem<br/>- Distance too far<br/>- Network congestion]
+    NetworkIssue --> NetworkFix[Fix network:<br/>- Contact ISP<br/>- Use closer peers<br/>- Reduce congestion]
+    
+    BaseHigh -->|No| LANrageOverhead[LANrage overhead<br/>issue]
+    LANrageOverhead --> ReduceOverhead[Reduce overhead:<br/>- Update LANrage<br/>- Optimize settings<br/>- Check CPU usage]
+    
+    ConnType1 -->|Relayed| RelayOpt[Relay connection<br/>optimization]
+    ConnType2 -->|Relayed| RelayOpt
+    
+    RelayOpt --> WhyRelay{Why using<br/>relay?}
+    WhyRelay -->|NAT issues| FixNAT[Fix NAT:<br/>- Open ports<br/>- Enable UPnP<br/>- DMZ host]
+    WhyRelay -->|Firewall| FixFirewall[Fix firewall:<br/>- Allow UDP 51820<br/>- Disable strict rules]
+    WhyRelay -->|Distance| CloserRelay[Use closer<br/>relay server]
+    
+    FixNAT --> TryDirect[Try direct<br/>connection]
+    FixFirewall --> TryDirect
+    CloserRelay --> CheckRelay[Check relay<br/>selection in UI]
+    
+    TryDirect --> Success([✅ Latency<br/>Improved])
+    CheckRelay --> Success
+    NetworkFix --> Success
+    ReduceOverhead --> Success
+```
+
+### Relay Server Selection
+
+```mermaid
+flowchart TD
+    Start([Need Relay Server]) --> AutoSelect{Auto-select<br/>enabled?}
+    
+    AutoSelect -->|Yes| Measure[Measure latency to<br/>all available relays]
+    Measure --> SelectBest[Select relay with<br/>lowest latency]
+    SelectBest --> TestConnection[Test connection<br/>through relay]
+    
+    AutoSelect -->|No| ManualSelect[Manual relay<br/>selection]
+    ManualSelect --> ChooseRelay[Choose relay from<br/>available list]
+    ChooseRelay --> TestConnection
+    
+    TestConnection --> Working{Relay<br/>working?}
+    
+    Working -->|No| CheckRelay[Check relay status]
+    CheckRelay --> RelayStatus{Relay<br/>online?}
+    RelayStatus -->|No| TryAnother[Try another<br/>relay server]
+    RelayStatus -->|Yes| CheckFirewall[Check firewall<br/>allows relay]
+    CheckFirewall --> TryAnother
+    
+    TryAnother --> Measure
+    
+    Working -->|Yes| CheckLatency{Latency<br/>acceptable?}
+    CheckLatency -->|No| TryCloser[Try geographically<br/>closer relay]
+    TryCloser --> Measure
+    
+    CheckLatency -->|Yes| Success([✅ Relay<br/>Connected])
+    
+    Success --> Monitor[Monitor connection<br/>quality]
+    Monitor --> QualityCheck{Quality<br/>degraded?}
+    QualityCheck -->|Yes| AutoSwitch[Auto-switch to<br/>better relay]
+    AutoSwitch --> Measure
+    QualityCheck -->|No| Monitor
+```
+
+### WireGuard Interface Issues
+
+```mermaid
+flowchart TD
+    Start([WireGuard Interface<br/>Problem]) --> CheckInstalled{WireGuard<br/>installed?}
+    
+    CheckInstalled -->|No| Install[Install WireGuard]
+    Install --> InstallOS{Operating<br/>System?}
+    InstallOS -->|Windows| InstallWin[Download from<br/>wireguard.com]
+    InstallOS -->|Linux| InstallLinux[sudo apt install<br/>wireguard]
+    InstallOS -->|Mac| InstallMac[brew install<br/>wireguard-tools]
+    
+    InstallWin --> Verify
+    InstallLinux --> Verify
+    InstallMac --> Verify
+    
+    CheckInstalled -->|Yes| CheckPerms{Have admin/<br/>root perms?}
+    
+    CheckPerms -->|No| GetPerms[Run with elevated<br/>privileges]
+    GetPerms --> PermsOS{Operating<br/>System?}
+    PermsOS -->|Windows| RunAsAdmin[Right-click<br/>Run as Administrator]
+    PermsOS -->|Linux/Mac| RunSudo[Run with sudo]
+    
+    RunAsAdmin --> CheckPerms
+    RunSudo --> CheckPerms
+    
+    CheckPerms -->|Yes| CreateInterface[Try creating<br/>interface]
+    CreateInterface --> Created{Interface<br/>created?}
+    
+    Created -->|No| CheckError[Check error<br/>message]
+    CheckError --> ErrorType{Error<br/>type?}
+    
+    ErrorType -->|Already exists| DeleteOld[Delete old interface:<br/>Windows: netsh interface delete<br/>Linux: ip link delete]
+    ErrorType -->|Port in use| ChangePort[Change WireGuard<br/>port in settings]
+    ErrorType -->|Permission denied| GetPerms
+    ErrorType -->|Other| CheckLogs[Check logs for<br/>details]
+    
+    DeleteOld --> CreateInterface
+    ChangePort --> CreateInterface
+    CheckLogs --> ReportIssue[Report issue<br/>on GitHub]
+    
+    Created -->|Yes| TestInterface[Test interface]
+    TestInterface --> Working{Interface<br/>working?}
+    
+    Working -->|No| CheckConfig[Check interface<br/>configuration]
+    CheckConfig --> ConfigOK{Config<br/>valid?}
+    ConfigOK -->|No| FixConfig[Fix configuration:<br/>- Check IP range<br/>- Verify keys<br/>- Check MTU]
+    ConfigOK -->|Yes| RestartInterface[Restart interface]
+    
+    FixConfig --> CreateInterface
+    RestartInterface --> Working
+    
+    Working -->|Yes| Success([✅ Interface<br/>Working])
+    
+    Verify --> CheckInstalled
+```
+
 ## Quick Diagnostics
 
 Run these checks before diving into specific issues:

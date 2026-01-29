@@ -1,0 +1,72 @@
+{
+  "forza_horizon": {
+    "name": "Forza Horizon Series",
+    "executable": "ForzaHorizon*.exe",
+    "ports": [3074, 3075],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Forza Horizon - Open world racing",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "gran_turismo": {
+    "name": "Gran Turismo 7",
+    "executable": "GT7.exe",
+    "ports": [9295, 9296, 9297],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Gran Turismo 7 - Racing simulator",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "assetto_corsa": {
+    "name": "Assetto Corsa",
+    "executable": "acs.exe",
+    "ports": [9600, 8081],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Assetto Corsa - Racing simulator",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "iracing": {
+    "name": "iRacing",
+    "executable": "iRacingSim64DX11.exe",
+    "ports": [32750, 32751],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "iRacing - Professional racing sim",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "trackmania": {
+    "name": "Trackmania",
+    "executable": "Trackmania.exe",
+    "ports": [2350, 3450],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Trackmania - Arcade racing",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  }
+}

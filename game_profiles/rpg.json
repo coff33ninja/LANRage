@@ -1,0 +1,72 @@
+{
+  "diablo4": {
+    "name": "Diablo IV",
+    "executable": "Diablo IV.exe",
+    "ports": [1119, 3724, 6113],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Diablo IV - Action RPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "path_of_exile": {
+    "name": "Path of Exile",
+    "executable": "PathOfExile.exe",
+    "ports": [6112, 20481],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Path of Exile - Action RPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "divinity_original_sin": {
+    "name": "Divinity: Original Sin 2",
+    "executable": "EoCApp.exe",
+    "ports": [23253, 23254],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Divinity: Original Sin 2 - Turn-based RPG",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "baldurs_gate_3": {
+    "name": "Baldur's Gate 3",
+    "executable": "bg3.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Baldur's Gate 3 - Turn-based RPG",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "monster_hunter": {
+    "name": "Monster Hunter World",
+    "executable": "MonsterHunterWorld.exe",
+    "ports": [27015, 27016, 27017],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Monster Hunter World - Action RPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  }
+}

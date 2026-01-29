@@ -129,6 +129,22 @@ Complete documentation suite (1650+ lines):
 
 ## [Unreleased]
 
+### Added (v1.0.1 - In Progress)
+
+#### Game Profiles Expansion
+- **26 new game profiles** across 6 new categories (27 → 53 games)
+- **FPS Category** (6 games): Valorant, Apex Legends, COD Warzone, Battlefield, Halo Infinite, Overwatch 2
+- **Racing Category** (5 games): Forza Horizon, Gran Turismo 7, Assetto Corsa, iRacing, Trackmania
+- **RPG Category** (5 games): Diablo IV, Path of Exile, Divinity: Original Sin 2, Baldur's Gate 3, Monster Hunter World
+- **MOBA Category** (3 games): League of Legends, Dota 2, Smite
+- **Sports Category** (3 games): EA Sports FC (FIFA), NBA 2K, Madden NFL
+- **Horror Category** (4 games): Dead by Daylight, The Forest, Lethal Company, Content Warning
+
+#### Documentation
+- Updated game profiles README with new categories
+- Added genre-specific optimization guidelines
+- Troubleshooting flowcharts (coming soon)
+
 ### Planned for v1.1 (Q1 2026)
 
 #### Infrastructure
