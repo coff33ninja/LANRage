@@ -1,0 +1,72 @@
+{
+  "phasmophobia": {
+    "name": "Phasmophobia",
+    "executable": "Phasmophobia.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Phasmophobia - Ghost hunting co-op",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "amongus": {
+    "name": "Among Us",
+    "executable": "Among Us.exe",
+    "ports": [22023],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Among Us - Social deduction",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "fallguys": {
+    "name": "Fall Guys",
+    "executable": "FallGuys_client.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Fall Guys - Battle royale party game",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "gangbeasts": {
+    "name": "Gang Beasts",
+    "executable": "GangBeasts.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Gang Beasts - Party brawler",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "pummelparty": {
+    "name": "Pummel Party",
+    "executable": "PummelParty.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Pummel Party - Party board game",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

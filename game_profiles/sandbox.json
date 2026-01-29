@@ -1,0 +1,72 @@
+{
+  "minecraft": {
+    "name": "Minecraft Java Edition",
+    "executable": "javaw.exe",
+    "ports": [25565, 4445],
+    "protocol": "both",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Minecraft Java Edition - LAN discovery on port 4445",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "terraria": {
+    "name": "Terraria",
+    "executable": "Terraria.exe",
+    "ports": [7777],
+    "protocol": "tcp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Terraria - LAN discovery on port 7777",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "stardew": {
+    "name": "Stardew Valley",
+    "executable": "Stardew Valley.exe",
+    "ports": [24642],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Stardew Valley - LAN co-op",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "factorio": {
+    "name": "Factorio",
+    "executable": "factorio.exe",
+    "ports": [34197],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Factorio - LAN multiplayer",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "satisfactory": {
+    "name": "Satisfactory",
+    "executable": "FactoryGame.exe",
+    "ports": [7777, 15000, 15777],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Satisfactory - Factory building",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

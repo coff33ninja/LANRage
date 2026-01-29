@@ -1,0 +1,30 @@
+{
+  "aoe2": {
+    "name": "Age of Empires II",
+    "executable": "AoE2DE.exe",
+    "ports": [6073, 2300, 2301, 2302, 2303],
+    "protocol": "both",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Age of Empires II: Definitive Edition",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "warcraft3": {
+    "name": "Warcraft III",
+    "executable": "Warcraft III.exe",
+    "ports": [6112, 6113, 6114],
+    "protocol": "both",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Warcraft III - Battle.net LAN",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  }
+}

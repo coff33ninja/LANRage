@@ -1,0 +1,72 @@
+{
+  "rust": {
+    "name": "Rust",
+    "executable": "Rust.exe",
+    "ports": [28015, 28016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Rust - Survival multiplayer",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "ark": {
+    "name": "ARK: Survival Evolved",
+    "executable": "ShooterGame.exe",
+    "ports": [7777, 7778, 27015],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "ARK: Survival Evolved - Dinosaur survival",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "7days": {
+    "name": "7 Days to Die",
+    "executable": "7DaysToDie.exe",
+    "ports": [26900, 26901, 26902],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "7 Days to Die - Zombie survival",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "theforest": {
+    "name": "The Forest",
+    "executable": "TheForest.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "The Forest - Survival horror co-op",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "valheim": {
+    "name": "Valheim",
+    "executable": "valheim.exe",
+    "ports": [2456, 2457, 2458],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Valheim - Direct IP connection",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

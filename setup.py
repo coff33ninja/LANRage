@@ -23,21 +23,21 @@ def run_command(cmd: list[str], check: bool = True) -> bool:
 def main():
     print("🔥 LANrage Setup")
     print("=" * 60)
-    
+
     # Check Python version
     if sys.version_info < (3, 12):
         print("❌ Python 3.12 or higher required")
         print(f"   Current version: {sys.version}")
         sys.exit(1)
     print("✓ Python version OK")
-    
+
     # Check if uv is installed
     if not run_command(["uv", "--version"], check=False):
         print("❌ uv not found")
         print("   Install from: https://docs.astral.sh/uv/")
         sys.exit(1)
     print("✓ uv found")
-    
+
     # Create virtual environment
     venv_path = Path(".venv")
     if not venv_path.exists():
@@ -47,20 +47,20 @@ def main():
         print("✓ Virtual environment created")
     else:
         print("✓ Virtual environment exists")
-    
+
     # Install dependencies
     print("Installing dependencies...")
     if not run_command(["uv", "pip", "install", "-r", "requirements.txt"]):
         sys.exit(1)
     print("✓ Dependencies installed")
-    
+
     # Create .env if it doesn't exist
     env_path = Path(".env")
     if not env_path.exists():
         print("Creating .env file...")
         env_path.write_text(Path(".env.example").read_text())
         print("✓ .env created")
-    
+
     print("\n" + "=" * 60)
     print("✅ Setup complete!")
     print("\nNext steps:")

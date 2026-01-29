@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - LANrage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .settings-card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .setting-group .description {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .setting-group input[type="text"],
+        .setting-group input[type="number"],
+        .setting-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .setting-group input:focus,
+        .setting-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mode-option {
+            padding: 20px;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .mode-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .mode-option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .mode-option h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .mode-option p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .server-configs {
+            margin-top: 20px;
+        }
+
+        .config-item {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .config-item.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .config-info h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .config-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .config-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .config-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .btn-activate {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <div class="header">
+            <h1>⚙️ Settings</h1>
+            <p>Configure LANrage</p>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- Mode Selection -->
+        <div class="settings-card">
+            <h2>Instance Mode</h2>
+            <div class="mode-selector">
+                <div class="mode-option" id="modeClient" onclick="selectMode('client')">
+                    <h3>🎮 Client Mode</h3>
+                    <p>Join parties and play games with friends</p>
+                </div>
+                <div class="mode-option" id="modeRelay" onclick="selectMode('relay')">
+                    <h3>🌐 Relay Server Mode</h3>
+                    <p>Host a relay server for NAT traversal</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Settings -->
+        <div class="settings-card" id="clientSettings">
+            <h2>Client Settings</h2>
+            
+            <div class="setting-group">
+                <label for="peerName">Your Name</label>
+                <span class="description">Display name shown to other players</span>
+                <input type="text" id="peerName" placeholder="Player">
+            </div>
+
+            <div class="setting-group">
+                <label for="interfaceName">Interface Name</label>
+                <span class="description">WireGuard interface name</span>
+                <input type="text" id="interfaceName" placeholder="lanrage0">
+            </div>
+
+            <div class="setting-group">
+                <label for="virtualSubnet">Virtual Subnet</label>
+                <span class="description">IP range for the virtual network</span>
+                <input type="text" id="virtualSubnet" placeholder="10.66.0.0/16">
+            </div>
+
+            <div class="setting-group">
+                <label for="keepalive">WireGuard Keepalive (seconds)</label>
+                <span class="description">How often to send keepalive packets</span>
+                <input type="number" id="keepalive" placeholder="25" min="10" max="60">
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="autoOptimize"> Auto-optimize for detected games
+                </label>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="enableBroadcast"> Enable LAN broadcast emulation
+                </label>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="enableDiscord"> Enable Discord Rich Presence
+                </label>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="enableMetrics"> Enable metrics collection
+                </label>
+            </div>
+        </div>
+
+        <!-- Relay Server Settings -->
+        <div class="settings-card" id="relaySettings" style="display: none;">
+            <h2>Relay Server Settings</h2>
+            
+            <div class="setting-group">
+                <label for="relayPublicIp">Public IP Address</label>
+                <span class="description">Your server's public IP (leave empty for auto-detect)</span>
+                <input type="text" id="relayPublicIp" placeholder="Auto-detect">
+            </div>
+
+            <div class="setting-group">
+                <label for="relayPort">Relay Port</label>
+                <span class="description">UDP port for relay traffic</span>
+                <input type="number" id="relayPort" placeholder="51820" min="1024" max="65535">
+            </div>
+
+            <div class="setting-group">
+                <label for="maxClients">Max Clients</label>
+                <span class="description">Maximum number of concurrent clients</span>
+                <input type="number" id="maxClients" placeholder="100" min="10" max="1000">
+            </div>
+        </div>
+
+        <!-- API Settings -->
+        <div class="settings-card">
+            <h2>API Settings</h2>
+            
+            <div class="setting-group">
+                <label for="apiHost">API Host</label>
+                <span class="description">Local API server host</span>
+                <input type="text" id="apiHost" placeholder="127.0.0.1">
+            </div>
+
+            <div class="setting-group">
+                <label for="apiPort">API Port</label>
+                <span class="description">Local API server port</span>
+                <input type="number" id="apiPort" placeholder="8666" min="1024" max="65535">
+            </div>
+        </div>
+
+        <!-- Control Plane Settings -->
+        <div class="settings-card">
+            <h2>Control Plane</h2>
+            
+            <div class="setting-group">
+                <label for="controlServer">Control Server URL</label>
+                <span class="description">Central control plane server (for remote party discovery)</span>
+                <input type="text" id="controlServer" placeholder="https://control.lanrage.io">
+            </div>
+        </div>
+
+        <!-- Discord Settings -->
+        <div class="settings-card">
+            <h2>Discord Integration</h2>
+            
+            <div class="setting-group">
+                <label for="discordAppId">Discord Application ID</label>
+                <span class="description">Your Discord app ID for Rich Presence (get from <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a>)</span>
+                <input type="text" id="discordAppId" placeholder="1234567890123456789">
+            </div>
+
+            <div class="setting-group">
+                <label for="discordWebhook">Discord Webhook URL</label>
+                <span class="description">Webhook URL for party notifications (optional)</span>
+                <input type="text" id="discordWebhook" placeholder="https://discord.com/api/webhooks/...">
+            </div>
+
+            <div class="setting-group">
+                <label for="discordInvite">Discord Voice Channel Invite</label>
+                <span class="description">Invite link for voice chat (optional)</span>
+                <input type="text" id="discordInvite" placeholder="https://discord.gg/...">
+            </div>
+        </div>
+
+        <!-- Saved Configurations -->
+        <div class="settings-card">
+            <h2>Saved Configurations</h2>
+            <p style="color: #666; margin-bottom: 15px;">Save and switch between different configurations</p>
+            
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="saveAsConfig()">💾 Save Current as New Config</button>
+            </div>
+
+            <div class="server-configs" id="savedConfigs">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+            <button class="btn btn-secondary" onclick="resetSettings()">🔄 Reset to Defaults</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'client';
+
+        // Load settings on page load
+        window.addEventListener('DOMContentLoaded', loadSettings);
+
+        function selectMode(mode) {
+            currentMode = mode;
+            
+            // Update UI
+            document.getElementById('modeClient').classList.toggle('selected', mode === 'client');
+            document.getElementById('modeRelay').classList.toggle('selected', mode === 'relay');
+            document.getElementById('clientSettings').style.display = mode === 'client' ? 'block' : 'none';
+            document.getElementById('relaySettings').style.display = mode === 'relay' ? 'block' : 'none';
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+                
+                // Mode
+                selectMode(settings.mode || 'client');
+                
+                // Client settings
+                document.getElementById('peerName').value = settings.peer_name || 'Player';
+                document.getElementById('interfaceName').value = settings.interface_name || 'lanrage0';
+                document.getElementById('virtualSubnet').value = settings.virtual_subnet || '10.66.0.0/16';
+                document.getElementById('keepalive').value = settings.wireguard_keepalive || 25;
+                document.getElementById('autoOptimize').checked = settings.auto_optimize_games !== false;
+                document.getElementById('enableBroadcast').checked = settings.enable_broadcast !== false;
+                document.getElementById('enableDiscord').checked = settings.enable_discord === true;
+                document.getElementById('enableMetrics').checked = settings.enable_metrics !== false;
+                
+                // Relay settings
+                document.getElementById('relayPublicIp').value = settings.relay_public_ip || '';
+                document.getElementById('relayPort').value = settings.relay_port || 51820;
+                document.getElementById('maxClients').value = settings.max_clients || 100;
+                
+                // API settings
+                document.getElementById('apiHost').value = settings.api_host || '127.0.0.1';
+                document.getElementById('apiPort').value = settings.api_port || 8666;
+                
+                // Control plane
+                document.getElementById('controlServer').value = settings.control_server || 'https://control.lanrage.io';
+                
+                // Discord settings
+                document.getElementById('discordAppId').value = settings.discord_app_id || '';
+                document.getElementById('discordWebhook').value = settings.discord_webhook || '';
+                document.getElementById('discordInvite').value = settings.discord_invite || '';
+                
+                // Load saved configs
+                await loadSavedConfigs();
+                
+            } catch (error) {
+                showMessage('Failed to load settings: ' + error.message, 'error');
+            }
+        }
+
+        async function saveSettings() {
+            const settings = {
+                mode: currentMode,
+                peer_name: document.getElementById('peerName').value,
+                interface_name: document.getElementById('interfaceName').value,
+                virtual_subnet: document.getElementById('virtualSubnet').value,
+                wireguard_keepalive: parseInt(document.getElementById('keepalive').value),
+                auto_optimize_games: document.getElementById('autoOptimize').checked,
+                enable_broadcast: document.getElementById('enableBroadcast').checked,
+                enable_discord: document.getElementById('enableDiscord').checked,
+                enable_metrics: document.getElementById('enableMetrics').checked,
+                relay_public_ip: document.getElementById('relayPublicIp').value || null,
+                relay_port: parseInt(document.getElementById('relayPort').value),
+                max_clients: parseInt(document.getElementById('maxClients').value),
+                api_host: document.getElementById('apiHost').value,
+                api_port: parseInt(document.getElementById('apiPort').value),
+                control_server: document.getElementById('controlServer').value,
+                discord_app_id: document.getElementById('discordAppId').value || '',
+                discord_webhook: document.getElementById('discordWebhook').value || '',
+                discord_invite: document.getElementById('discordInvite').value || '',
+            };
+
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                if (response.ok) {
+                    showMessage('Settings saved successfully! Restart LANrage for changes to take effect.', 'success');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                showMessage('Failed to save settings: ' + error.message, 'error');
+            }
+        }
+
+        async function resetSettings() {
+            if (!confirm('Reset all settings to defaults?')) return;
+
+            try {
+                const response = await fetch('/api/settings/reset', { method: 'POST' });
+                if (response.ok) {
+                    showMessage('Settings reset to defaults', 'success');
+                    await loadSettings();
+                } else {
+                    throw new Error('Failed to reset settings');
+                }
+            } catch (error) {
+                showMessage('Failed to reset settings: ' + error.message, 'error');
+            }
+        }
+
+        async function saveAsConfig() {
+            const name = prompt('Enter a name for this configuration:');
+            if (!name) return;
+
+            const settings = {
+                mode: currentMode,
+                peer_name: document.getElementById('peerName').value,
+                interface_name: document.getElementById('interfaceName').value,
+                virtual_subnet: document.getElementById('virtualSubnet').value,
+                wireguard_keepalive: parseInt(document.getElementById('keepalive').value),
+                relay_public_ip: document.getElementById('relayPublicIp').value || null,
+                relay_port: parseInt(document.getElementById('relayPort').value),
+            };
+
+            try {
+                const response = await fetch('/api/settings/configs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, mode: currentMode, config: settings })
+                });
+
+                if (response.ok) {
+                    showMessage('Configuration saved!', 'success');
+                    await loadSavedConfigs();
+                } else {
+                    throw new Error('Failed to save configuration');
+                }
+            } catch (error) {
+                showMessage('Failed to save configuration: ' + error.message, 'error');
+            }
+        }
+
+        async function loadSavedConfigs() {
+            try {
+                const response = await fetch('/api/settings/configs');
+                const configs = await response.json();
+                
+                const container = document.getElementById('savedConfigs');
+                if (configs.length === 0) {
+                    container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No saved configurations</p>';
+                    return;
+                }
+
+                container.innerHTML = configs.map(config => `
+                    <div class="config-item ${config.enabled ? 'active' : ''}">
+                        <div class="config-info">
+                            <h4>${config.name}</h4>
+                            <p>Mode: ${config.mode} ${config.enabled ? '(Active)' : ''}</p>
+                        </div>
+                        <div class="config-actions">
+                            <button class="btn-activate" onclick="activateConfig(${config.id})">Activate</button>
+                            <button class="btn-delete" onclick="deleteConfig(${config.id})">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load configs:', error);
+            }
+        }
+
+        async function activateConfig(id) {
+            try {
+                const response = await fetch(`/api/settings/configs/${id}/activate`, { method: 'POST' });
+                if (response.ok) {
+                    showMessage('Configuration activated! Restart LANrage for changes to take effect.', 'success');
+                    await loadSettings();
+                } else {
+                    throw new Error('Failed to activate configuration');
+                }
+            } catch (error) {
+                showMessage('Failed to activate configuration: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteConfig(id) {
+            if (!confirm('Delete this configuration?')) return;
+
+            try {
+                const response = await fetch(`/api/settings/configs/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showMessage('Configuration deleted', 'success');
+                    await loadSavedConfigs();
+                } else {
+                    throw new Error('Failed to delete configuration');
+                }
+            } catch (error) {
+                showMessage('Failed to delete configuration: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

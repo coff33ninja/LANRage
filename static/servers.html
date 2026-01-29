@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Browser - LANrage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .stats {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .servers-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .server-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .server-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .server-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .server-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .server-game {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .server-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .server-info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-join {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-join:hover {
+            background: #45a049;
+        }
+
+        .btn-join:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-favorite {
+            background: #f0f0f0;
+            color: #333;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-favorite:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-favorite.active {
+            background: #FFD700;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .badge-full {
+            background: #f44336;
+            color: white;
+        }
+
+        .badge-password {
+            background: #FF9800;
+            color: white;
+        }
+
+        .badge-tag {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .latency {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+
+        .latency.warning {
+            color: #FF9800;
+        }
+
+        .latency.danger {
+            color: #f44336;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to LANrage</a>
+        
+        <div class="header">
+            <h1>🎮 Server Browser</h1>
+            <p>Find and join game servers</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="stat-servers">0</div>
+                <div class="stat-label">Servers</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="stat-players">0</div>
+                <div class="stat-label">Players</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="stat-games">0</div>
+                <div class="stat-label">Games</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label for="search">Search</label>
+                    <input type="text" id="search" placeholder="Server name, game, or host...">
+                </div>
+                <div class="control-group">
+                    <label for="game-filter">Game</label>
+                    <select id="game-filter">
+                        <option value="">All Games</option>
+                    </select>
+                </div>
+            </div>
+            <div class="controls-row" style="margin-top: 15px;">
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="hide-full">
+                        Hide Full
+                    </label>
+                    <label>
+                        <input type="checkbox" id="hide-empty">
+                        Hide Empty
+                    </label>
+                    <label>
+                        <input type="checkbox" id="hide-password">
+                        Hide Password
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="refreshServers()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Servers List -->
+        <div class="servers-container">
+            <div id="servers-list" class="loading">
+                Loading servers...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8666';
+        let refreshInterval;
+        let favorites = new Set();
+
+        // Load servers on page load
+        window.addEventListener('load', () => {
+            loadServers();
+            startAutoRefresh();
+            
+            // Add event listeners for filters
+            document.getElementById('search').addEventListener('input', loadServers);
+            document.getElementById('game-filter').addEventListener('change', loadServers);
+            document.getElementById('hide-full').addEventListener('change', loadServers);
+            document.getElementById('hide-empty').addEventListener('change', loadServers);
+            document.getElementById('hide-password').addEventListener('change', loadServers);
+        });
+
+        async function loadServers() {
+            try {
+                // Build query parameters
+                const params = new URLSearchParams();
+                
+                const search = document.getElementById('search').value.trim();
+                if (search) params.append('search', search);
+                
+                const game = document.getElementById('game-filter').value;
+                if (game) params.append('game', game);
+                
+                if (document.getElementById('hide-full').checked) params.append('hide_full', 'true');
+                if (document.getElementById('hide-empty').checked) params.append('hide_empty', 'true');
+                if (document.getElementById('hide-password').checked) params.append('hide_password', 'true');
+
+                const response = await fetch(`${API_BASE}/api/servers?${params}`);
+                const data = await response.json();
+
+                // Update stats
+                document.getElementById('stat-servers').textContent = data.stats.total_servers;
+                document.getElementById('stat-players').textContent = data.stats.total_players;
+                document.getElementById('stat-games').textContent = data.stats.unique_games;
+
+                // Update game filter dropdown
+                updateGameFilter(data.stats.games);
+
+                // Render servers
+                renderServers(data.servers);
+
+            } catch (error) {
+                console.error('Failed to load servers:', error);
+                document.getElementById('servers-list').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <div class="empty-state-text">Failed to load servers</div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateGameFilter(games) {
+            const select = document.getElementById('game-filter');
+            const currentValue = select.value;
+            
+            // Keep "All Games" option and add games
+            select.innerHTML = '<option value="">All Games</option>';
+            games.forEach(game => {
+                const option = document.createElement('option');
+                option.value = game;
+                option.textContent = game;
+                select.appendChild(option);
+            });
+            
+            // Restore selection if still valid
+            if (games.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function renderServers(servers) {
+            const container = document.getElementById('servers-list');
+
+            if (servers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎮</div>
+                        <div class="empty-state-text">No servers found</div>
+                        <p style="color: #999; margin-top: 10px;">Try adjusting your filters or create a server</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = servers.map(server => `
+                <div class="server-card">
+                    <div class="server-header">
+                        <div>
+                            <div class="server-name">${escapeHtml(server.name)}</div>
+                            <div class="server-game">${escapeHtml(server.game)}</div>
+                        </div>
+                        <div>
+                            ${server.is_full ? '<span class="badge badge-full">FULL</span>' : ''}
+                            ${server.password_protected ? '<span class="badge badge-password">🔒</span>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="server-info">
+                        <div class="server-info-item">
+                            <span>👥</span>
+                            <span>${server.current_players}/${server.max_players}</span>
+                        </div>
+                        <div class="server-info-item">
+                            <span>🖥️</span>
+                            <span>${escapeHtml(server.host_peer_name)}</span>
+                        </div>
+                        ${server.map_name ? `
+                            <div class="server-info-item">
+                                <span>🗺️</span>
+                                <span>${escapeHtml(server.map_name)}</span>
+                            </div>
+                        ` : ''}
+                        ${server.game_mode ? `
+                            <div class="server-info-item">
+                                <span>🎯</span>
+                                <span>${escapeHtml(server.game_mode)}</span>
+                            </div>
+                        ` : ''}
+                        ${server.latency_ms ? `
+                            <div class="server-info-item">
+                                <span>📡</span>
+                                <span class="latency ${getLatencyClass(server.latency_ms)}">${server.latency_ms.toFixed(0)}ms</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${server.tags && server.tags.length > 0 ? `
+                        <div style="margin-top: 10px;">
+                            ${server.tags.map(tag => `<span class="badge badge-tag">${escapeHtml(tag)}</span>`).join(' ')}
+                        </div>
+                    ` : ''}
+
+                    <div class="server-actions">
+                        <button class="btn-join" onclick="joinServer('${server.id}')" ${server.is_full ? 'disabled' : ''}>
+                            ${server.is_full ? 'FULL' : 'JOIN'}
+                        </button>
+                        <button class="btn-favorite ${favorites.has(server.id) ? 'active' : ''}" onclick="toggleFavorite('${server.id}')">
+                            ${favorites.has(server.id) ? '⭐' : '☆'}
+                        </button>
+                        <button class="btn-favorite" onclick="measureLatency('${server.id}')">
+                            📡 Ping
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function joinServer(serverId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/servers/${serverId}/join`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(`Joining server!\nConnect to: ${data.host_ip}`);
+                    // TODO: Implement automatic party joining
+                } else {
+                    alert(data.detail || 'Failed to join server');
+                }
+            } catch (error) {
+                alert('Failed to join server');
+            }
+        }
+
+        async function toggleFavorite(serverId) {
+            try {
+                if (favorites.has(serverId)) {
+                    await fetch(`${API_BASE}/api/servers/${serverId}/favorite`, {
+                        method: 'DELETE'
+                    });
+                    favorites.delete(serverId);
+                } else {
+                    await fetch(`${API_BASE}/api/servers/${serverId}/favorite`, {
+                        method: 'POST'
+                    });
+                    favorites.add(serverId);
+                }
+                loadServers();
+            } catch (error) {
+                console.error('Failed to toggle favorite:', error);
+            }
+        }
+
+        async function measureLatency(serverId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/servers/${serverId}/latency`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(`Latency: ${data.latency_ms.toFixed(0)}ms`);
+                    loadServers(); // Refresh to show updated latency
+                } else {
+                    alert('Failed to measure latency');
+                }
+            } catch (error) {
+                alert('Failed to measure latency');
+            }
+        }
+
+        function refreshServers() {
+            loadServers();
+        }
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(loadServers, 10000); // Refresh every 10 seconds
+        }
+
+        function getLatencyClass(latency) {
+            if (latency < 50) return '';
+            if (latency < 100) return 'warning';
+            return 'danger';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

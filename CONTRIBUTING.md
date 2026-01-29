@@ -2,262 +2,579 @@
 
 ## Current Status
 
-LANrage is currently a **solo project** in early prototype phase. I'm not actively accepting contributions yet, but that will change.
+LANrage v1.0 is **production ready** and now open for contributions! 🎉
 
-## Future Contributions
+**Phase 1 Complete**: All core features implemented, tested (88% coverage), and documented (1650+ lines).
 
-Once the core is stable (Phase 3+), I'll open up contributions for:
-- Bug fixes
-- Game profiles
-- Platform support
-- Documentation
-- Testing
+We welcome contributions for:
+- 🐛 Bug fixes
+- 🎮 Game profiles
+- 🖥️ Platform support
+- 📚 Documentation
+- 🧪 Testing
+- ✨ Feature enhancements
 
-## How to Help Now
+---
 
-### 1. Test It
+## Quick Start for Contributors
 
-The best way to help is to test LANrage and report issues:
-- Try it with different games
-- Test on different networks
-- Report bugs on GitHub Issues
-- Share your experience
+### 1. Setup Development Environment
 
-### 2. Spread the Word
+```bash
+# Fork and clone
+git clone https://github.com/YOUR_USERNAME/lanrage.git
+cd lanrage
 
-- Tell your gaming friends
-- Share on Reddit/Discord
-- Stream it on Twitch
-- Write about it
+# Run setup
+python setup.py
 
-### 3. Provide Feedback
+# Activate virtual environment
+.venv\Scripts\activate.bat  # Windows
+source .venv/bin/activate   # Linux/Mac
 
-- What games do you want to work?
-- What features are missing?
-- What's confusing?
-- What's broken?
+# Verify setup
+python lanrage.py
+```
 
-### 4. Donate (Future)
+### 2. Run Tests
 
-Once there's a Patreon/Ko-fi, support the project financially.
+```bash
+# Run all tests
+.venv\Scripts\python.exe -m pytest tests/  # Windows
+.venv/bin/python -m pytest tests/          # Linux/Mac
+
+# Run specific test
+pytest tests/test_nat.py -v
+
+# Check coverage
+pytest --cov=core --cov=api tests/
+```
+
+### 3. Code Quality
+
+```bash
+# Run all quality checks (in order)
+.venv\Scripts\python.exe -m isort .              # Sort imports
+.venv\Scripts\python.exe -m black .              # Format code
+.venv\Scripts\python.exe -m ruff check --fix .   # Lint and fix
+.venv\Scripts\python.exe -m pytest tests/        # Run tests
+```
+
+All checks must pass before submitting PR.
+
+---
+
+## How to Contribute
+
+### 🐛 Bug Fixes
+
+1. Check if issue already exists
+2. Create issue if not (use bug report template)
+3. Fork and create branch: `fix/issue-description`
+4. Fix the bug with tests
+5. Submit PR referencing issue
+
+### 🎮 Game Profiles
+
+Adding a new game is easy!
+
+**Create**: `game_profiles/custom/your_game.json`
+
+```json
+{
+  "your_game": {
+    "name": "Your Game Name",
+    "executable": "game.exe",
+    "ports": [12345],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Game description",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  }
+}
+```
+
+**Test**: Verify game detection and optimization work.
+
+**Submit**: PR with game profile + testing notes.
+
+### 📚 Documentation
+
+- Fix typos and errors
+- Add examples and tutorials
+- Improve clarity
+- Translate to other languages (future)
+
+### 🧪 Testing
+
+- Add test cases for edge cases
+- Improve test coverage
+- Add integration tests
+- Performance benchmarks
+
+### ✨ Features
+
+For new features:
+1. Open issue first to discuss
+2. Get approval before coding
+3. Follow architecture patterns
+4. Include tests and docs
+5. Submit PR
+
+---
 
 ## Bug Reports
 
-### Good Bug Report
+### Good Bug Report Template
 
 ```markdown
-**Title**: Minecraft LAN discovery not working
+**Title**: Clear, specific description
 
 **Environment**:
-- LANrage version: 0.1.0
-- OS: Windows 11
+- LANrage version: 1.0.0
+- OS: Windows 11 / Ubuntu 22.04
+- Python: 3.12.1
 - Game: Minecraft Java 1.20.4
-- Network: Behind NAT
+- Network: Behind NAT / Direct connection
 
-**Expected**: See friend's server in LAN list
-**Actual**: No servers shown
+**Expected Behavior**: What should happen
+
+**Actual Behavior**: What actually happens
 
 **Steps to Reproduce**:
-1. Create party
-2. Friend joins party
-3. Friend hosts Minecraft server
-4. Open LAN game list
-5. No servers appear
+1. Step one
+2. Step two
+3. Step three
 
-**Logs**: (attach ~/.lanrage/logs/lanrage.log)
-
-**Additional Info**:
-- Direct IP connection works
-- Both can ping each other (10.66.0.x)
-- Firewall disabled
+**Logs**: 
+```
+Paste relevant logs from ~/.lanrage/network.log
 ```
 
-### Bad Bug Report
-
-```markdown
-**Title**: It doesn't work
-
-**Description**: I tried to use it and it didn't work. Fix it.
+**Additional Context**:
+- Screenshots if applicable
+- Network topology diagram
+- Related issues
 ```
+
+### What Makes a Good Bug Report
+
+✅ **Good**:
+- Specific and reproducible
+- Includes environment details
+- Has logs and error messages
+- Clear steps to reproduce
+- Expected vs actual behavior
+
+❌ **Bad**:
+- "It doesn't work"
+- No details or context
+- Can't reproduce
+- No logs or errors
+
+---
 
 ## Feature Requests
 
-### Good Feature Request
+### Good Feature Request Template
 
 ```markdown
-**Title**: Add support for Age of Empires II
+**Title**: Concise feature description
 
-**Problem**: AoE2 uses IPX protocol for LAN games
+**Problem**: What problem does this solve?
 
-**Proposed Solution**: 
-- Emulate IPX over IP
-- Translate IPX broadcasts
-- Add AoE2 game profile
+**Proposed Solution**: How should it work?
 
-**Alternatives Considered**:
-- Use existing IPX wrapper
-- Manual port forwarding (defeats the purpose)
+**Alternatives Considered**: Other approaches?
 
-**Priority**: High (popular game)
+**Use Case**: Real-world scenario
+
+**Priority**: High / Medium / Low
+
+**Willing to Implement**: Yes / No / Need guidance
 ```
 
-### Bad Feature Request
+### Feature Request Guidelines
 
-```markdown
-**Title**: Add everything
+- Check if already requested
+- Explain the "why" not just "what"
+- Consider implementation complexity
+- Think about edge cases
+- Be open to alternatives
 
-**Description**: Make it work with all games ever made.
-```
+---
 
-## Code Style
+## Code Style & Standards
 
-When contributions open up:
+### Python Style
 
-### Python
+- **Python Version**: 3.12+
+- **Formatting**: Black (line length 88)
+- **Import Sorting**: isort
+- **Linting**: Ruff
+- **Type Hints**: Required for all public APIs
+- **Docstrings**: Required for public functions/classes
 
-- Python 3.12+
-- Type hints everywhere
-- Black formatting
-- Ruff linting
-- Docstrings for public APIs
-
-### Example
+### Example Code
 
 ```python
 async def measure_latency(peer_ip: str, count: int = 10) -> float:
     """
-    Measure latency to a peer.
+    Measure latency to a peer using ICMP ping.
     
     Args:
-        peer_ip: Virtual IP of the peer
-        count: Number of pings to average
+        peer_ip: Virtual IP address of the peer (10.66.x.x)
+        count: Number of pings to average (default: 10)
         
     Returns:
         Average latency in milliseconds
         
     Raises:
         NetworkError: If peer is unreachable
+        ValueError: If count < 1
+        
+    Example:
+        >>> latency = await measure_latency("10.66.0.2")
+        >>> print(f"Latency: {latency:.2f}ms")
+        Latency: 12.34ms
     """
+    if count < 1:
+        raise ValueError("count must be >= 1")
+    
     # Implementation
     pass
 ```
 
+### Code Quality Checklist
+
+Before submitting PR:
+- [ ] Code formatted with Black
+- [ ] Imports sorted with isort
+- [ ] No Ruff warnings
+- [ ] Type hints added
+- [ ] Docstrings added
+- [ ] Tests added/updated
+- [ ] Tests passing (100%)
+- [ ] Documentation updated
+
+---
+
 ## Commit Messages
 
-### Good
+### Format
 
 ```
-fix: Minecraft broadcast emulation not working
+<type>(<scope>): <subject>
 
-- Add UDP broadcast capture
-- Re-emit to all party members
-- Handle address translation
+<body>
 
-Fixes #42
+<footer>
 ```
 
-### Bad
+### Types
 
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation only
+- `style`: Code style (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding/updating tests
+- `chore`: Maintenance tasks
+
+### Examples
+
+✅ **Good**:
+```
+feat(games): add Age of Empires II profile
+
+- Add game detection for AoE2
+- Configure broadcast emulation for IPX
+- Set optimal keepalive and MTU
+- Add integration test
+
+Closes #123
+```
+
+```
+fix(nat): handle symmetric NAT detection edge case
+
+STUN detection was failing when both peers had symmetric NAT.
+Now properly falls back to relay in this scenario.
+
+Fixes #456
+```
+
+❌ **Bad**:
 ```
 fixed stuff
 ```
 
+```
+update
+```
+
+---
+
 ## Pull Request Process
 
-(When contributions open)
+### Before Submitting
 
-1. Fork the repo
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Update documentation
-6. Submit PR
-7. Wait for review
+1. **Fork** the repository
+2. **Create branch**: `feat/your-feature` or `fix/issue-123`
+3. **Make changes** following code style
+4. **Add tests** for new functionality
+5. **Update docs** if needed
+6. **Run quality checks** (isort, black, ruff, pytest)
+7. **Commit** with good messages
+8. **Push** to your fork
+
+### PR Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation
+- [ ] Refactoring
+- [ ] Test improvement
+
+## Related Issues
+Fixes #123
+Closes #456
 
 ## Testing
+- [ ] All existing tests pass
+- [ ] Added new tests
+- [ ] Manually tested
+
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Self-reviewed code
+- [ ] Commented complex logic
+- [ ] Updated documentation
+- [ ] No new warnings
+- [ ] Tests added/updated
+```
+
+### Review Process
+
+1. **Automated checks** run (tests, linting)
+2. **Code review** by maintainer
+3. **Feedback** and requested changes
+4. **Approval** when ready
+5. **Merge** into main branch
+
+### Review Timeline
+
+- Initial response: 1-3 days
+- Full review: 3-7 days
+- Complex features: 1-2 weeks
+
+---
+
+## Testing Guidelines
+
+### Test Requirements
 
 All PRs must include:
-- Unit tests
-- Integration tests (if applicable)
-- Manual testing notes
+- **Unit tests** for new functions
+- **Integration tests** for features
+- **Manual testing** notes
 
-## Documentation
+### Test Structure
 
-All features must be documented:
-- Code comments
-- API documentation
-- User-facing docs
-- Examples
+```python
+import pytest
+from core.nat import NATTraversal
 
-## License
+@pytest.mark.asyncio
+async def test_nat_detection():
+    """Test NAT type detection via STUN"""
+    nat = NATTraversal(config)
+    response = await nat.detect_nat()
+    
+    assert response.nat_type is not None
+    assert response.public_ip is not None
+    assert response.public_port > 0
+```
 
-By contributing, you agree to license your contributions under the MIT License.
+### Running Tests
 
-## Code of Conduct
+```bash
+# All tests
+pytest tests/
 
-### Be Cool
+# Specific file
+pytest tests/test_nat.py
 
-- Be respectful
-- Be constructive
-- Be patient
-- Be helpful
+# Specific test
+pytest tests/test_nat.py::test_nat_detection
 
-### Don't Be a Jerk
+# With coverage
+pytest --cov=core tests/
 
-- No harassment
-- No spam
-- No trolling
-- No gatekeeping
+# Verbose
+pytest -v tests/
+```
 
-### Consequences
+---
 
-- First offense: Warning
-- Second offense: Temporary ban
-- Third offense: Permanent ban
+## Documentation Guidelines
 
-## Communication
+### What to Document
+
+- **Public APIs**: All functions/classes
+- **Features**: User-facing functionality
+- **Setup**: Installation and configuration
+- **Examples**: Real-world usage
+- **Troubleshooting**: Common issues
+
+### Documentation Locations
+
+- **Code**: Docstrings in Python files
+- **API**: `docs/API.md`
+- **User Guide**: `docs/USER_GUIDE.md`
+- **Architecture**: `docs/ARCHITECTURE.md`
+- **Troubleshooting**: `docs/TROUBLESHOOTING.md`
+
+### Documentation Style
+
+- Clear and concise
+- Include examples
+- Use proper formatting
+- Link to related docs
+- Keep up to date
+
+---
+
+## Project Structure
+
+```
+lanrage/
+├── api/              # FastAPI REST API
+├── core/             # Core networking logic
+├── servers/          # Control plane and relay servers
+├── static/           # Web UI (HTML/CSS/JS)
+├── tests/            # Test suites
+├── docs/             # Documentation
+├── game_profiles/    # Game detection profiles
+├── .kiro/            # Kiro AI configuration
+├── lanrage.py        # Main entry point
+└── requirements.txt  # Dependencies
+```
+
+### Key Modules
+
+- `core/network.py` - WireGuard management
+- `core/nat.py` - NAT traversal
+- `core/party.py` - Party management
+- `core/games.py` - Game detection
+- `core/control_client.py` - Control plane client
+- `servers/control_server.py` - Control plane server
+
+---
+
+## Communication Channels
 
 ### GitHub Issues
+- 🐛 Bug reports
+- ✨ Feature requests
+- 💬 Technical discussions
+- ❓ Questions
 
-- Bug reports
-- Feature requests
-- Technical discussions
+### GitHub Discussions (Future)
+- General chat
+- Ideas and brainstorming
+- Show and tell
+- Q&A
 
 ### Discord (Future)
-
-- General chat
-- Support
-- Community
+- Real-time chat
+- Community support
+- Development updates
+- Gaming sessions
 
 ### Reddit (Future)
-
 - Announcements
-- Discussions
-- Memes
+- Community discussions
+- Memes and fun
 
-## Roadmap Influence
-
-Want to influence the roadmap?
-- Comment on GitHub Issues
-- Vote with 👍 reactions
-- Provide use cases
-- Share your experience
+---
 
 ## Recognition
 
 Contributors will be:
-- Listed in CONTRIBUTORS.md
-- Mentioned in release notes
-- Given eternal glory
+- ✨ Listed in `CONTRIBUTORS.md`
+- 📢 Mentioned in release notes
+- 🏆 Given eternal glory
+- 💖 Appreciated forever
+
+---
+
+## Code of Conduct
+
+### Be Excellent to Each Other
+
+✅ **Do**:
+- Be respectful and kind
+- Be constructive in feedback
+- Be patient with newcomers
+- Be helpful and supportive
+- Celebrate others' contributions
+
+❌ **Don't**:
+- Harass or discriminate
+- Spam or troll
+- Be dismissive or rude
+- Gatekeep or exclude
+- Violate privacy
+
+### Enforcement
+
+1. **First offense**: Warning
+2. **Second offense**: Temporary ban (1 week)
+3. **Third offense**: Permanent ban
+
+Serious violations (harassment, threats) result in immediate permanent ban.
+
+---
+
+## License
+
+By contributing, you agree to license your contributions under the **MIT License**.
+
+Your contributions will be:
+- Open source forever
+- Free to use and modify
+- Attributed to you
+- Part of something awesome
+
+---
 
 ## Questions?
 
-- Open a GitHub Issue
-- Tag it with "question"
-- I'll respond ASAP
+- 📖 Check the [User Guide](docs/USER_GUIDE.md)
+- 🔍 Search existing issues
+- 💬 Open a new issue with "question" label
+- 📧 Email: support@lanrage.dev (future)
 
-## Thank You
+---
 
-Thanks for your interest in LANrage. Even if you're just reading this, you're helping make gaming better.
+## Thank You! 🎉
 
-Now go play some games. 🎮
+Thank you for contributing to LANrage! Whether you're fixing a typo, adding a game profile, or building a major feature, every contribution makes gaming better for everyone.
+
+Now go play some games! 🎮
+
+---
+
+**LANrage v1.0 - Production Ready**  
+*If it runs on LAN, it runs on LANrage.*

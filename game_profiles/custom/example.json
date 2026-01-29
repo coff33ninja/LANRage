@@ -1,0 +1,17 @@
+{
+  "_comment": "This is an example custom game profile. Copy this file and modify it for your game.",
+  "my_game": {
+    "name": "My Custom Game",
+    "executable": "MyGame.exe",
+    "ports": [12345, 12346],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "My custom game - LAN multiplayer",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

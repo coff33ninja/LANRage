@@ -1,0 +1,44 @@
+{
+  "csgo": {
+    "name": "Counter-Strike: Global Offensive",
+    "executable": "csgo.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "CS:GO - Source engine LAN",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "rocketleague": {
+    "name": "Rocket League",
+    "executable": "RocketLeague.exe",
+    "ports": [7777, 7778, 9999],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Rocket League - Car soccer",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "brawlhalla": {
+    "name": "Brawlhalla",
+    "executable": "Brawlhalla.exe",
+    "ports": [5555, 5556],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Brawlhalla - Platform fighter",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  }
+}

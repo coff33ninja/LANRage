@@ -1,295 +1,1482 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LANrage - Gaming VPN</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
-        
+
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 5px;
+        }
+
+        .tagline {
+            opacity: 0.9;
+            font-style: italic;
+            font-size: 1.1em;
+        }
+
+        .main-card {
             background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
+            padding: 30px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
-        
-        h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        
-        .tagline {
-            text-align: center;
-            opacity: 0.8;
-            margin-bottom: 40px;
-            font-style: italic;
-        }
-        
-        .status {
+
+        .status-bar {
             background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
+            padding: 15px 20px;
             border-radius: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
         .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            margin-right: 10px;
             animation: pulse 2s infinite;
         }
-        
-        .status-indicator.connected { background: #10b981; }
-        .status-indicator.disconnected { background: #ef4444; }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+        .status-indicator.connected {
+            background: #10b981;
         }
-        
+
+        .status-indicator.disconnected {
+            background: #ef4444;
+        }
+
+        .status-indicator.warning {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .status-right {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s;
+            border-radius: 8px;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
         .big-button {
-            width: 100%;
             padding: 20px;
-            font-size: 1.5em;
+            font-size: 1.2em;
             font-weight: bold;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        
+
         .big-button.primary {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
         }
-        
+
         .big-button.primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
         }
-        
+
         .big-button.secondary {
             background: rgba(255, 255, 255, 0.1);
             color: white;
         }
-        
+
         .big-button.secondary:hover {
             background: rgba(255, 255, 255, 0.2);
         }
-        
-        .peers {
-            margin-top: 20px;
+
+        .big-button.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
         }
-        
-        .peer {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+
+        .big-button.danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
         }
-        
-        .peer-name {
-            font-weight: bold;
+
+        .input-group {
+            margin-bottom: 15px;
         }
-        
-        .peer-ping {
-            color: #10b981;
-            font-family: monospace;
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            opacity: 0.9;
         }
-        
-        .peer-ping.warning { color: #f59e0b; }
-        .peer-ping.danger { color: #ef4444; }
-        
-        input {
+
+        input,
+        textarea {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: none;
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.1);
             color: white;
             font-size: 1em;
+            font-family: inherit;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .party-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .party-id-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
         }
-        
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
+
+        .party-id {
+            font-family: monospace;
+            font-size: 1.2em;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .copy-button {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .peers-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .peer-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .peer-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .peer-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+        }
+
+        .peer-stat {
+            text-align: center;
+        }
+
+        .peer-stat-value {
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .peer-stat-value.warning {
+            color: #f59e0b;
+        }
+
+        .peer-stat-value.danger {
+            color: #ef4444;
+        }
+
+        .peer-stat-label {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .servers-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .server-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .server-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .server-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .server-name {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .server-game {
+            font-size: 0.9em;
+            opacity: 0.8;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .server-players {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .server-info {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            opacity: 0.8;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .server-info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-join {
+            background: #10b981;
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-join:hover {
+            background: #059669;
+        }
+
+        .btn-join:disabled {
+            background: rgba(255, 255, 255, 0.2);
+            cursor: not-allowed;
+        }
+
+        .btn-favorite {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-favorite:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-favorite.active {
+            background: #FFD700;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .badge-full {
+            background: #ef4444;
+            color: white;
+        }
+
+        .badge-password {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .badge-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            margin-right: 5px;
+        }
+
+        .latency {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .latency.warning {
+            color: #f59e0b;
+        }
+
+        .latency.danger {
+            color: #ef4444;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .status-right {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>🔥 LANrage</h1>
-        <p class="tagline">If it runs on LAN, it runs on LANrage</p>
-        
-        <div class="status">
-            <span class="status-indicator disconnected" id="statusIndicator"></span>
-            <span id="statusText">Not connected</span>
+        <div class="header">
+            <h1>🔥 LANrage</h1>
+            <p class="tagline">If it runs on LAN, it runs on LANrage</p>
         </div>
-        
-        <div id="mainView">
-            <button class="big-button primary" onclick="createParty()">CREATE PARTY</button>
-            <button class="big-button secondary" onclick="showJoinParty()">JOIN PARTY</button>
-        </div>
-        
-        <div id="joinView" style="display: none;">
-            <input type="text" id="partyId" placeholder="Party ID">
-            <input type="text" id="peerName" placeholder="Your name">
-            <button class="big-button primary" onclick="joinParty()">JOIN</button>
-            <button class="big-button secondary" onclick="showMainView()">BACK</button>
-        </div>
-        
-        <div id="partyView" style="display: none;">
-            <div style="margin-bottom: 20px;">
-                <strong>Party ID:</strong> <span id="currentPartyId" style="font-family: monospace;"></span>
+
+        <div class="main-card">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <div class="status-item">
+                        <span class="status-indicator disconnected" id="internetIndicator"></span>
+                        <span id="internetText">Checking...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-indicator disconnected" id="serviceIndicator"></span>
+                        <span id="serviceText">Service</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-indicator disconnected" id="partyIndicator"></span>
+                        <span id="partyText">No Party</span>
+                    </div>
+                    <div class="status-item" id="serverStatusItem" style="display: none;">
+                        <span class="status-indicator connected" id="serverIndicator"></span>
+                        <span id="serverText">Hosting</span>
+                    </div>
+                </div>
+                <div class="status-right">
+                    <div class="stat-item">
+                        <span class="stat-value" id="peerCount">0</span>
+                        <span class="stat-label">Peers</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="latency">--</span>
+                        <span class="stat-label">Latency</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="quality">--</span>
+                        <span class="stat-label">Quality</span>
+                    </div>
+                </div>
             </div>
-            <div class="peers" id="peersList"></div>
-            <button class="big-button secondary" onclick="leaveParty()">LEAVE PARTY</button>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('party', this)">🎮 Party</button>
+                <button class="tab" onclick="switchTab('servers', this)">🖥️ Servers</button>
+                <button class="tab" onclick="switchTab('metrics', this)">📊 Metrics</button>
+                <button class="tab" onclick="switchTab('discord', this)">💬 Discord</button>
+                <button class="tab" onclick="window.location.href='/static/settings.html'">⚙️ Settings</button>
+            </div>
+
+            <!-- Party Tab -->
+            <div id="party-tab" class="tab-content active">
+                <div id="party-main">
+                    <div class="button-grid">
+                        <button class="big-button primary" onclick="showCreateParty()">
+                            ➕ Create Party
+                        </button>
+                        <button class="big-button secondary" onclick="showJoinParty()">
+                            🔗 Join Party
+                        </button>
+                    </div>
+                </div>
+
+                <div id="party-create" style="display: none;">
+                    <div class="input-group">
+                        <label>Party Name</label>
+                        <input type="text" id="partyName" placeholder="Gaming Session" value="Gaming Session">
+                    </div>
+                    <div class="button-grid">
+                        <button class="big-button primary" onclick="createParty()">Create</button>
+                        <button class="big-button secondary" onclick="showPartyMain()">Cancel</button>
+                    </div>
+                </div>
+
+                <div id="party-join" style="display: none;">
+                    <div class="input-group">
+                        <label>Party ID</label>
+                        <input type="text" id="joinPartyId" placeholder="Enter party ID">
+                    </div>
+                    <div class="input-group">
+                        <label>Your Name</label>
+                        <input type="text" id="joinPeerName" placeholder="Player">
+                    </div>
+                    <div class="button-grid">
+                        <button class="big-button primary" onclick="joinParty()">Join</button>
+                        <button class="big-button secondary" onclick="showPartyMain()">Cancel</button>
+                    </div>
+                </div>
+
+                <div id="party-active" style="display: none;">
+                    <div class="party-info">
+                        <div class="party-id-display">
+                            <div class="party-id" id="currentPartyId"></div>
+                            <button class="copy-button" onclick="copyPartyId()">📋 Copy</button>
+                        </div>
+                        <div id="peersList" class="peers-list"></div>
+                    </div>
+                    <button class="big-button danger" onclick="leaveParty()">Leave Party</button>
+                </div>
+            </div>
+
+            <!-- Servers Tab -->
+            <div id="servers-tab" class="tab-content">
+                <!-- Server Stats -->
+                <div class="metrics-grid" style="margin-bottom: 20px;">
+                    <div class="metric-card">
+                        <div class="metric-value" id="stat-servers">0</div>
+                        <div class="metric-label">Servers</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="stat-players">0</div>
+                        <div class="metric-label">Players</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="stat-games">0</div>
+                        <div class="metric-label">Games</div>
+                    </div>
+                </div>
+
+                <!-- Server Filters -->
+                <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Search</label>
+                            <input type="text" id="search" placeholder="Server name, game, or host...">
+                        </div>
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Game</label>
+                            <select id="game-filter" style="padding: 12px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
+                                <option value="">All Games</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                            <input type="checkbox" id="hide-full">
+                            <span>Hide Full</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                            <input type="checkbox" id="hide-empty">
+                            <span>Hide Empty</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                            <input type="checkbox" id="hide-password">
+                            <span>Hide Password</span>
+                        </label>
+                        <button class="copy-button" onclick="refreshServers()" style="margin-left: auto;">🔄 Refresh</button>
+                    </div>
+                </div>
+
+                <!-- Servers List -->
+                <div id="serversList" class="servers-grid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎮</div>
+                        <div>Loading servers...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Tab -->
+            <div id="metrics-tab" class="tab-content">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="cpuUsage">0%</div>
+                        <div class="metric-label">CPU Usage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="memoryUsage">0%</div>
+                        <div class="metric-label">Memory Usage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="networkQuality">--</div>
+                        <div class="metric-label">Network Quality</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="activePeers">0</div>
+                        <div class="metric-label">Active Peers</div>
+                    </div>
+                </div>
+                <div id="sessionsHistory"></div>
+            </div>
+
+            <!-- Discord Tab -->
+            <div id="discord-tab" class="tab-content">
+                <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 15px;">Status</h3>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div>
+                            <strong>Webhook:</strong>
+                            <span id="webhookStatus" style="margin-left: 10px; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; background: rgba(239, 68, 68, 0.3);">Not Configured</span>
+                        </div>
+                        <div>
+                            <strong>Invite:</strong>
+                            <span id="inviteStatus" style="margin-left: 10px; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; background: rgba(239, 68, 68, 0.3);">Not Configured</span>
+                        </div>
+                        <div>
+                            <strong>Rich Presence:</strong>
+                            <span id="presenceStatus" style="margin-left: 10px; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; background: rgba(239, 68, 68, 0.3);">Disconnected</span>
+                        </div>
+                    </div>
+                    <div id="inviteLinkDisplay" style="display: none; margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;">
+                        <strong>Your Discord Invite:</strong><br>
+                        <a id="inviteLinkUrl" href="#" target="_blank" style="color: #10b981; word-break: break-all;"></a>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid rgba(16, 185, 129, 0.5);">
+                    <h4 style="margin-bottom: 10px;">📝 Webhook Setup Instructions</h4>
+                    <ol style="margin-left: 20px; line-height: 1.8; font-size: 0.9em;">
+                        <li>Open your Discord server</li>
+                        <li>Go to <strong>Server Settings → Integrations</strong></li>
+                        <li>Click <strong>"Create Webhook"</strong></li>
+                        <li>Name it "LANrage" and select a channel</li>
+                        <li>Copy the <strong>Webhook URL</strong></li>
+                        <li>Paste it below</li>
+                    </ol>
+                </div>
+
+                <div class="input-group">
+                    <label>Discord Webhook URL (Optional)</label>
+                    <input type="text" id="discordWebhook" placeholder="https://discord.com/api/webhooks/...">
+                </div>
+                <div class="button-grid" style="margin-bottom: 20px;">
+                    <button class="big-button primary" onclick="saveWebhook()">Save Webhook</button>
+                    <button class="big-button secondary" onclick="testWebhook()">Send Test</button>
+                </div>
+
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid rgba(16, 185, 129, 0.5);">
+                    <h4 style="margin-bottom: 10px;">🎤 Voice Chat Invite Instructions</h4>
+                    <ol style="margin-left: 20px; line-height: 1.8; font-size: 0.9em;">
+                        <li>Right-click a <strong>voice channel</strong> in Discord</li>
+                        <li>Click <strong>"Invite People"</strong></li>
+                        <li>Set <strong>"Expire After"</strong> to Never</li>
+                        <li>Set <strong>"Max Uses"</strong> to No Limit</li>
+                        <li>Copy the invite link</li>
+                        <li>Paste it below</li>
+                    </ol>
+                </div>
+
+                <div class="input-group">
+                    <label>Discord Invite URL (Optional)</label>
+                    <input type="text" id="discordInvite" placeholder="https://discord.gg/...">
+                </div>
+                <button class="big-button primary" onclick="saveInvite()">Save Invite</button>
+
+                <div style="margin-top: 20px; opacity: 0.8; font-size: 0.9em; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                    <p style="margin-bottom: 10px;"><strong>💬 Webhook:</strong> Get notifications when players join/leave</p>
+                    <p style="margin-bottom: 10px;"><strong>🎤 Invite:</strong> Share your Discord voice channel with party members</p>
+                    <p><strong>🎮 Rich Presence:</strong> Show LANrage status in Discord (requires pypresence package)</p>
+                </div>
+            </div>
         </div>
     </div>
-    
+
     <script>
         const API_BASE = 'http://localhost:8666';
         let statusInterval;
-        
+        let currentTab = 'party';
+
+        // Tab switching
+        function switchTab(tab, element) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById(tab + '-tab').classList.add('active');
+
+            if (tab === 'servers') {
+                loadServers();
+                startServersAutoRefresh();
+
+                // Add event listeners for filters if not already added
+                const search = document.getElementById('search');
+                const gameFilter = document.getElementById('game-filter');
+                const hideFull = document.getElementById('hide-full');
+                const hideEmpty = document.getElementById('hide-empty');
+                const hidePassword = document.getElementById('hide-password');
+
+                if (search && !search.hasAttribute('data-listener')) {
+                    search.addEventListener('input', loadServers);
+                    search.setAttribute('data-listener', 'true');
+                }
+                if (gameFilter && !gameFilter.hasAttribute('data-listener')) {
+                    gameFilter.addEventListener('change', loadServers);
+                    gameFilter.setAttribute('data-listener', 'true');
+                }
+                if (hideFull && !hideFull.hasAttribute('data-listener')) {
+                    hideFull.addEventListener('change', loadServers);
+                    hideFull.setAttribute('data-listener', 'true');
+                }
+                if (hideEmpty && !hideEmpty.hasAttribute('data-listener')) {
+                    hideEmpty.addEventListener('change', loadServers);
+                    hideEmpty.setAttribute('data-listener', 'true');
+                }
+                if (hidePassword && !hidePassword.hasAttribute('data-listener')) {
+                    hidePassword.addEventListener('change', loadServers);
+                    hidePassword.setAttribute('data-listener', 'true');
+                }
+            } else {
+                stopServersAutoRefresh();
+            }
+
+            if (tab === 'metrics') loadMetrics();
+            if (tab === 'discord') loadDiscordSettings();
+        }
+
+        // Party views
+        function showPartyMain() {
+            document.getElementById('party-main').style.display = 'block';
+            document.getElementById('party-create').style.display = 'none';
+            document.getElementById('party-join').style.display = 'none';
+            document.getElementById('party-active').style.display = 'none';
+        }
+
+        function showCreateParty() {
+            document.getElementById('party-main').style.display = 'none';
+            document.getElementById('party-create').style.display = 'block';
+        }
+
+        function showJoinParty() {
+            document.getElementById('party-main').style.display = 'none';
+            document.getElementById('party-join').style.display = 'block';
+        }
+
+        function showActiveParty(partyId) {
+            document.getElementById('party-main').style.display = 'none';
+            document.getElementById('party-create').style.display = 'none';
+            document.getElementById('party-join').style.display = 'none';
+            document.getElementById('party-active').style.display = 'block';
+            document.getElementById('currentPartyId').textContent = partyId;
+        }
+
+        // Party actions
         async function createParty() {
-            const name = prompt('Party name:', 'Gaming Session');
-            if (!name) return;
-            
+            const name = document.getElementById('partyName').value || 'Gaming Session';
             try {
                 const res = await fetch(`${API_BASE}/party/create`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name
+                    })
                 });
                 const data = await res.json();
-                showPartyView(data.party_id);
+                showActiveParty(data.party_id);
                 startStatusPolling();
             } catch (err) {
                 alert('Failed to create party: ' + err.message);
             }
         }
-        
-        function showJoinParty() {
-            document.getElementById('mainView').style.display = 'none';
-            document.getElementById('joinView').style.display = 'block';
-        }
-        
-        function showMainView() {
-            document.getElementById('joinView').style.display = 'none';
-            document.getElementById('mainView').style.display = 'block';
-        }
-        
+
         async function joinParty() {
-            const partyId = document.getElementById('partyId').value;
-            const peerName = document.getElementById('peerName').value;
-            
+            const partyId = document.getElementById('joinPartyId').value;
+            const peerName = document.getElementById('joinPeerName').value;
+
             if (!partyId || !peerName) {
                 alert('Please fill in all fields');
                 return;
             }
-            
+
             try {
                 const res = await fetch(`${API_BASE}/party/join`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ party_id: partyId, peer_name: peerName })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        party_id: partyId,
+                        peer_name: peerName
+                    })
                 });
-                const data = await res.json();
-                showPartyView(partyId);
+                await res.json();
+                showActiveParty(partyId);
                 startStatusPolling();
             } catch (err) {
                 alert('Failed to join party: ' + err.message);
             }
         }
-        
-        function showPartyView(partyId) {
-            document.getElementById('mainView').style.display = 'none';
-            document.getElementById('joinView').style.display = 'none';
-            document.getElementById('partyView').style.display = 'block';
-            document.getElementById('currentPartyId').textContent = partyId;
-        }
-        
+
         async function leaveParty() {
             try {
-                await fetch(`${API_BASE}/party/leave`, { method: 'POST' });
+                await fetch(`${API_BASE}/party/leave`, {
+                    method: 'POST'
+                });
                 stopStatusPolling();
-                showMainView();
+                showPartyMain();
+                updateStatusBar({
+                    status: 'idle'
+                });
             } catch (err) {
                 alert('Failed to leave party: ' + err.message);
             }
         }
-        
+
+        function copyPartyId() {
+            const partyId = document.getElementById('currentPartyId').textContent;
+            navigator.clipboard.writeText(partyId);
+            alert('Party ID copied to clipboard!');
+        }
+
+        // Status updates
         async function updateStatus() {
             try {
                 const res = await fetch(`${API_BASE}/status`);
                 const data = await res.json();
-                
+                updateStatusBar(data);
+
                 if (data.status === 'in_party') {
-                    document.getElementById('statusIndicator').className = 'status-indicator connected';
-                    document.getElementById('statusText').textContent = `Connected (${data.peer_count} peers)`;
-                    
-                    // Update peers list
-                    const peersList = document.getElementById('peersList');
-                    peersList.innerHTML = '';
-                    
-                    for (const peer of Object.values(data.party.peers)) {
-                        const peerDiv = document.createElement('div');
-                        peerDiv.className = 'peer';
-                        
-                        let pingClass = '';
-                        let pingText = peer.connection_type;
-                        
-                        if (peer.latency_ms !== null) {
-                            pingText = `${peer.latency_ms.toFixed(1)}ms`;
-                            if (peer.latency_ms > 100) pingClass = 'danger';
-                            else if (peer.latency_ms > 50) pingClass = 'warning';
-                        }
-                        
-                        peerDiv.innerHTML = `
-                            <span class="peer-name">${peer.name}</span>
-                            <span class="peer-ping ${pingClass}">${pingText}</span>
-                        `;
-                        peersList.appendChild(peerDiv);
-                    }
+                    updatePeersList(data.party.peers);
                 }
             } catch (err) {
                 console.error('Status update failed:', err);
+                updateStatusBar({
+                    status: 'error'
+                });
             }
         }
-        
+
+        function updateStatusBar(data) {
+            // Internet connectivity (if API responds, we're online)
+            const internetIndicator = document.getElementById('internetIndicator');
+            const internetText = document.getElementById('internetText');
+
+            if (data.status === 'error') {
+                internetIndicator.className = 'status-indicator disconnected';
+                internetText.textContent = 'Offline';
+            } else {
+                internetIndicator.className = 'status-indicator connected';
+                internetText.textContent = 'Online';
+            }
+
+            // Service status (LANrage is running if we get a response)
+            const serviceIndicator = document.getElementById('serviceIndicator');
+            const serviceText = document.getElementById('serviceText');
+
+            if (data.status === 'error') {
+                serviceIndicator.className = 'status-indicator disconnected';
+                serviceText.textContent = 'Service Down';
+            } else {
+                serviceIndicator.className = 'status-indicator connected';
+                serviceText.textContent = 'Service OK';
+            }
+
+            // Party status
+            const partyIndicator = document.getElementById('partyIndicator');
+            const partyText = document.getElementById('partyText');
+            const peerCount = document.getElementById('peerCount');
+
+            if (data.status === 'in_party') {
+                partyIndicator.className = 'status-indicator connected';
+                const isHost = data.party && data.party.host_peer_id === data.peer_id;
+                partyText.textContent = isHost ? 'Host' : 'Member';
+                peerCount.textContent = data.peer_count || 0;
+
+                // Update latency and quality if available
+                if (data.party && data.party.peers) {
+                    updateNetworkStats(data.party.peers);
+                }
+            } else {
+                partyIndicator.className = 'status-indicator disconnected';
+                partyText.textContent = 'No Party';
+                peerCount.textContent = '0';
+                document.getElementById('latency').textContent = '--';
+                document.getElementById('quality').textContent = '--';
+            }
+
+            // Server hosting status (check if we're hosting any servers)
+            checkServerHostingStatus();
+        }
+
+        async function checkServerHostingStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/api/servers`);
+                const data = await res.json();
+
+                const serverStatusItem = document.getElementById('serverStatusItem');
+                const serverText = document.getElementById('serverText');
+
+                // Check if any servers are hosted by us
+                const hostedServers = data.servers.filter(s => s.is_host);
+
+                if (hostedServers.length > 0) {
+                    serverStatusItem.style.display = 'flex';
+                    serverText.textContent = `Hosting (${hostedServers.length})`;
+                } else {
+                    serverStatusItem.style.display = 'none';
+                }
+            } catch (err) {
+                // If server browser fails, hide the indicator
+                document.getElementById('serverStatusItem').style.display = 'none';
+            }
+        }
+
+        function updateNetworkStats(peers) {
+            const latencies = [];
+
+            Object.values(peers).forEach(peer => {
+                if (peer.latency_ms !== null && peer.latency_ms !== undefined) {
+                    latencies.push(peer.latency_ms);
+                }
+            });
+
+            if (latencies.length > 0) {
+                const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+                document.getElementById('latency').textContent = avgLatency.toFixed(0) + 'ms';
+
+                // Calculate quality based on latency
+                let quality = 'Excellent';
+                if (avgLatency > 100) quality = 'Poor';
+                else if (avgLatency > 50) quality = 'Good';
+
+                document.getElementById('quality').textContent = quality;
+            }
+        }
+
+        function updatePeersList(peers) {
+            const list = document.getElementById('peersList');
+            list.innerHTML = '';
+
+            Object.values(peers).forEach(peer => {
+                const card = document.createElement('div');
+                card.className = 'peer-card';
+
+                let latencyClass = '';
+                let latencyText = peer.connection_type || 'connecting';
+
+                if (peer.latency_ms !== null) {
+                    latencyText = peer.latency_ms.toFixed(0) + 'ms';
+                    if (peer.latency_ms > 100) latencyClass = 'danger';
+                    else if (peer.latency_ms > 50) latencyClass = 'warning';
+                }
+
+                card.innerHTML = `
+                    <div class="peer-name">${peer.name}</div>
+                    <div class="peer-stats">
+                        <div class="peer-stat">
+                            <div class="peer-stat-value ${latencyClass}">${latencyText}</div>
+                            <div class="peer-stat-label">Latency</div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // Servers
+        let serversAutoRefresh;
+        let favorites = new Set();
+
+        async function loadServers() {
+            try {
+                // Build query parameters
+                const params = new URLSearchParams();
+
+                const search = document.getElementById('search')?.value.trim();
+                if (search) params.append('search', search);
+
+                const game = document.getElementById('game-filter')?.value;
+                if (game) params.append('game', game);
+
+                if (document.getElementById('hide-full')?.checked) params.append('hide_full', 'true');
+                if (document.getElementById('hide-empty')?.checked) params.append('hide_empty', 'true');
+                if (document.getElementById('hide-password')?.checked) params.append('hide_password', 'true');
+
+                const res = await fetch(`${API_BASE}/api/servers?${params}`);
+                const data = await res.json();
+
+                // Update stats
+                document.getElementById('stat-servers').textContent = data.stats.total_servers;
+                document.getElementById('stat-players').textContent = data.stats.total_players;
+                document.getElementById('stat-games').textContent = data.stats.unique_games;
+
+                // Update game filter dropdown
+                updateGameFilter(data.stats.games);
+
+                // Render servers
+                renderServers(data.servers);
+            } catch (err) {
+                console.error('Failed to load servers:', err);
+                const list = document.getElementById('serversList');
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Failed to load servers</div></div>';
+            }
+        }
+
+        function updateGameFilter(games) {
+            const select = document.getElementById('game-filter');
+            if (!select) return;
+
+            const currentValue = select.value;
+
+            // Keep "All Games" option and add games
+            select.innerHTML = '<option value="">All Games</option>';
+            games.forEach(game => {
+                const option = document.createElement('option');
+                option.value = game;
+                option.textContent = game;
+                select.appendChild(option);
+            });
+
+            // Restore selection if still valid
+            if (games.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function renderServers(servers) {
+            const container = document.getElementById('serversList');
+
+            if (servers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎮</div>
+                        <div>No servers found</div>
+                        <p style="opacity: 0.6; margin-top: 10px;">Try adjusting your filters or create a server</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = servers.map(server => `
+                <div class="server-card">
+                    <div class="server-header">
+                        <div>
+                            <div class="server-name">
+                                ${escapeHtml(server.name)}
+                                ${server.is_full ? '<span class="badge badge-full">FULL</span>' : ''}
+                                ${server.password_protected ? '<span class="badge badge-password">🔒</span>' : ''}
+                            </div>
+                            <div class="server-game">${escapeHtml(server.game)}</div>
+                        </div>
+                        <div class="server-players">${server.current_players}/${server.max_players}</div>
+                    </div>
+                    
+                    <div class="server-info">
+                        <div class="server-info-item">
+                            <span>🖥️</span>
+                            <span>${escapeHtml(server.host_peer_name)}</span>
+                        </div>
+                        ${server.map_name ? `
+                            <div class="server-info-item">
+                                <span>🗺️</span>
+                                <span>${escapeHtml(server.map_name)}</span>
+                            </div>
+                        ` : ''}
+                        ${server.game_mode ? `
+                            <div class="server-info-item">
+                                <span>🎯</span>
+                                <span>${escapeHtml(server.game_mode)}</span>
+                            </div>
+                        ` : ''}
+                        ${server.latency_ms ? `
+                            <div class="server-info-item">
+                                <span>📡</span>
+                                <span class="latency ${getLatencyClass(server.latency_ms)}">${server.latency_ms.toFixed(0)}ms</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${server.tags && server.tags.length > 0 ? `
+                        <div style="margin-top: 10px;">
+                            ${server.tags.map(tag => `<span class="badge badge-tag">${escapeHtml(tag)}</span>`).join(' ')}
+                        </div>
+                    ` : ''}
+
+                    <div class="server-actions">
+                        <button class="btn-join" onclick="joinServer('${server.id}')" ${server.is_full ? 'disabled' : ''}>
+                            ${server.is_full ? 'FULL' : 'JOIN'}
+                        </button>
+                        <button class="btn-favorite ${favorites.has(server.id) ? 'active' : ''}" onclick="toggleFavorite('${server.id}')">
+                            ${favorites.has(server.id) ? '⭐' : '☆'}
+                        </button>
+                        <button class="btn-favorite" onclick="measureLatency('${server.id}')">
+                            📡 Ping
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function joinServer(serverId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/servers/${serverId}/join`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(`Joining server!\nConnect to: ${data.host_ip}`);
+                } else {
+                    alert(data.detail || 'Failed to join server');
+                }
+            } catch (err) {
+                alert('Failed to join server: ' + err.message);
+            }
+        }
+
+        async function toggleFavorite(serverId) {
+            try {
+                if (favorites.has(serverId)) {
+                    await fetch(`${API_BASE}/api/servers/${serverId}/favorite`, {
+                        method: 'DELETE'
+                    });
+                    favorites.delete(serverId);
+                } else {
+                    await fetch(`${API_BASE}/api/servers/${serverId}/favorite`, {
+                        method: 'POST'
+                    });
+                    favorites.add(serverId);
+                }
+                loadServers();
+            } catch (err) {
+                console.error('Failed to toggle favorite:', err);
+            }
+        }
+
+        async function measureLatency(serverId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/servers/${serverId}/latency`);
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(`Latency: ${data.latency_ms.toFixed(0)}ms`);
+                    loadServers(); // Refresh to show updated latency
+                } else {
+                    alert('Failed to measure latency');
+                }
+            } catch (err) {
+                alert('Failed to measure latency: ' + err.message);
+            }
+        }
+
+        function refreshServers() {
+            loadServers();
+        }
+
+        function startServersAutoRefresh() {
+            if (serversAutoRefresh) clearInterval(serversAutoRefresh);
+            serversAutoRefresh = setInterval(loadServers, 10000); // Refresh every 10 seconds
+        }
+
+        function stopServersAutoRefresh() {
+            if (serversAutoRefresh) {
+                clearInterval(serversAutoRefresh);
+                serversAutoRefresh = null;
+            }
+        }
+
+        function getLatencyClass(latency) {
+            if (latency < 50) return '';
+            if (latency < 100) return 'warning';
+            return 'danger';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Metrics
+        async function loadMetrics() {
+            try {
+                const res = await fetch(`${API_BASE}/api/metrics/summary`);
+                const data = await res.json();
+
+                document.getElementById('cpuUsage').textContent = Math.round(data.system.cpu.current) + '%';
+                document.getElementById('memoryUsage').textContent = Math.round(data.system.memory.current) + '%';
+                document.getElementById('networkQuality').textContent = Math.round(data.network_quality);
+                document.getElementById('activePeers').textContent = data.peers.length;
+            } catch (err) {
+                console.error('Failed to load metrics:', err);
+            }
+        }
+
+        // Discord
+        async function loadDiscordSettings() {
+            try {
+                const res = await fetch(`${API_BASE}/api/discord/status`);
+                const data = await res.json();
+
+                // Update webhook status
+                const webhookStatus = document.getElementById('webhookStatus');
+                if (data.webhook_configured) {
+                    webhookStatus.textContent = 'Configured';
+                    webhookStatus.style.background = 'rgba(16, 185, 129, 0.3)';
+                } else {
+                    webhookStatus.textContent = 'Not Configured';
+                    webhookStatus.style.background = 'rgba(239, 68, 68, 0.3)';
+                }
+
+                // Update invite status
+                const inviteStatus = document.getElementById('inviteStatus');
+                if (data.invite_configured) {
+                    inviteStatus.textContent = 'Configured';
+                    inviteStatus.style.background = 'rgba(16, 185, 129, 0.3)';
+
+                    // Show invite link
+                    const inviteLinkDisplay = document.getElementById('inviteLinkDisplay');
+                    const inviteLinkUrl = document.getElementById('inviteLinkUrl');
+                    inviteLinkUrl.href = data.invite_url;
+                    inviteLinkUrl.textContent = data.invite_url;
+                    inviteLinkDisplay.style.display = 'block';
+                } else {
+                    inviteStatus.textContent = 'Not Configured';
+                    inviteStatus.style.background = 'rgba(239, 68, 68, 0.3)';
+                    document.getElementById('inviteLinkDisplay').style.display = 'none';
+                }
+
+                // Update presence status
+                const presenceStatus = document.getElementById('presenceStatus');
+                if (data.rich_presence) {
+                    presenceStatus.textContent = 'Connected';
+                    presenceStatus.style.background = 'rgba(16, 185, 129, 0.3)';
+                } else {
+                    presenceStatus.textContent = 'Disconnected';
+                    presenceStatus.style.background = 'rgba(239, 68, 68, 0.3)';
+                }
+            } catch (err) {
+                console.error('Failed to load Discord settings:', err);
+            }
+        }
+
+        async function saveWebhook() {
+            const webhook = document.getElementById('discordWebhook').value.trim();
+
+            if (!webhook) {
+                alert('Please enter a webhook URL');
+                return;
+            }
+
+            if (!webhook.startsWith('https://discord.com/api/webhooks/') &&
+                !webhook.startsWith('https://discordapp.com/api/webhooks/')) {
+                alert('Invalid webhook URL format. Must start with https://discord.com/api/webhooks/');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/discord/webhook`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        webhook_url: webhook
+                    })
+                });
+
+                if (res.ok) {
+                    alert('Discord webhook saved successfully!');
+                    loadDiscordSettings();
+                } else {
+                    const error = await res.json();
+                    alert(error.detail || 'Failed to save webhook');
+                }
+            } catch (err) {
+                alert('Failed to save webhook: ' + err.message);
+            }
+        }
+
+        async function testWebhook() {
+            try {
+                const res = await fetch(`${API_BASE}/api/discord/test`, {
+                    method: 'POST'
+                });
+
+                if (res.ok) {
+                    alert('Test notification sent! Check your Discord channel.');
+                } else {
+                    const error = await res.json();
+                    alert(error.detail || 'Failed to send test notification. Make sure webhook is configured.');
+                }
+            } catch (err) {
+                alert('Failed to send test: ' + err.message);
+            }
+        }
+
+        async function saveInvite() {
+            const invite = document.getElementById('discordInvite').value.trim();
+
+            if (!invite) {
+                alert('Please enter an invite URL');
+                return;
+            }
+
+            if (!invite.startsWith('https://discord.gg/') &&
+                !invite.startsWith('https://discord.com/invite/')) {
+                alert('Invalid invite URL format. Must start with https://discord.gg/ or https://discord.com/invite/');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/discord/invite`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        invite_url: invite
+                    })
+                });
+
+                if (res.ok) {
+                    alert('Discord invite saved successfully!');
+                    loadDiscordSettings();
+                } else {
+                    const error = await res.json();
+                    alert(error.detail || 'Failed to save invite');
+                }
+            } catch (err) {
+                alert('Failed to save invite: ' + err.message);
+            }
+        }
+
+        // Polling
         function startStatusPolling() {
             updateStatus();
             statusInterval = setInterval(updateStatus, 2000);
         }
-        
+
         function stopStatusPolling() {
             if (statusInterval) {
                 clearInterval(statusInterval);
                 statusInterval = null;
             }
         }
+
+        // Initial load
+        updateStatus();
     </script>
 </body>
+
 </html>

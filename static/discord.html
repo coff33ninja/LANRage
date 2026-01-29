@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Setup - LANrage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-badge.inactive {
+            background: #f44336;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .instructions code {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .invite-link {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            word-break: break-all;
+        }
+
+        .invite-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .invite-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to LANrage</a>
+        
+        <div class="header">
+            <h1>🎮 Discord Integration</h1>
+            <p>Connect LANrage with Discord for notifications and voice chat</p>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <h2>Status</h2>
+            <p>
+                <strong>Webhook:</strong>
+                <span id="webhook-status" class="status-badge inactive">Not Configured</span>
+            </p>
+            <p style="margin-top: 10px;">
+                <strong>Voice Chat Invite:</strong>
+                <span id="invite-status" class="status-badge inactive">Not Configured</span>
+            </p>
+            <p style="margin-top: 10px;">
+                <strong>Rich Presence:</strong>
+                <span id="presence-status" class="status-badge inactive">Disconnected</span>
+            </p>
+            <div id="invite-link-display" class="invite-link" style="display: none;">
+                <strong>Your Discord Invite:</strong><br>
+                <a id="invite-link-url" href="#" target="_blank"></a>
+            </div>
+        </div>
+
+        <!-- Webhook Setup -->
+        <div class="card">
+            <h2>1. Webhook Setup</h2>
+            <p style="margin-bottom: 15px;">Get notifications when players join, leave, or start games.</p>
+            
+            <div class="instructions">
+                <h3>How to create a Discord webhook:</h3>
+                <ol>
+                    <li>Open your Discord server</li>
+                    <li>Go to <strong>Server Settings → Integrations</strong></li>
+                    <li>Click <strong>"Create Webhook"</strong> or <strong>"View Webhooks"</strong></li>
+                    <li>Click <strong>"New Webhook"</strong></li>
+                    <li>Name it <code>LANrage</code></li>
+                    <li>Select the channel for notifications</li>
+                    <li>Copy the <strong>Webhook URL</strong></li>
+                    <li>Paste it below</li>
+                </ol>
+            </div>
+
+            <div class="form-group">
+                <label for="webhook-url">Discord Webhook URL</label>
+                <input 
+                    type="url" 
+                    id="webhook-url" 
+                    placeholder="https://discord.com/api/webhooks/123456789/abcdefghijklmnop"
+                >
+            </div>
+
+            <button class="btn btn-primary" onclick="saveWebhook()">Save Webhook</button>
+            <button class="btn btn-secondary" onclick="testWebhook()">Send Test</button>
+        </div>
+
+        <!-- Voice Chat Setup -->
+        <div class="card">
+            <h2>2. Voice Chat Invite (Optional)</h2>
+            <p style="margin-bottom: 15px;">Share a Discord voice channel link with your party.</p>
+            
+            <div class="instructions">
+                <h3>How to create a Discord invite:</h3>
+                <ol>
+                    <li>Open your Discord server</li>
+                    <li>Right-click on a <strong>voice channel</strong></li>
+                    <li>Click <strong>"Invite People"</strong></li>
+                    <li>Click <strong>"Edit Invite Link"</strong></li>
+                    <li>Set <strong>"Expire After"</strong> to <code>Never</code></li>
+                    <li>Set <strong>"Max Uses"</strong> to <code>No Limit</code></li>
+                    <li>Copy the <strong>invite link</strong></li>
+                    <li>Paste it below</li>
+                </ol>
+            </div>
+
+            <div class="form-group">
+                <label for="invite-url">Discord Invite URL</label>
+                <input 
+                    type="url" 
+                    id="invite-url" 
+                    placeholder="https://discord.gg/abc123xyz"
+                >
+            </div>
+
+            <button class="btn btn-primary" onclick="saveInvite()">Save Invite</button>
+        </div>
+
+        <!-- Rich Presence Info -->
+        <div class="card">
+            <h2>3. Rich Presence</h2>
+            <p style="margin-bottom: 15px;">Show your LANrage status in Discord (requires <code>pypresence</code> package).</p>
+            
+            <div class="instructions">
+                <h3>To enable Rich Presence:</h3>
+                <ol>
+                    <li>Install pypresence: <code>uv pip install pypresence</code></li>
+                    <li>Restart LANrage</li>
+                    <li>Your Discord status will update automatically</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load status on page load
+        window.addEventListener('load', loadStatus);
+
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/discord/status');
+                const data = await response.json();
+
+                // Update webhook status
+                const webhookStatus = document.getElementById('webhook-status');
+                if (data.webhook_configured) {
+                    webhookStatus.textContent = 'Configured';
+                    webhookStatus.className = 'status-badge active';
+                } else {
+                    webhookStatus.textContent = 'Not Configured';
+                    webhookStatus.className = 'status-badge inactive';
+                }
+
+                // Update invite status
+                const inviteStatus = document.getElementById('invite-status');
+                if (data.invite_configured) {
+                    inviteStatus.textContent = 'Configured';
+                    inviteStatus.className = 'status-badge active';
+
+                    // Show invite link
+                    const inviteLinkDisplay = document.getElementById('invite-link-display');
+                    const inviteLinkUrl = document.getElementById('invite-link-url');
+                    inviteLinkUrl.href = data.invite_url;
+                    inviteLinkUrl.textContent = data.invite_url;
+                    inviteLinkDisplay.style.display = 'block';
+                } else {
+                    inviteStatus.textContent = 'Not Configured';
+                    inviteStatus.className = 'status-badge inactive';
+                    document.getElementById('invite-link-display').style.display = 'none';
+                }
+
+                // Update presence status
+                const presenceStatus = document.getElementById('presence-status');
+                if (data.rich_presence) {
+                    presenceStatus.textContent = 'Connected';
+                    presenceStatus.className = 'status-badge active';
+                } else {
+                    presenceStatus.textContent = 'Disconnected';
+                    presenceStatus.className = 'status-badge inactive';
+                }
+
+            } catch (error) {
+                showAlert('Failed to load Discord status', 'error');
+            }
+        }
+
+        async function saveWebhook() {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+
+            if (!webhookUrl) {
+                showAlert('Please enter a webhook URL', 'error');
+                return;
+            }
+
+            if (!webhookUrl.startsWith('https://discord.com/api/webhooks/') && 
+                !webhookUrl.startsWith('https://discordapp.com/api/webhooks/')) {
+                showAlert('Invalid webhook URL format', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/discord/webhook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ webhook_url: webhookUrl })
+                });
+
+                if (response.ok) {
+                    showAlert('Discord webhook saved successfully!', 'success');
+                    loadStatus();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Failed to save webhook', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to save webhook', 'error');
+            }
+        }
+
+        async function testWebhook() {
+            try {
+                const response = await fetch('/api/discord/test', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    showAlert('Test notification sent! Check your Discord channel.', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Failed to send test notification', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to send test notification', 'error');
+            }
+        }
+
+        async function saveInvite() {
+            const inviteUrl = document.getElementById('invite-url').value.trim();
+
+            if (!inviteUrl) {
+                showAlert('Please enter an invite URL', 'error');
+                return;
+            }
+
+            if (!inviteUrl.startsWith('https://discord.gg/') && 
+                !inviteUrl.startsWith('https://discord.com/invite/')) {
+                showAlert('Invalid invite URL format', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/discord/invite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ invite_url: inviteUrl })
+                });
+
+                if (response.ok) {
+                    showAlert('Discord invite saved successfully!', 'success');
+                    loadStatus();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Failed to save invite', 'error');
+                }
+            } catch (error) {
+                showAlert('Failed to save invite', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+
+            setTimeout(() => {
+                alert.className = 'alert';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

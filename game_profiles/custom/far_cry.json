@@ -1,0 +1,72 @@
+{
+  "farcry": {
+    "name": "Far Cry",
+    "executable": "FarCry.exe",
+    "ports": [49001, 49002],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Far Cry - LAN multiplayer",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "farcry2": {
+    "name": "Far Cry 2",
+    "executable": "FarCry2.exe",
+    "ports": [9000, 9001, 9002],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Far Cry 2 - LAN multiplayer",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "farcry3": {
+    "name": "Far Cry 3",
+    "executable": "farcry3.exe",
+    "ports": [9000, 9001, 3074],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Far Cry 3 - LAN co-op and multiplayer",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "farcry4": {
+    "name": "Far Cry 4",
+    "executable": "FarCry4.exe",
+    "ports": [9000, 3074],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Far Cry 4 - LAN co-op",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "farcry5": {
+    "name": "Far Cry 5",
+    "executable": "FarCry5.exe",
+    "ports": [3074, 3075, 3076],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Far Cry 5 - Co-op (limited LAN support)",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  }
+}

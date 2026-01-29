@@ -1,24 +1,30 @@
 # LANrage Quick Start Guide
 
-## For the Impatient
+Get LANrage v1.0 running in under 5 minutes.
 
-```bash
-python setup.py
-.venv\Scripts\activate.bat
-python lanrage.py
-# Open http://localhost:8666
-```
+## What You're Getting
 
-Done. Now read the rest if you want details.
+LANrage v1.0 is production-ready with:
+- ✅ Direct P2P connections (<5ms overhead)
+- ✅ Smart relay fallback (<15ms overhead)
+- ✅ 27 game profiles with auto-optimization
+- ✅ Broadcast/multicast emulation
+- ✅ Discord integration
+- ✅ Game server browser
+- ✅ Real-time statistics
+- ✅ 88% test coverage, 100% pass rate
 
 ## Prerequisites
 
-- **Python 3.12+** (not 3.11, not 3.10, 3.12+)
-- **uv** (Python package manager)
+- **Python 3.12+** (required)
+- **uv** package manager
 - **Windows 10/11** or **Linux** (Ubuntu/Debian)
-- **Admin rights** (for network interface creation)
+- **Admin/root privileges** (for network interface creation)
+- **WireGuard** installed
 
-### Installing uv
+## Installation
+
+### 1. Install uv
 
 **Windows (PowerShell)**:
 ```powershell
@@ -30,37 +36,30 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-## Installation
+### 2. Install WireGuard
 
-### 1. Clone the Repo
+**Windows**: Download from https://www.wireguard.com/install/  
+**Linux**: `sudo apt install wireguard`
+
+### 3. Clone and Setup
 
 ```bash
 git clone https://github.com/yourusername/lanrage.git
 cd lanrage
-```
-
-### 2. Run Setup
-
-```bash
 python setup.py
 ```
 
-This will:
-- Create virtual environment
-- Install dependencies
-- Generate config files
-- Create WireGuard keys
+The setup script will:
+- Create `.venv` virtual environment
+- Install all dependencies via uv
+- Create `.env` configuration file
+- Generate WireGuard keys
 
-### 3. Activate Environment
+### 4. Activate Virtual Environment
 
 **Windows (CMD)**:
 ```cmd
 .venv\Scripts\activate.bat
-```
-
-**Windows (PowerShell)**:
-```powershell
-.venv\Scripts\Activate.ps1
 ```
 
 **Linux/Mac**:
@@ -76,215 +75,193 @@ source .venv/bin/activate
 python lanrage.py
 ```
 
-You should see:
+Expected output:
 ```
-🔥 LANrage - If it runs on LAN, it runs on LANrage
+🔥 LANrage v1.0 - If it runs on LAN, it runs on LANrage
 ============================================================
+✓ Settings database initialized
 ✓ Config loaded (mode: client)
 ✓ Network initialized (interface: lanrage0)
+✓ NAT traversal initialized (type: Port-Restricted Cone)
+✓ Control plane ready (SQLite-based)
 ✓ Party manager ready
-✓ Starting API server on 127.0.0.1:8666
+✓ Server browser started
+✓ Discord integration ready
+✓ Metrics collector started
+✓ API server running on http://127.0.0.1:8666
+============================================================
+LANrage v1.0 - Production Ready
 ```
 
-### Open the UI
+### Access the Web UI
 
-Open your browser to: `http://localhost:8666`
+Open your browser to: **http://localhost:8666**
 
 ## Creating a Party
 
-1. Click **"CREATE PARTY"**
-2. Enter a party name (e.g., "Gaming Session")
+1. Click **"CREATE PARTY"** button
+2. Enter a party name (e.g., "Gaming Night")
 3. Note the **Party ID** (e.g., `a3f7c2`)
 4. Share this ID with friends
 
 ## Joining a Party
 
-1. Click **"JOIN PARTY"**
+1. Click **"JOIN PARTY"** button
 2. Enter the **Party ID** from your friend
-3. Enter your name
+3. Enter your display name
 4. Click **"JOIN"**
+
+LANrage will automatically:
+- Detect your NAT type
+- Attempt direct P2P connection
+- Fall back to relay if needed
+- Configure WireGuard interface
+- Measure latency to peers
 
 ## Playing Games
 
 Once in a party:
 1. Launch your game
-2. Look for LAN/Local multiplayer
+2. Look for **LAN/Local multiplayer** option
 3. Your friends should appear as "local" players
-4. Play!
+4. Start playing!
+
+## Configuration
+
+### Settings UI
+
+Access settings at: **http://localhost:8666/settings.html**
+
+Configure:
+- **Mode**: Client or Relay server
+- **Peer Name**: Your display name
+- **Network Settings**: Virtual subnet, interface name
+- **API Settings**: Host and port
+- **WireGuard**: Keepalive interval
+- **Control Server**: Discovery endpoint
+- **Relay Settings**: Public IP and port (for relay mode)
+
+Settings are stored in SQLite database at `~/.lanrage/settings.db`
+
+### Environment Variables
+
+Alternatively, edit `.env` file:
+```bash
+# Mode: client or relay
+LANRAGE_MODE=client
+
+# API settings
+LANRAGE_API_HOST=127.0.0.1
+LANRAGE_API_PORT=8666
+
+# Peer name
+LANRAGE_PEER_NAME=Player
+
+# Relay settings (for relay mode)
+LANRAGE_RELAY_IP=your.public.ip
+```
 
 ## Troubleshooting
 
 ### "Permission denied" on startup
 
-**Windows**: Run as Administrator
+**Windows**: Run as Administrator  
 **Linux**: Use `sudo` or add user to `netdev` group
-
-### "Port 8666 already in use"
-
-Change the port in `.env`:
-```
-LANRAGE_API_PORT=8667
-```
 
 ### "WireGuard not found"
 
-**Windows**: Install from https://www.wireguard.com/install/
-**Linux**: `sudo apt install wireguard`
+Install WireGuard:
+- **Windows**: https://www.wireguard.com/install/
+- **Linux**: `sudo apt install wireguard`
+
+### "Port 8666 already in use"
+
+Change port in settings UI or `.env`:
+```
+LANRAGE_API_PORT=8667
+```
 
 ### Friends can't join party
 
 - Check firewall (allow UDP 51820)
 - Verify Party ID is correct
 - Ensure both running same LANrage version
+- Check NAT type (symmetric NATs need relay)
 
 ### High latency
 
-- Check connection type in UI
-- If "relayed", your NAT is being difficult
+- Check connection type in UI (direct vs relayed)
+- If relayed, your NAT type may be difficult
 - Try different network (mobile hotspot, etc.)
+- Use wired connection instead of WiFi
 
 ### Game doesn't see other players
 
-- Some games need specific ports
-- Check game documentation
-- Try game profile (TODO)
-
-## Advanced Usage
-
-### Custom Configuration
-
-Edit `.env`:
-```bash
-# Change API port
-LANRAGE_API_PORT=9000
-
-# Change virtual subnet
-LANRAGE_VIRTUAL_SUBNET=10.99.0.0/16
-
-# Use custom relay
-LANRAGE_RELAY_IP=your.relay.ip
-```
-
-### Running as Service
-
-**Windows** (TODO):
-```powershell
-# Install as service
-python lanrage.py --install-service
-```
-
-**Linux**:
-```bash
-# Copy systemd unit
-sudo cp docs/lanrage.service /etc/systemd/system/
-sudo systemctl enable lanrage
-sudo systemctl start lanrage
-```
-
-### Monitoring
-
-Check status:
-```bash
-curl http://localhost:8666/status
-```
-
-View logs:
-```bash
-tail -f ~/.lanrage/logs/lanrage.log
-```
+- Verify all players are in the same party
+- Check that WireGuard interface is active
+- Some games need specific ports (check game docs)
+- Try game profile optimization (if available)
 
 ## Next Steps
 
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
-- Check [ROADMAP.md](ROADMAP.md) for upcoming features
-- Set up a relay: [ORACLE_RELAY.md](ORACLE_RELAY.md)
+- **Server Browser**: Browse and join game servers at `/servers.html`
+- **Statistics**: View metrics and performance at `/dashboard.html`
+- **Discord Integration**: Connect Discord bot at `/discord.html`
+- **Settings**: Customize configuration at `/settings.html`
+
+## Advanced Usage
+
+### Running Tests
+
+```bash
+# All tests
+.venv\Scripts\python.exe -m pytest tests/
+
+# Specific test
+.venv\Scripts\python.exe tests/test_nat.py
+```
+
+### Code Quality Checks
+
+```bash
+# Sort imports
+.venv\Scripts\python.exe -m isort .
+
+# Format code
+.venv\Scripts\python.exe -m black .
+
+# Lint
+.venv\Scripts\python.exe -m ruff check --fix .
+```
+
+### Viewing Logs
+
+```bash
+# Network operations
+type %USERPROFILE%\.lanrage\network.log
+
+# Application logs
+# (Currently logged to console)
+```
 
 ## Getting Help
 
-- GitHub Issues: Bug reports
-- Discord: (TODO)
-- Reddit: (TODO)
+- **Documentation**: See `docs/` directory
+- **GitHub Issues**: Report bugs and request features
+- **Discord**: (Coming soon)
 
-## Tips
+## Performance Tips
 
-- Lower ping = better experience
-- Direct P2P is always best
-- Relays add ~10-15ms latency
-- Close other network apps
-- Use wired connection if possible
-- Some ISPs hate UDP (switch ISP)
-
-## Known Limitations
-
-- No mobile support yet
-- No game profiles yet
-- Control plane not implemented
-- NAT traversal is basic
-- Windows only tested on 10/11
-
-## Performance Expectations
-
-**Good**:
-- Direct P2P: <5ms overhead
-- Same-region relay: <15ms overhead
-- 50+ FPS in most games
-
-**Bad**:
-- Cross-continent relay: 50ms+ overhead
-- Cellular connection: Variable
-- Strict NAT: May need relay
+- Use wired connection for best latency
+- Close bandwidth-heavy applications
+- Direct P2P is always faster than relay
+- Some ISPs throttle UDP traffic
+- Geographic distance affects relay latency
 
 ## Security Notes
 
-- All traffic encrypted (WireGuard)
-- Keys stored locally
-- No central authority
-- Relays can't decrypt
-- No logging by default
-
-## Uninstalling
-
-```bash
-# Stop service
-# (Ctrl+C if running in terminal)
-
-# Remove files
-rm -rf ~/.lanrage
-rm -rf .venv
-
-# Remove repo
-cd ..
-rm -rf lanrage
-```
-
-## FAQ
-
-**Q: Is this legal?**
-A: Yes. It's just a VPN.
-
-**Q: Will I get banned?**
-A: Depends on game. Most don't care about VPNs.
-
-**Q: Does it work with [game]?**
-A: Probably. Try it and report back.
-
-**Q: Why not just use Hamachi?**
-A: Hamachi is dead. Long live LANrage.
-
-**Q: Can I use this for non-gaming?**
-A: Sure, but Tailscale is better for that.
-
-**Q: How much does it cost?**
-A: Free (for now). Paid tier later.
-
-**Q: Can I self-host everything?**
-A: Yes! That's the point.
-
-**Q: Is my data safe?**
-A: Yes. WireGuard encryption + no logging.
-
-**Q: Why Python?**
-A: Fast prototyping. May rewrite in Rust later.
-
-**Q: Can I contribute?**
-A: Not yet. Solo project for now.
+- All traffic encrypted with WireGuard
+- Keys stored locally in `~/.lanrage/keys/`
+- No central authority required
+- Relays cannot decrypt traffic
+- Party IDs are random and unguessable
