@@ -16,9 +16,13 @@ def metrics():
     """Create a metrics collector instance"""
     config = Config.load()
     collector = MetricsCollector(config)
-    # Use Windows-specific event loop policy only on Windows
+    # Use platform-specific event loop policy for optimal performance
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    else:
+        # Linux/Unix: Use default selector event loop (already optimal)
+        # No need to set explicitly as it's the default
+        pass
     return collector
 
 
