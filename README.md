@@ -1,6 +1,10 @@
-# LANrage - Gaming VPN for the People
-
-**Tagline**: *If it runs on LAN, it runs on LANrage.*
+<div align="center">
+  <img src="logo.png" alt="LANrage Logo" width="200"/>
+  
+  # LANrage - Gaming VPN for the People
+  
+  **Tagline**: *If it runs on LAN, it runs on LANrage.*
+</div>
 
 ## What is this?
 
