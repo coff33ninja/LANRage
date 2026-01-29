@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LANrage - Gaming VPN</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .tagline {
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connected { background: #10b981; }
+        .status-indicator.disconnected { background: #ef4444; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .big-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        .big-button.primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .big-button.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+        
+        .big-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .big-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .peers {
+            margin-top: 20px;
+        }
+        
+        .peer {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .peer-name {
+            font-weight: bold;
+        }
+        
+        .peer-ping {
+            color: #10b981;
+            font-family: monospace;
+        }
+        
+        .peer-ping.warning { color: #f59e0b; }
+        .peer-ping.danger { color: #ef4444; }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 LANrage</h1>
+        <p class="tagline">If it runs on LAN, it runs on LANrage</p>
+        
+        <div class="status">
+            <span class="status-indicator disconnected" id="statusIndicator"></span>
+            <span id="statusText">Not connected</span>
+        </div>
+        
+        <div id="mainView">
+            <button class="big-button primary" onclick="createParty()">CREATE PARTY</button>
+            <button class="big-button secondary" onclick="showJoinParty()">JOIN PARTY</button>
+        </div>
+        
+        <div id="joinView" style="display: none;">
+            <input type="text" id="partyId" placeholder="Party ID">
+            <input type="text" id="peerName" placeholder="Your name">
+            <button class="big-button primary" onclick="joinParty()">JOIN</button>
+            <button class="big-button secondary" onclick="showMainView()">BACK</button>
+        </div>
+        
+        <div id="partyView" style="display: none;">
+            <div style="margin-bottom: 20px;">
+                <strong>Party ID:</strong> <span id="currentPartyId" style="font-family: monospace;"></span>
+            </div>
+            <div class="peers" id="peersList"></div>
+            <button class="big-button secondary" onclick="leaveParty()">LEAVE PARTY</button>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8666';
+        let statusInterval;
+        
+        async function createParty() {
+            const name = prompt('Party name:', 'Gaming Session');
+            if (!name) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/party/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const data = await res.json();
+                showPartyView(data.party_id);
+                startStatusPolling();
+            } catch (err) {
+                alert('Failed to create party: ' + err.message);
+            }
+        }
+        
+        function showJoinParty() {
+            document.getElementById('mainView').style.display = 'none';
+            document.getElementById('joinView').style.display = 'block';
+        }
+        
+        function showMainView() {
+            document.getElementById('joinView').style.display = 'none';
+            document.getElementById('mainView').style.display = 'block';
+        }
+        
+        async function joinParty() {
+            const partyId = document.getElementById('partyId').value;
+            const peerName = document.getElementById('peerName').value;
+            
+            if (!partyId || !peerName) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_BASE}/party/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ party_id: partyId, peer_name: peerName })
+                });
+                const data = await res.json();
+                showPartyView(partyId);
+                startStatusPolling();
+            } catch (err) {
+                alert('Failed to join party: ' + err.message);
+            }
+        }
+        
+        function showPartyView(partyId) {
+            document.getElementById('mainView').style.display = 'none';
+            document.getElementById('joinView').style.display = 'none';
+            document.getElementById('partyView').style.display = 'block';
+            document.getElementById('currentPartyId').textContent = partyId;
+        }
+        
+        async function leaveParty() {
+            try {
+                await fetch(`${API_BASE}/party/leave`, { method: 'POST' });
+                stopStatusPolling();
+                showMainView();
+            } catch (err) {
+                alert('Failed to leave party: ' + err.message);
+            }
+        }
+        
+        async function updateStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/status`);
+                const data = await res.json();
+                
+                if (data.status === 'in_party') {
+                    document.getElementById('statusIndicator').className = 'status-indicator connected';
+                    document.getElementById('statusText').textContent = `Connected (${data.peer_count} peers)`;
+                    
+                    // Update peers list
+                    const peersList = document.getElementById('peersList');
+                    peersList.innerHTML = '';
+                    
+                    for (const peer of Object.values(data.party.peers)) {
+                        const peerDiv = document.createElement('div');
+                        peerDiv.className = 'peer';
+                        
+                        let pingClass = '';
+                        let pingText = peer.connection_type;
+                        
+                        if (peer.latency_ms !== null) {
+                            pingText = `${peer.latency_ms.toFixed(1)}ms`;
+                            if (peer.latency_ms > 100) pingClass = 'danger';
+                            else if (peer.latency_ms > 50) pingClass = 'warning';
+                        }
+                        
+                        peerDiv.innerHTML = `
+                            <span class="peer-name">${peer.name}</span>
+                            <span class="peer-ping ${pingClass}">${pingText}</span>
+                        `;
+                        peersList.appendChild(peerDiv);
+                    }
+                }
+            } catch (err) {
+                console.error('Status update failed:', err);
+            }
+        }
+        
+        function startStatusPolling() {
+            updateStatus();
+            statusInterval = setInterval(updateStatus, 2000);
+        }
+        
+        function stopStatusPolling() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+                statusInterval = null;
+            }
+        }
+    </script>
+</body>
+</html>

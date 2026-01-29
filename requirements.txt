@@ -1,0 +1,19 @@
+# Core networking
+wireguard-tools>=0.4.0
+pyroute2>=0.7.12
+scapy>=2.5.0
+
+# NAT traversal
+aiortc>=1.9.0
+aioice>=0.9.0
+
+# Web framework
+fastapi>=0.115.0
+uvicorn>=0.32.0
+websockets>=13.1
+
+# Utilities
+pydantic>=2.10.0
+cryptography>=44.0.0
+python-dotenv>=1.0.1
+psutil>=6.1.0
