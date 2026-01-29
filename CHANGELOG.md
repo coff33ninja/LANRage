@@ -132,18 +132,18 @@ Complete documentation suite (1650+ lines):
 ### Added (v1.0.1 - In Progress)
 
 #### Game Profiles Expansion
-- **26 new game profiles** across 6 new categories (27 → 53 games)
-- **FPS Category** (6 games): Valorant, Apex Legends, COD Warzone, Battlefield, Halo Infinite, Overwatch 2
-- **Racing Category** (5 games): Forza Horizon, Gran Turismo 7, Assetto Corsa, iRacing, Trackmania
-- **RPG Category** (5 games): Diablo IV, Path of Exile, Divinity: Original Sin 2, Baldur's Gate 3, Monster Hunter World
-- **MOBA Category** (3 games): League of Legends, Dota 2, Smite
-- **Sports Category** (3 games): EA Sports FC (FIFA), NBA 2K, Madden NFL
-- **Horror Category** (4 games): Dead by Daylight, The Forest, Lethal Company, Content Warning
+- **85 new game profiles** across 16 categories (27 → 112 games, 315% increase!)
+- **Original 6 categories** (27 games): Sandbox, Survival, Co-op, Party, Competitive, Strategy
+- **Phase 1 expansion** (26 games): FPS, Racing, RPG, MOBA, Sports, Horror
+- **Phase 2 expansion** (59 games): MMO, Battle Royale, Simulation, Fighting, Card/Board, Extraction, Roguelike, Tower Defense, Platformer
+- **Comprehensive validation suite**: 127 automated tests ensuring profile quality
+- **Notable additions**: Fortnite, PUBG, WoW, FFXIV, Street Fighter 6, Tekken 8, Escape from Tarkov, Hades, It Takes Two, and many more
 
 #### Documentation
-- Updated game profiles README with new categories
+- Updated game profiles README with all new categories
 - Added genre-specific optimization guidelines
-- Troubleshooting flowcharts (coming soon)
+- Troubleshooting flowcharts with Mermaid diagrams
+- Validation test suite documentation
 
 ### Planned for v1.1 (Q1 2026)
 

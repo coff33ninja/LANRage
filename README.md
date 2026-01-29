@@ -234,7 +234,7 @@ All core features implemented, tested, and documented:
 - ✅ Performance optimization (all targets met)
 - ✅ One-click setup (90 seconds)
 
-### Supported Games (53+)
+### Supported Games (112+)
 
 **Strategy/RTS (4)**:
 - Minecraft Java Edition
