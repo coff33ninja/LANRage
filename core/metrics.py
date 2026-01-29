@@ -280,13 +280,14 @@ class MetricsCollector:
             "last_seen": peer.last_seen,
         }
 
-    def get_all_peers_summary(self) -> List[dict]:
+    async def get_all_peers_summary(self) -> List[dict]:
         """Get summary for all peers"""
-        return [
-            self.get_peer_summary(peer_id)
-            for peer_id in self.peer_metrics
-            if self.get_peer_summary(peer_id)
-        ]
+        summaries = []
+        for peer_id in self.peer_metrics:
+            summary = await self.get_peer_summary(peer_id)
+            if summary:
+                summaries.append(summary)
+        return summaries
 
     def get_system_summary(self) -> dict:
         """Get system metrics summary"""

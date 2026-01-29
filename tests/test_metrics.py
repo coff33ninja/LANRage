@@ -20,9 +20,9 @@ def metrics():
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     else:
-        # Linux/Unix: Use default selector event loop (already optimal)
-        # No need to set explicitly as it's the default
-        pass
+        # Linux/Unix: Use SelectorEventLoopPolicy explicitly for consistency
+        # This is the default on Unix, but we set it explicitly to match Windows pattern
+        asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
     return collector
 
 
@@ -33,12 +33,13 @@ def test_metrics_initialization(metrics):
     assert isinstance(metrics.game_sessions, deque)
 
 
-def test_record_peer_latency(metrics):
+@pytest.mark.asyncio
+async def test_record_peer_latency(metrics):
     """Test recording peer latency"""
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_latency("peer1", 25.5)
+    await metrics.record_latency("peer1", 25.5)
 
-    summary = metrics.get_peer_summary("peer1")
+    summary = await metrics.get_peer_summary("peer1")
     assert summary is not None
     assert summary["peer_id"] == "peer1"
     assert summary["latency"]["average"] == 25.5
@@ -46,66 +47,71 @@ def test_record_peer_latency(metrics):
     assert summary["latency"]["max"] == 25.5
 
 
-def test_record_multiple_latencies(metrics):
+@pytest.mark.asyncio
+async def test_record_multiple_latencies(metrics):
     """Test recording multiple latencies"""
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_latency("peer1", 20.0)
-    metrics.record_latency("peer1", 30.0)
-    metrics.record_latency("peer1", 25.0)
+    await metrics.record_latency("peer1", 20.0)
+    await metrics.record_latency("peer1", 30.0)
+    await metrics.record_latency("peer1", 25.0)
 
-    summary = metrics.get_peer_summary("peer1")
+    summary = await metrics.get_peer_summary("peer1")
     assert summary["latency"]["average"] == 25.0
     assert summary["latency"]["min"] == 20.0
     assert summary["latency"]["max"] == 30.0
 
 
-def test_record_peer_bandwidth(metrics):
+@pytest.mark.asyncio
+async def test_record_peer_bandwidth(metrics):
     """Test recording peer bandwidth"""
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_bandwidth("peer1", 1024, 512)
+    await metrics.record_bandwidth("peer1", 1024, 512)
 
-    summary = metrics.get_peer_summary("peer1")
+    summary = await metrics.get_peer_summary("peer1")
     assert summary is not None
     assert summary["bandwidth"]["sent"] == 1024
     assert summary["bandwidth"]["received"] == 512
 
 
-def test_record_peer_status(metrics):
+@pytest.mark.asyncio
+async def test_record_peer_status(metrics):
     """Test peer status tracking"""
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_latency("peer1", 25.0)
+    await metrics.record_latency("peer1", 25.0)
 
-    summary = metrics.get_peer_summary("peer1")
+    summary = await metrics.get_peer_summary("peer1")
     assert summary is not None
     assert summary["status"] == "connected"
 
     # Test degraded status with high latency
-    metrics.record_latency("peer1", 250.0)
-    summary = metrics.get_peer_summary("peer1")
+    await metrics.record_latency("peer1", 250.0)
+    summary = await metrics.get_peer_summary("peer1")
     assert summary["status"] == "degraded"
 
 
-def test_get_all_peers_summary(metrics):
+@pytest.mark.asyncio
+async def test_get_all_peers_summary(metrics):
     """Test getting all peers summary"""
     metrics.add_peer("peer1", "Peer 1")
     metrics.add_peer("peer2", "Peer 2")
-    metrics.record_latency("peer1", 25.0)
-    metrics.record_latency("peer2", 30.0)
+    await metrics.record_latency("peer1", 25.0)
+    await metrics.record_latency("peer2", 30.0)
 
-    summaries = metrics.get_all_peers_summary()
+    summaries = await metrics.get_all_peers_summary()
     assert len(summaries) == 2
     assert any(s["peer_id"] == "peer1" for s in summaries)
     assert any(s["peer_id"] == "peer2" for s in summaries)
 
 
-def test_latency_history(metrics):
+@pytest.mark.asyncio
+async def test_latency_history(metrics):
     """Test latency history retrieval"""
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_latency("peer1", 20.0)
+    await metrics.record_latency("peer1", 20.0)
     time.sleep(0.1)
-    metrics.record_latency("peer1", 25.0)
+    await metrics.record_latency("peer1", 25.0)
     time.sleep(0.1)
-    metrics.record_latency("peer1", 30.0)
+    await metrics.record_latency("peer1", 30.0)
 
     history = metrics.get_latency_history("peer1", duration=10)
     assert len(history) == 3
@@ -113,19 +119,20 @@ def test_latency_history(metrics):
     assert all("value" in point for point in history)
 
 
-def test_latency_history_duration_filter(metrics):
+@pytest.mark.asyncio
+async def test_latency_history_duration_filter(metrics):
     """Test latency history duration filtering"""
     metrics.add_peer("peer1", "Peer 1")
 
     # Record old latency
-    metrics.record_latency("peer1", 20.0)
+    await metrics.record_latency("peer1", 20.0)
 
     # Manually set old timestamp
     if "peer1" in metrics.peer_metrics and metrics.peer_metrics["peer1"].latency:
         metrics.peer_metrics["peer1"].latency[0].timestamp = time.time() - 100
 
     # Record new latency
-    metrics.record_latency("peer1", 30.0)
+    await metrics.record_latency("peer1", 30.0)
 
     # Get recent history (last 10 seconds)
     history = metrics.get_latency_history("peer1", duration=10)
@@ -156,9 +163,10 @@ def test_system_history(metrics):
     assert isinstance(history["memory"], list)
 
 
-def test_start_game_session(metrics):
+@pytest.mark.asyncio
+async def test_start_game_session(metrics):
     """Test starting a game session"""
-    metrics.start_game_session("minecraft", "Minecraft", ["Alice", "Bob"])
+    await metrics.start_game_session("minecraft", "Minecraft", ["Alice", "Bob"])
 
     assert metrics.active_session is not None
     assert metrics.active_session.game_name == "Minecraft"
@@ -166,11 +174,12 @@ def test_start_game_session(metrics):
     assert metrics.active_session.ended_at is None
 
 
-def test_end_game_session(metrics):
+@pytest.mark.asyncio
+async def test_end_game_session(metrics):
     """Test ending a game session"""
-    metrics.start_game_session("minecraft", "Minecraft", ["Alice", "Bob"])
+    await metrics.start_game_session("minecraft", "Minecraft", ["Alice", "Bob"])
     time.sleep(0.1)
-    metrics.end_game_session()
+    await metrics.end_game_session()
 
     sessions = metrics.get_game_sessions(limit=10)
     assert len(sessions) == 1
@@ -178,56 +187,61 @@ def test_end_game_session(metrics):
     assert sessions[0]["duration"] > 0
 
 
-def test_get_game_sessions_limit(metrics):
+@pytest.mark.asyncio
+async def test_get_game_sessions_limit(metrics):
     """Test game sessions limit"""
     for i in range(15):
-        metrics.start_game_session(f"game{i}", f"Game{i}", ["Player1"])
-        metrics.end_game_session()
+        await metrics.start_game_session(f"game{i}", f"Game{i}", ["Player1"])
+        await metrics.end_game_session()
 
     sessions = metrics.get_game_sessions(limit=10)
     assert len(sessions) == 10
 
 
-def test_network_quality_score(metrics):
+@pytest.mark.asyncio
+async def test_network_quality_score(metrics):
     """Test network quality score calculation"""
     # Good network
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_latency("peer1", 20.0)
+    await metrics.record_latency("peer1", 20.0)
 
     score = metrics.get_network_quality_score()
     assert score >= 80  # Should be "Excellent" or "Good"
 
     # Bad network
     metrics.add_peer("peer2", "Peer 2")
-    metrics.record_latency("peer2", 200.0)
+    await metrics.record_latency("peer2", 200.0)
 
     score = metrics.get_network_quality_score()
     assert score < 80  # Should be lower with bad peer
 
 
-def test_peer_connection_status(metrics):
+@pytest.mark.asyncio
+async def test_peer_connection_status(metrics):
     """Test peer connection status"""
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_latency("peer1", 25.0)
+    await metrics.record_latency("peer1", 25.0)
 
-    summary = metrics.get_peer_summary("peer1")
+    summary = await metrics.get_peer_summary("peer1")
     assert summary["status"] == "connected"
 
 
-def test_peer_uptime(metrics):
+@pytest.mark.asyncio
+async def test_peer_uptime(metrics):
     """Test peer uptime calculation"""
     metrics.add_peer("peer1", "Peer 1")
-    metrics.record_latency("peer1", 25.0)
+    await metrics.record_latency("peer1", 25.0)
     time.sleep(0.2)
 
-    summary = metrics.get_peer_summary("peer1")
+    summary = await metrics.get_peer_summary("peer1")
     # Uptime is calculated as time.time() - last_seen, which should be small
     assert summary["uptime"] < 1.0
 
 
-def test_empty_peer_summary(metrics):
+@pytest.mark.asyncio
+async def test_empty_peer_summary(metrics):
     """Test getting summary for non-existent peer"""
-    summary = metrics.get_peer_summary("nonexistent")
+    summary = await metrics.get_peer_summary("nonexistent")
     assert summary is None
 
 
@@ -237,12 +251,13 @@ def test_empty_latency_history(metrics):
     assert history == []
 
 
-def test_metrics_cleanup(metrics):
+@pytest.mark.asyncio
+async def test_metrics_cleanup(metrics):
     """Test metrics cleanup (old data removal)"""
     metrics.add_peer("peer1", "Peer 1")
 
     # Record old latency
-    metrics.record_latency("peer1", 20.0)
+    await metrics.record_latency("peer1", 20.0)
 
     # Manually set very old timestamp
     if "peer1" in metrics.peer_metrics and metrics.peer_metrics["peer1"].latency:

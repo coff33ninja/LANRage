@@ -169,7 +169,7 @@ async def get_metrics_summary():
         raise HTTPException(500, "Metrics collector not initialized")
 
     return {
-        "peers": metrics_collector.get_all_peers_summary(),
+        "peers": await metrics_collector.get_all_peers_summary(),
         "system": metrics_collector.get_system_summary(),
         "network_quality": metrics_collector.get_network_quality_score(),
     }
@@ -181,7 +181,7 @@ async def get_peer_metrics():
     if not metrics_collector:
         raise HTTPException(500, "Metrics collector not initialized")
 
-    return {"peers": metrics_collector.get_all_peers_summary()}
+    return {"peers": await metrics_collector.get_all_peers_summary()}
 
 
 @app.get("/api/metrics/peers/{peer_id}")

@@ -17,7 +17,8 @@ def config():
     return Config.load()
 
 
-def test_metrics_collection_performance(config):
+@pytest.mark.asyncio
+async def test_metrics_collection_performance(config):
     """Test metrics collection performance"""
     collector = MetricsCollector(config)
 
@@ -29,7 +30,7 @@ def test_metrics_collection_performance(config):
     start = time.time()
     for i in range(10):
         for j in range(100):
-            collector.record_latency(f"peer{i}", 25.0 + j * 0.1)
+            await collector.record_latency(f"peer{i}", 25.0 + j * 0.1)
     duration = time.time() - start
 
     # Should complete in reasonable time
@@ -38,7 +39,7 @@ def test_metrics_collection_performance(config):
     # Measure time to get summaries
     start = time.time()
     for _ in range(100):
-        summaries = collector.get_all_peers_summary()
+        summaries = await collector.get_all_peers_summary()
     duration = time.time() - start
 
     assert duration < 0.5, f"Summary generation too slow: {duration:.2f}s"
@@ -90,7 +91,8 @@ async def test_server_browser_performance(config):
         await browser.stop()
 
 
-def test_memory_usage():
+@pytest.mark.asyncio
+async def test_memory_usage():
     """Test memory usage stays within limits"""
     process = psutil.Process()
 
@@ -105,7 +107,7 @@ def test_memory_usage():
     for i in range(50):
         collector.add_peer(f"peer{i}", f"Peer {i}")
         for j in range(360):  # Fill the deque
-            collector.record_latency(f"peer{i}", 25.0 + j * 0.1)
+            await collector.record_latency(f"peer{i}", 25.0 + j * 0.1)
 
     # Check memory usage
     current = process.memory_info().rss / 1024 / 1024  # MB
@@ -159,26 +161,28 @@ async def test_concurrent_operations():
         await browser.stop()
 
 
-def test_latency_calculation_performance(config):
+@pytest.mark.asyncio
+async def test_latency_calculation_performance(config):
     """Test latency calculation performance"""
     collector = MetricsCollector(config)
     collector.add_peer("peer1", "Peer 1")
 
     # Fill with data
     for i in range(360):
-        collector.record_latency("peer1", 20.0 + i * 0.1)
+        await collector.record_latency("peer1", 20.0 + i * 0.1)
 
     # Measure summary calculation
     start = time.time()
     for _ in range(1000):
-        summary = collector.get_peer_summary("peer1")
+        summary = await collector.get_peer_summary("peer1")
     duration = time.time() - start
 
     assert duration < 0.5, f"Latency calculation too slow: {duration:.2f}s"
     assert summary is not None
 
 
-def test_network_quality_score_performance(config):
+@pytest.mark.asyncio
+async def test_network_quality_score_performance(config):
     """Test network quality score calculation performance"""
     collector = MetricsCollector(config)
 
@@ -186,7 +190,7 @@ def test_network_quality_score_performance(config):
     for i in range(20):
         collector.add_peer(f"peer{i}", f"Peer {i}")
         for j in range(100):
-            collector.record_latency(f"peer{i}", 20.0 + j * 0.1)
+            await collector.record_latency(f"peer{i}", 20.0 + j * 0.1)
 
     # Measure score calculation
     start = time.time()
