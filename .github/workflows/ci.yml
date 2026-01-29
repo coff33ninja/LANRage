@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Create virtual environment
+      run: uv venv --python 3.12
+    
+    - name: Install dependencies
+      run: |
+        source .venv/bin/activate
+        uv pip install -r requirements.txt
+    
+    - name: Check import sorting with isort
+      run: |
+        source .venv/bin/activate
+        python -m isort --check-only .
+    
+    - name: Check code formatting with black
+      run: |
+        source .venv/bin/activate
+        python -m black --check .
+    
+    - name: Lint with ruff
+      run: |
+        source .venv/bin/activate
+        python -m ruff check .
+
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.12']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install uv (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install uv (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+        echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    
+    - name: Create virtual environment
+      run: uv venv --python 3.12
+    
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        source .venv/bin/activate
+        uv pip install -r requirements.txt
+    
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate.bat
+        uv pip install -r requirements.txt
+    
+    - name: Run tests (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        source .venv/bin/activate
+        python -m pytest tests/ -v --tb=short
+    
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate.bat
+        python -m pytest tests/ -v --tb=short
+    
+    - name: Generate coverage report (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        source .venv/bin/activate
+        python -m pytest --cov=core --cov=api --cov-report=xml --cov-report=term
+    
+    - name: Upload coverage to artifacts
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage.xml
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Create virtual environment
+      run: uv venv --python 3.12
+    
+    - name: Install dependencies
+      run: |
+        source .venv/bin/activate
+        uv pip install -r requirements.txt
+        uv pip install safety bandit
+    
+    - name: Check for known vulnerabilities
+      run: |
+        source .venv/bin/activate
+        safety check --json || true
+    
+    - name: Run bandit security linter
+      run: |
+        source .venv/bin/activate
+        bandit -r core/ api/ servers/ -f json -o bandit-report.json || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json

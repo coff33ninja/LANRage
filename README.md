@@ -4,6 +4,19 @@
   # LANrage - Gaming VPN for the People
   
   **Tagline**: *If it runs on LAN, it runs on LANrage.*
+  
+  [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+  [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+  [![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](CHANGELOG.md)
+  [![Test Coverage](https://img.shields.io/badge/coverage-88%25-brightgreen.svg)](docs/TESTING.md)
+  [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+  [![Linter](https://img.shields.io/badge/linter-ruff-red.svg)](https://github.com/astral-sh/ruff)
+  [![WireGuard](https://img.shields.io/badge/VPN-WireGuard-88171A.svg)](https://www.wireguard.com/)
+  
+  [![GitHub Stars](https://img.shields.io/github/stars/coff33ninja/LANRage?style=social)](https://github.com/coff33ninja/LANRage/stargazers)
+  [![GitHub Forks](https://img.shields.io/github/forks/coff33ninja/LANRage?style=social)](https://github.com/coff33ninja/LANRage/network/members)
+  [![GitHub Issues](https://img.shields.io/github/issues/coff33ninja/LANRage)](https://github.com/coff33ninja/LANRage/issues)
+  [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/coff33ninja/LANRage)](https://github.com/coff33ninja/LANRage/pulls)
 </div>
 
 ## What is this?
