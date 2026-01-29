@@ -82,5 +82,61 @@
     "low_latency": true,
     "high_bandwidth": true,
     "packet_priority": "high"
+  },
+  "csgo2": {
+    "name": "Counter-Strike 2",
+    "executable": "cs2.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Counter-Strike 2 - Tactical FPS",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "rainbow_six": {
+    "name": "Rainbow Six Siege",
+    "executable": "RainbowSix.exe",
+    "ports": [3074, 3075],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Rainbow Six Siege - Tactical shooter",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "titanfall2": {
+    "name": "Titanfall 2",
+    "executable": "Titanfall2.exe",
+    "ports": [37015, 37016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Titanfall 2 - Mech FPS",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "destiny2": {
+    "name": "Destiny 2",
+    "executable": "destiny2.exe",
+    "ports": [3074, 3097, 7500],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Destiny 2 - Looter shooter",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
   }
 }

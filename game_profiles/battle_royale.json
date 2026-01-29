@@ -1,0 +1,44 @@
+{
+  "fortnite": {
+    "name": "Fortnite",
+    "executable": "FortniteClient-Win64-Shipping.exe",
+    "ports": [9000, 9001, 9002, 9003],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Fortnite - Battle Royale",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "pubg": {
+    "name": "PUBG: Battlegrounds",
+    "executable": "TslGame.exe",
+    "ports": [7777, 7778, 27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "PUBG - Battle Royale",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "hunt_showdown": {
+    "name": "Hunt: Showdown",
+    "executable": "HuntGame.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Hunt: Showdown - PvPvE Battle Royale",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  }
+}

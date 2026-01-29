@@ -1,0 +1,44 @@
+{
+  "escape_from_tarkov": {
+    "name": "Escape from Tarkov",
+    "executable": "EscapeFromTarkov.exe",
+    "ports": [9000, 9001, 9002],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Escape from Tarkov - Hardcore extraction shooter",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "the_cycle": {
+    "name": "The Cycle: Frontier",
+    "executable": "Prospect-Win64-Shipping.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "The Cycle: Frontier - PvPvE extraction",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  },
+  "marauders": {
+    "name": "Marauders",
+    "executable": "Marauders.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 15,
+    "mtu": 1420,
+    "description": "Marauders - Space extraction shooter",
+    "low_latency": true,
+    "high_bandwidth": true,
+    "packet_priority": "high"
+  }
+}

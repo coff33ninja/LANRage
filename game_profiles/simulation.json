@@ -1,0 +1,58 @@
+{
+  "cities_skylines": {
+    "name": "Cities: Skylines",
+    "executable": "Cities.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Cities: Skylines - City building",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "low"
+  },
+  "farming_simulator": {
+    "name": "Farming Simulator 22",
+    "executable": "FarmingSimulator2022Game.exe",
+    "ports": [10823],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Farming Simulator - Co-op farming",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "low"
+  },
+  "euro_truck": {
+    "name": "Euro Truck Simulator 2",
+    "executable": "eurotrucks2.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Euro Truck Simulator 2 - Trucking",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "low"
+  },
+  "american_truck": {
+    "name": "American Truck Simulator",
+    "executable": "amtrucks.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "American Truck Simulator - Trucking",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "low"
+  }
+}

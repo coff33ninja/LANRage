@@ -1,0 +1,58 @@
+{
+  "tabletop_simulator": {
+    "name": "Tabletop Simulator",
+    "executable": "Tabletop Simulator.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Tabletop Simulator - Virtual tabletop",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "uno": {
+    "name": "UNO",
+    "executable": "UNO.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "UNO - Card game",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "low"
+  },
+  "jackbox": {
+    "name": "The Jackbox Party Pack",
+    "executable": "Jackbox.exe",
+    "ports": [38203, 38204],
+    "protocol": "tcp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Jackbox Party Pack - Party games",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "golf_with_friends": {
+    "name": "Golf With Your Friends",
+    "executable": "Golf With Your Friends.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Golf With Your Friends - Mini golf",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

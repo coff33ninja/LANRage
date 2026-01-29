@@ -1,0 +1,44 @@
+{
+  "bloons_td6": {
+    "name": "Bloons TD 6",
+    "executable": "BloonsTD6.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 25,
+    "mtu": 1420,
+    "description": "Bloons TD 6 - Co-op tower defense",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "low"
+  },
+  "orcs_must_die": {
+    "name": "Orcs Must Die! 3",
+    "executable": "OrcsMustDie3.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Orcs Must Die! 3 - Co-op tower defense",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "dungeon_defenders": {
+    "name": "Dungeon Defenders 2",
+    "executable": "DunDefGame.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Dungeon Defenders 2 - Tower defense RPG",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

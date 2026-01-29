@@ -68,5 +68,47 @@
     "low_latency": false,
     "high_bandwidth": true,
     "packet_priority": "medium"
+  },
+  "elden_ring": {
+    "name": "Elden Ring",
+    "executable": "eldenring.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Elden Ring - Action RPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "dark_souls_3": {
+    "name": "Dark Souls III",
+    "executable": "DarkSoulsIII.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Dark Souls III - Action RPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "grim_dawn": {
+    "name": "Grim Dawn",
+    "executable": "Grim Dawn.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Grim Dawn - Action RPG",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
   }
 }

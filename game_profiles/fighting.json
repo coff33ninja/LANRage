@@ -1,0 +1,58 @@
+{
+  "street_fighter_6": {
+    "name": "Street Fighter 6",
+    "executable": "StreetFighter6.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Street Fighter 6 - Fighting game",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "tekken_8": {
+    "name": "Tekken 8",
+    "executable": "Polaris-Win64-Shipping.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Tekken 8 - Fighting game",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "mortal_kombat": {
+    "name": "Mortal Kombat 11",
+    "executable": "MK11.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Mortal Kombat 11 - Fighting game",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "guilty_gear": {
+    "name": "Guilty Gear Strive",
+    "executable": "GGST-Win64-Shipping.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 10,
+    "mtu": 1420,
+    "description": "Guilty Gear Strive - Fighting game",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  }
+}

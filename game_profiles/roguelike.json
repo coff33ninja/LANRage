@@ -1,0 +1,58 @@
+{
+  "hades": {
+    "name": "Hades",
+    "executable": "Hades.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Hades - Roguelike dungeon crawler",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "enter_the_gungeon": {
+    "name": "Enter the Gungeon",
+    "executable": "EtG.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Enter the Gungeon - Co-op roguelike",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "binding_of_isaac": {
+    "name": "The Binding of Isaac: Repentance",
+    "executable": "isaac-ng.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "The Binding of Isaac - Roguelike",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "dead_cells": {
+    "name": "Dead Cells",
+    "executable": "deadcells.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Dead Cells - Roguelike metroidvania",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  }
+}

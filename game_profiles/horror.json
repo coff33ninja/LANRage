@@ -54,5 +54,33 @@
     "low_latency": false,
     "high_bandwidth": false,
     "packet_priority": "medium"
+  },
+  "devour": {
+    "name": "DEVOUR",
+    "executable": "DEVOUR.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "DEVOUR - Co-op horror",
+    "low_latency": false,
+    "high_bandwidth": false,
+    "packet_priority": "medium"
+  },
+  "the_outlast_trials": {
+    "name": "The Outlast Trials",
+    "executable": "TheOutlastTrials-Win64-Shipping.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "The Outlast Trials - Co-op horror",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
   }
 }

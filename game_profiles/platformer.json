@@ -1,0 +1,58 @@
+{
+  "cuphead": {
+    "name": "Cuphead",
+    "executable": "Cuphead.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Cuphead - Co-op run and gun",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  },
+  "it_takes_two": {
+    "name": "It Takes Two",
+    "executable": "ItTakesTwo.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "It Takes Two - Co-op adventure",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "a_way_out": {
+    "name": "A Way Out",
+    "executable": "AWayOut.exe",
+    "ports": [7777, 7778],
+    "protocol": "udp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "A Way Out - Co-op prison escape",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "castle_crashers": {
+    "name": "Castle Crashers",
+    "executable": "castle.exe",
+    "ports": [27015, 27016],
+    "protocol": "udp",
+    "broadcast": true,
+    "multicast": false,
+    "keepalive": 20,
+    "mtu": 1420,
+    "description": "Castle Crashers - Beat 'em up",
+    "low_latency": true,
+    "high_bandwidth": false,
+    "packet_priority": "high"
+  }
+}

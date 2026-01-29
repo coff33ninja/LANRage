@@ -1,0 +1,44 @@
+{
+  "wow": {
+    "name": "World of Warcraft",
+    "executable": "Wow.exe",
+    "ports": [3724, 1119, 6012],
+    "protocol": "tcp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 30,
+    "mtu": 1420,
+    "description": "World of Warcraft - MMORPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "ffxiv": {
+    "name": "Final Fantasy XIV",
+    "executable": "ffxiv_dx11.exe",
+    "ports": [54992, 54993, 54994],
+    "protocol": "tcp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 30,
+    "mtu": 1420,
+    "description": "Final Fantasy XIV - MMORPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  },
+  "eso": {
+    "name": "The Elder Scrolls Online",
+    "executable": "eso64.exe",
+    "ports": [24100, 24101, 24102, 24103],
+    "protocol": "tcp",
+    "broadcast": false,
+    "multicast": false,
+    "keepalive": 30,
+    "mtu": 1420,
+    "description": "The Elder Scrolls Online - MMORPG",
+    "low_latency": false,
+    "high_bandwidth": true,
+    "packet_priority": "medium"
+  }
+}
