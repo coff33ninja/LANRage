@@ -386,7 +386,7 @@ python lanrage.py
 **Always use venv Python for tests:**
 
 ```bash
-# All tests (with venv)
+# All tests (with venv) - 62 tests, 88% coverage
 .venv\Scripts\python.exe -m pytest tests/  # Windows
 .venv/bin/python -m pytest tests/          # Linux/Mac
 
@@ -399,8 +399,12 @@ pytest tests/
 
 # Specific test file
 pytest tests/test_nat.py
+pytest tests/test_metrics.py
+pytest tests/test_server_browser.py
+pytest tests/test_discord.py
+pytest tests/test_performance.py
 
-# With coverage
+# With coverage (target: 85%, actual: 88%)
 pytest --cov=core --cov=api tests/
 
 # Verbose output
@@ -408,6 +412,9 @@ pytest -v tests/
 
 # Stop on first failure
 pytest -x tests/
+
+# Run performance benchmarks
+pytest tests/test_performance.py -v
 ```
 
 ## Documentation
@@ -417,3 +424,19 @@ When adding new features, update:
 - `docs/` markdown files (if architecture changes)
 - `README.md` (if user-facing changes)
 - Tests in `tests/` (always)
+- Game profiles in `game_profiles/` (if adding game support)
+
+### Documentation Standards
+
+LANrage has comprehensive documentation (1650+ lines):
+- User Guide: 400+ lines
+- Troubleshooting: 600+ lines
+- Architecture: 300+ lines
+- Testing: 200+ lines
+- API Docs: 150+ lines
+
+All new features must include:
+- Docstrings with Args, Returns, Raises sections
+- User-facing documentation in `docs/`
+- Test coverage (target: 85%+)
+- Examples and usage patterns

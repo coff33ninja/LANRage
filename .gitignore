@@ -29,3 +29,5 @@ keys/
 # Logs
 *.log
 logs/
+coverage.json
+.coverage

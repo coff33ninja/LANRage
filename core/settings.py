@@ -80,53 +80,6 @@ class SettingsDatabase:
                 """)
 
                 await db.commit()
-            # Settings table
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS settings (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL,
-                    type TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-            """)
-
-            # Server configurations table
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS server_configs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    mode TEXT NOT NULL,
-                    enabled INTEGER DEFAULT 1,
-                    config TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-            """)
-
-            # Favorite servers table
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS favorite_servers (
-                    server_id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    game TEXT NOT NULL,
-                    address TEXT NOT NULL,
-                    added_at TEXT NOT NULL
-                )
-            """)
-
-            # Game profiles table
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS game_profiles (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL UNIQUE,
-                    game TEXT NOT NULL,
-                    profile TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-            """)
-
-            await db.commit()
 
     async def get_setting(self, key: str, default: Any = None) -> Any:
         """Get a setting value"""
