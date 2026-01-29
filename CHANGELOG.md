@@ -5,6 +5,33 @@ All notable changes to LANrage will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+#### Performance Profiling Infrastructure
+- **Runtime Profiler** (`core/profiler.py`) - Decorator-based performance profiling with hotspot detection
+- **Performance Monitor Tool** (`tools/performance_monitor.py`) - Real-time monitoring with CLI interface
+- **Profiling Test Suite** (`tests/test_profiling.py`) - 13 comprehensive performance tests
+- **Performance Documentation** (`docs/PERFORMANCE_PROFILING.md`) - Complete profiling guide
+
+#### Utility Functions
+- `calculate_latency()` - Calculate latency between timestamps
+- `format_bandwidth()` - Format bandwidth for display (B/s, KB/s, MB/s, GB/s)
+- `parse_port_range()` - Parse port range strings (e.g., "7777-7780")
+
+#### Async Improvements
+- Made `MetricsCollector` methods async: `record_latency()`, `record_bandwidth()`, `record_packet_loss()`, `get_peer_summary()`, `start_game_session()`, `end_game_session()`
+
+### Performance Benchmarks
+- Config load: <10ms average
+- IP allocation: <300µs average
+- IP lookup: <10µs average
+- Metrics collection: <5ms average
+- Utility functions: <10µs average
+- Game profile loading: <100ms total (112 profiles)
+- Concurrent operations: >50 ops/sec
+
 ## [1.0.0] - 2026-01-29
 
 ### 🎉 Initial Production Release

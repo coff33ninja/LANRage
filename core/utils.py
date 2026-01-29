@@ -92,3 +92,67 @@ def get_connection_emoji(connection_type: str) -> str:
         "unknown": "❓",
     }
     return emojis.get(connection_type, "❓")
+
+
+def calculate_latency(start_ms: float, end_ms: float) -> float:
+    """Calculate latency between two timestamps.
+
+    Args:
+        start_ms: Start timestamp in milliseconds
+        end_ms: End timestamp in milliseconds
+
+    Returns:
+        Latency in milliseconds
+    """
+    return end_ms - start_ms
+
+
+def format_bandwidth(bytes_per_sec: float) -> str:
+    """Format bandwidth for display.
+
+    Args:
+        bytes_per_sec: Bandwidth in bytes per second
+
+    Returns:
+        Formatted bandwidth string (e.g., "10.5 MB/s")
+    """
+    if bytes_per_sec < 1024:
+        return f"{bytes_per_sec:.1f} B/s"
+    elif bytes_per_sec < 1024 * 1024:
+        return f"{bytes_per_sec / 1024:.1f} KB/s"
+    elif bytes_per_sec < 1024 * 1024 * 1024:
+        return f"{bytes_per_sec / (1024 * 1024):.1f} MB/s"
+    else:
+        return f"{bytes_per_sec / (1024 * 1024 * 1024):.1f} GB/s"
+
+
+def parse_port_range(port_range: str) -> list[int]:
+    """Parse a port range string into a list of ports.
+
+    Args:
+        port_range: Port range string (e.g., "7777-7780" or "7777")
+
+    Returns:
+        List of port numbers
+
+    Raises:
+        ValueError: If port range is invalid
+    """
+    if "-" in port_range:
+        start_str, end_str = port_range.split("-", 1)
+        start = int(start_str.strip())
+        end = int(end_str.strip())
+
+        if start > end:
+            raise ValueError(f"Invalid port range: {port_range} (start > end)")
+        if start < 1 or end > 65535:
+            raise ValueError(
+                f"Invalid port range: {port_range} (ports must be 1-65535)"
+            )
+
+        return list(range(start, end + 1))
+    else:
+        port = int(port_range.strip())
+        if port < 1 or port > 65535:
+            raise ValueError(f"Invalid port: {port} (must be 1-65535)")
+        return [port]

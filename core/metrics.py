@@ -170,7 +170,7 @@ class MetricsCollector:
         if peer_id in self.peer_metrics:
             self.peer_metrics[peer_id].status = "disconnected"
 
-    def record_latency(self, peer_id: str, latency: Optional[float]):
+    async def record_latency(self, peer_id: str, latency: Optional[float]):
         """Record latency measurement for a peer"""
         if peer_id not in self.peer_metrics:
             return
@@ -191,7 +191,7 @@ class MetricsCollector:
             # No latency = connection issue
             peer.status = "degraded"
 
-    def record_bandwidth(
+    async def record_bandwidth(
         self, peer_id: str, bytes_sent: int = 0, bytes_received: int = 0
     ):
         """Record bandwidth usage for a peer"""
@@ -202,7 +202,16 @@ class MetricsCollector:
         peer.bytes_sent += bytes_sent
         peer.bytes_received += bytes_received
 
-    def start_game_session(self, game_id: str, game_name: str, peers: List[str]):
+    async def record_packet_loss(self, peer_id: str, packet_loss: float):
+        """Record packet loss for a peer"""
+        if peer_id not in self.peer_metrics:
+            return
+
+        # Store packet loss data (could be added to PeerMetrics if needed)
+        peer = self.peer_metrics[peer_id]
+        peer.last_seen = time.time()
+
+    async def start_game_session(self, game_id: str, game_name: str, peers: List[str]):
         """Start tracking a game session"""
         self.active_session = GameSession(
             game_id=game_id,
@@ -211,7 +220,7 @@ class MetricsCollector:
             peers=peers.copy(),
         )
 
-    def end_game_session(self):
+    async def end_game_session(self):
         """End the current game session"""
         if self.active_session:
             self.active_session.ended_at = time.time()
@@ -235,7 +244,7 @@ class MetricsCollector:
             self.game_sessions.append(self.active_session)
             self.active_session = None
 
-    def get_peer_summary(self, peer_id: str) -> Optional[dict]:
+    async def get_peer_summary(self, peer_id: str) -> Optional[dict]:
         """Get summary statistics for a peer"""
         if peer_id not in self.peer_metrics:
             return None
