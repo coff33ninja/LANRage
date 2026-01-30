@@ -116,6 +116,17 @@ async def serve_ui():
     return {"error": "UI not found"}
 
 
+@app.get("/logo.png")
+async def serve_logo():
+    """Serve the LANrage logo"""
+    from fastapi.responses import FileResponse
+
+    logo_path = Path(__file__).parent.parent / "logo.png"
+    if logo_path.exists():
+        return FileResponse(logo_path, media_type="image/png")
+    raise HTTPException(404, "Logo not found")
+
+
 @app.get("/status")
 async def get_status():
     """Get current status"""

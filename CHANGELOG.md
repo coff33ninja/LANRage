@@ -5,6 +5,23 @@ All notable changes to LANrage will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Settings Tab Integration**: Integrated Settings as a tab in main UI instead of separate page
+  - Settings now accessible via tab navigation, matching other tabs (Party, Servers, Metrics, Discord)
+  - Added Discord App ID field to Settings tab for Rich Presence configuration
+  - Backend already supported Discord App ID storage, now properly exposed in frontend
+  - Users can now configure Discord Rich Presence directly from Settings tab
+
+### Changed
+- **UI Enhancement**: Replaced text header with LANrage logo image
+  - Logo now displayed in header instead of "🔥 LANrage" text
+  - Added drop shadow effect for better visual appeal
+  - Logo served via `/logo.png` endpoint
+- Settings page (`/static/settings.html`) is now deprecated in favor of Settings tab
+- Discord integration settings consolidated in Settings tab with proper descriptions
+
 ## [1.2.2] - 2026-01-31
 
 ### Fixed
