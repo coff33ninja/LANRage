@@ -302,10 +302,10 @@ class GameDetector:
 
         proc_names = await loop.run_in_executor(None, _get_processes)
 
-        # Check against game profiles
+        # Check against game profiles with fuzzy matching
         for proc_name in proc_names:
             for game_id, profile in GAME_PROFILES.items():
-                if proc_name.lower() == profile.executable.lower():
+                if _fuzzy_match_executable(proc_name, profile.executable):
                     current_games.add(game_id)
 
         # Detect new games

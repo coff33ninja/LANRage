@@ -1,6 +1,7 @@
 """Game server browser and discovery"""
 
 import asyncio
+import statistics
 import time
 from dataclasses import dataclass, field
 from typing import Optional
@@ -315,27 +316,67 @@ class ServerBrowser:
         ]
 
     async def measure_latency(self, server_id: str) -> Optional[float]:
-        """Measure latency to a server
+        """Measure latency to a server using multiple samples for accuracy
 
         Args:
             server_id: Server ID
 
         Returns:
-            Latency in milliseconds, or None if measurement failed
+            Median latency in milliseconds, or None if measurement failed
         """
         server = self.get_server(server_id)
         if not server:
             return None
 
         try:
-            # Use ICMP ping to measure latency asynchronously
+            # Take multiple samples for more reliable latency measurement
             import platform
-
             param = "-n" if platform.system().lower() == "windows" else "-c"
-            command = ["ping", param, "1", server.host_ip]
+            
+            # Collect 3 ping samples in parallel
+            sample_count = 3
+            ping_tasks = []
+            
+            for _ in range(sample_count):
+                command = ["ping", param, "1", server.host_ip]
+                ping_tasks.append(self._single_ping(command))
+            
+            # Execute all pings concurrently
+            results = await asyncio.gather(*ping_tasks, return_exceptions=True)
+            
+            # Filter out exceptions and failed measurements
+            valid_latencies = [
+                latency for latency in results 
+                if isinstance(latency, (int, float)) and latency < 999
+            ]
+            
+            if valid_latencies:
+                # Use median for more robust latency estimate (less affected by outliers)
+                median_latency = statistics.median(valid_latencies)
+                server.latency_ms = median_latency
+                return median_latency
+            else:
+                # All measurements failed or timed out
+                server.latency_ms = 999
+                return 999.0
 
+        except Exception as e:
+            error_msg = str(e)
+            print(f"⚠ Latency measurement failed for {server.name}: {error_msg}")
+
+        return None
+
+    async def _single_ping(self, command: list) -> Optional[float]:
+        """Execute a single ping and return latency
+        
+        Args:
+            command: Ping command as list
+            
+        Returns:
+            Latency in milliseconds or 999 on timeout/failure
+        """
+        try:
             start_time = time.time()
-            # Use async subprocess instead of blocking subprocess.run
             proc = await asyncio.create_subprocess_exec(
                 *command,
                 stdout=asyncio.subprocess.PIPE,
@@ -353,21 +394,16 @@ class ServerBrowser:
                         # Extract time value from ping output
                         time_str = output.split("time=")[1].split()[0]
                         latency = float(time_str.replace("ms", ""))
-                        server.latency_ms = latency
                         return latency
+                    else:
+                        return elapsed
                 else:
-                    server.latency_ms = elapsed
                     return elapsed
             except asyncio.TimeoutError:
-                # Ping timed out
-                server.latency_ms = 999  # Mark as very high latency
                 return 999.0
 
-        except Exception as e:
-            error_msg = str(e)
-            print(f"⚠ Latency measurement failed for {server.name}: {error_msg}")
-
-        return None
+        except Exception:
+            return 999.0
 
     async def _cleanup_loop(self):
         """Background task to clean up expired servers"""
