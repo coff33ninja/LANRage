@@ -9,7 +9,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Tuple
 
 from .config import Config
 from .exceptions import NATError, STUNError
@@ -56,11 +55,11 @@ class NATTraversal:
         self.control_client = (
             control_client  # Optional control plane client for relay discovery
         )
-        self.public_ip: Optional[str] = None
-        self.public_port: Optional[int] = None
+        self.public_ip: str | None = None
+        self.public_port: int | None = None
         self.nat_type: NATType = NATType.UNKNOWN
-        self.local_ip: Optional[str] = None
-        self.local_port: Optional[int] = None
+        self.local_ip: str | None = None
+        self.local_port: int | None = None
 
     async def detect_nat(self) -> STUNResponse:
         """Detect NAT type using STUN"""
@@ -87,7 +86,7 @@ class NATTraversal:
                 )
                 last_error = e
                 continue
-            except socket.timeout:
+            except TimeoutError:
                 logger.warning(f"STUN server {stun_server[0]} timed out")
                 continue
             except OSError as e:
@@ -104,8 +103,8 @@ class NATTraversal:
         raise NATError(error_msg)
 
     async def _stun_request(
-        self, stun_server: Tuple[str, int]
-    ) -> Optional[STUNResponse]:
+        self, stun_server: tuple[str, int]
+    ) -> STUNResponse | None:
         """Send STUN request to server"""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(3)
@@ -167,7 +166,7 @@ class NATTraversal:
                 local_port=local_port,
             )
 
-        except socket.timeout:
+        except TimeoutError:
             return None
         except STUNError:
             raise
@@ -181,7 +180,7 @@ class NATTraversal:
 
     def _parse_stun_attributes(
         self, data: bytes
-    ) -> Tuple[Optional[str], Optional[int]]:
+    ) -> tuple[str | None, int | None]:
         """Parse STUN attributes to extract mapped address"""
         offset = 0
         public_ip = None
@@ -266,7 +265,7 @@ class NATTraversal:
                 data, addr = sock.recvfrom(1024)
                 if data == b"LANRAGE_PUNCH_ACK":
                     return True
-            except socket.timeout:
+            except TimeoutError:
                 pass
 
             return False
@@ -315,8 +314,7 @@ class NATTraversal:
         """Determine best connection strategy"""
         if self.can_direct_connect(peer_nat_type):
             return "direct"
-        else:
-            return "relay"
+        return "relay"
 
 
 class ConnectionCoordinator:
@@ -345,9 +343,8 @@ class ConnectionCoordinator:
                     "endpoint": f"{peer_nat_info['public_ip']}:{peer_nat_info['public_port']}",
                     "success": True,
                 }
-            else:
-                # Fall back to relay
-                strategy = "relay"
+            # Fall back to relay
+            strategy = "relay"
 
         if strategy == "relay":
             # Use relay server
@@ -449,7 +446,7 @@ class ConnectionCoordinator:
 
         return relays
 
-    async def _select_best_relay(self, relays: list) -> Optional[dict]:
+    async def _select_best_relay(self, relays: list) -> dict | None:
         """Select relay with lowest latency"""
         best_relay = None
         best_latency = float("inf")
@@ -462,7 +459,7 @@ class ConnectionCoordinator:
                 if latency is not None and latency < best_latency:
                     best_latency = latency
                     best_relay = relay
-            except (OSError, asyncio.TimeoutError) as e:
+            except (TimeoutError, OSError) as e:
                 logger.warning(f"Failed to measure latency to relay {relay['ip']}: {e}")
                 continue
 
@@ -473,7 +470,7 @@ class ConnectionCoordinator:
 
         return best_relay
 
-    async def _measure_relay_latency(self, relay_ip: str) -> Optional[float]:
+    async def _measure_relay_latency(self, relay_ip: str) -> float | None:
         """Measure latency to relay server"""
         try:
             # Use ICMP ping to measure latency
@@ -513,7 +510,7 @@ class ConnectionCoordinator:
             # Log parsing errors
             logger.debug(f"Failed to parse ping latency for {relay_ip}: {e}")
             return None
-        except (OSError, asyncio.TimeoutError) as e:
+        except (TimeoutError, OSError) as e:
             # Network errors or timeouts
             logger.debug(f"Network error measuring latency to {relay_ip}: {e}")
             return None

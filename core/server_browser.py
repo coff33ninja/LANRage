@@ -4,7 +4,6 @@ import asyncio
 import statistics
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .config import Config
 
@@ -21,13 +20,13 @@ class GameServer:
     host_ip: str
     max_players: int
     current_players: int
-    map_name: Optional[str] = None
-    game_mode: Optional[str] = None
+    map_name: str | None = None
+    game_mode: str | None = None
     password_protected: bool = False
     tags: list[str] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
     last_heartbeat: float = field(default_factory=time.time)
-    latency_ms: Optional[float] = None
+    latency_ms: float | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary"""
@@ -68,7 +67,7 @@ class ServerBrowser:
         self.servers: dict[str, GameServer] = {}
         self.favorites: set[str] = set()
         self.running = False
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
 
     async def start(self):
         """Start server browser"""
@@ -97,10 +96,10 @@ class ServerBrowser:
         host_ip: str,
         max_players: int,
         current_players: int = 0,
-        map_name: Optional[str] = None,
-        game_mode: Optional[str] = None,
+        map_name: str | None = None,
+        game_mode: str | None = None,
         password_protected: bool = False,
-        tags: Optional[list[str]] = None,
+        tags: list[str] | None = None,
     ) -> GameServer:
         """Register a new game server
 
@@ -196,7 +195,7 @@ class ServerBrowser:
             return True
         return False
 
-    def get_server(self, server_id: str) -> Optional[GameServer]:
+    def get_server(self, server_id: str) -> GameServer | None:
         """Get server by ID
 
         Args:
@@ -209,12 +208,12 @@ class ServerBrowser:
 
     def list_servers(
         self,
-        game: Optional[str] = None,
+        game: str | None = None,
         hide_full: bool = False,
         hide_empty: bool = False,
         hide_password: bool = False,
-        tags: Optional[list[str]] = None,
-        search: Optional[str] = None,
+        tags: list[str] | None = None,
+        search: str | None = None,
     ) -> list[GameServer]:
         """List servers with optional filtering
 
@@ -315,7 +314,7 @@ class ServerBrowser:
             if server_id in self.favorites
         ]
 
-    async def measure_latency(self, server_id: str) -> Optional[float]:
+    async def measure_latency(self, server_id: str) -> float | None:
         """Measure latency to a server using multiple samples for accuracy
 
         Args:
@@ -332,33 +331,32 @@ class ServerBrowser:
             # Take multiple samples for more reliable latency measurement
             import platform
             param = "-n" if platform.system().lower() == "windows" else "-c"
-            
+
             # Collect 3 ping samples in parallel
             sample_count = 3
             ping_tasks = []
-            
+
             for _ in range(sample_count):
                 command = ["ping", param, "1", server.host_ip]
                 ping_tasks.append(self._single_ping(command))
-            
+
             # Execute all pings concurrently
             results = await asyncio.gather(*ping_tasks, return_exceptions=True)
-            
+
             # Filter out exceptions and failed measurements
             valid_latencies = [
-                latency for latency in results 
+                latency for latency in results
                 if isinstance(latency, (int, float)) and latency < 999
             ]
-            
+
             if valid_latencies:
                 # Use median for more robust latency estimate (less affected by outliers)
                 median_latency = statistics.median(valid_latencies)
                 server.latency_ms = median_latency
                 return median_latency
-            else:
-                # All measurements failed or timed out
-                server.latency_ms = 999
-                return 999.0
+            # All measurements failed or timed out
+            server.latency_ms = 999
+            return 999.0
 
         except Exception as e:
             error_msg = str(e)
@@ -366,7 +364,7 @@ class ServerBrowser:
 
         return None
 
-    async def _single_ping(self, command: list) -> Optional[float]:
+    async def _single_ping(self, command: list) -> float | None:
         """Execute a single ping and return latency
         
         Args:
@@ -382,11 +380,11 @@ class ServerBrowser:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            
+
             try:
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=2.0)
                 elapsed = (time.time() - start_time) * 1000
-                
+
                 if proc.returncode == 0:
                     # Parse ping output for more accurate latency
                     output = stdout.decode().lower()
@@ -395,11 +393,9 @@ class ServerBrowser:
                         time_str = output.split("time=")[1].split()[0]
                         latency = float(time_str.replace("ms", ""))
                         return latency
-                    else:
-                        return elapsed
-                else:
                     return elapsed
-            except asyncio.TimeoutError:
+                return elapsed
+            except TimeoutError:
                 return 999.0
 
         except Exception:

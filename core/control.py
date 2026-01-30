@@ -7,7 +7,6 @@ import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, Set
 
 from .config import Config
 from .nat import NATType
@@ -25,8 +24,8 @@ class StatePersister:
         """
         self.file_path = file_path
         self.batch_interval_ms = batch_interval_ms
-        self.pending_state: Optional[dict] = None
-        self.flush_task: Optional[asyncio.Task] = None
+        self.pending_state: dict | None = None
+        self.flush_task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
 
     async def queue_write(self, state: dict) -> None:
@@ -38,7 +37,7 @@ class StatePersister:
         async with self._lock:
             # Update pending state (deduplicates rapid successive writes)
             self.pending_state = state
-            
+
             # Schedule flush if not already scheduled
             if self.flush_task is None or self.flush_task.done():
                 self.flush_task = asyncio.create_task(self._flush_after_delay())
@@ -48,7 +47,7 @@ class StatePersister:
         try:
             # Wait for batch interval
             await asyncio.sleep(self.batch_interval_ms / 1000.0)
-            
+
             async with self._lock:
                 if self.pending_state is not None:
                     await self._write_to_disk(self.pending_state)
@@ -67,10 +66,10 @@ class StatePersister:
         """
         try:
             import aiofiles
-            
+
             # Create parent directory if it doesn't exist
             self.file_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Use async file I/O
             async with aiofiles.open(self.file_path, "w", encoding="utf-8") as f:
                 await f.write(json.dumps(state, indent=2))
@@ -96,7 +95,7 @@ class StatePersister:
                     await self.flush_task
                 except asyncio.CancelledError:
                     pass
-            
+
             if self.pending_state is not None:
                 await self._write_to_disk(self.pending_state)
                 self.pending_state = None
@@ -149,7 +148,7 @@ class PartyInfo:
     name: str
     host_id: str
     created_at: datetime
-    peers: Dict[str, PeerInfo]
+    peers: dict[str, PeerInfo]
 
     def to_dict(self) -> dict:
         """Convert to dictionary"""
@@ -185,12 +184,12 @@ class ControlPlane:
 
     def __init__(self, config: Config):
         self.config = config
-        self.parties: Dict[str, PartyInfo] = {}
-        self.my_peer_id: Optional[str] = None
-        self.my_party_id: Optional[str] = None
+        self.parties: dict[str, PartyInfo] = {}
+        self.my_peer_id: str | None = None
+        self.my_party_id: str | None = None
 
         # Track active party IDs for quick lookup
-        self.active_party_ids: Set[str] = set()
+        self.active_party_ids: set[str] = set()
 
         # Persistence with batched writes (100ms default batch interval)
         self.state_file = config.config_dir / "control_state.json"
@@ -275,18 +274,18 @@ class ControlPlane:
 
         await self._save_state()
 
-    async def get_party(self, party_id: str) -> Optional[PartyInfo]:
+    async def get_party(self, party_id: str) -> PartyInfo | None:
         """Get party information"""
         return self.parties.get(party_id)
 
-    async def get_peers(self, party_id: str) -> Dict[str, PeerInfo]:
+    async def get_peers(self, party_id: str) -> dict[str, PeerInfo]:
         """Get all peers in a party"""
         if party_id not in self.parties:
             return {}
 
         return self.parties[party_id].peers
 
-    async def discover_peer(self, party_id: str, peer_id: str) -> Optional[PeerInfo]:
+    async def discover_peer(self, party_id: str, peer_id: str) -> PeerInfo | None:
         """Discover a specific peer"""
         if party_id not in self.parties:
             return None
@@ -361,7 +360,7 @@ class ControlPlane:
             "my_peer_id": self.my_peer_id,
             "my_party_id": self.my_party_id,
         }
-        
+
         # Queue write through batched persister (deduplicated, 100ms batch interval)
         await self.state_persister.queue_write(state)
 
@@ -369,9 +368,9 @@ class ControlPlane:
         """Load state from disk"""
         try:
             import aiofiles
-            
+
             if self.state_file.exists():
-                async with aiofiles.open(self.state_file, "r", encoding="utf-8") as f:
+                async with aiofiles.open(self.state_file, encoding="utf-8") as f:
                     content = await f.read()
                     state = json.loads(content)
 
@@ -424,19 +423,19 @@ class LocalControlPlane(ControlPlane):
         """Announce party on local network"""
         try:
             import aiofiles
-            
+
             # Write party info to shared discovery file
             discovery = {}
             if self.discovery_file.exists():
-                async with aiofiles.open(self.discovery_file, "r", encoding="utf-8") as f:
+                async with aiofiles.open(self.discovery_file, encoding="utf-8") as f:
                     content = await f.read()
                     discovery = json.loads(content)
 
             discovery[party.party_id] = party.to_dict()
-            
+
             # Create parent directory if it doesn't exist
             self.discovery_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
             async with aiofiles.open(self.discovery_file, "w", encoding="utf-8") as f:
                 await f.write(json.dumps(discovery, indent=2))
         except OSError as e:
@@ -452,13 +451,13 @@ class LocalControlPlane(ControlPlane):
             # Catch any other unexpected errors
             print(f"Warning: Unexpected error announcing party: {e}", file=sys.stderr)
 
-    async def discover_parties(self) -> Dict[str, PartyInfo]:
+    async def discover_parties(self) -> dict[str, PartyInfo]:
         """Discover parties on local network"""
         try:
             import aiofiles
-            
+
             if self.discovery_file.exists():
-                async with aiofiles.open(self.discovery_file, "r", encoding="utf-8") as f:
+                async with aiofiles.open(self.discovery_file, encoding="utf-8") as f:
                     content = await f.read()
                     discovery = json.loads(content)
                 return {k: PartyInfo.from_dict(v) for k, v in discovery.items()}
@@ -551,7 +550,7 @@ class RemoteControlPlane(ControlPlane):
             # Send authentication if needed
             await self._authenticate()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             print("⚠️  Connection timeout")
             raise ControlPlaneError("Connection timeout")
         except ImportError:

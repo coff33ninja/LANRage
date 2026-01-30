@@ -26,8 +26,8 @@ def get_all_game_profiles():
 async def load_game_profile_async(profile_path):
     """Load and parse a game profile JSON file asynchronously."""
     import aiofiles
-    
-    async with aiofiles.open(profile_path, "r", encoding="utf-8") as f:
+
+    async with aiofiles.open(profile_path, encoding="utf-8") as f:
         content = await f.read()
         return json.loads(content)
 

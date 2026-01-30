@@ -160,13 +160,12 @@ async def test_setting_timestamps(temp_db):
     # Get raw setting with timestamp
     import aiosqlite
 
-    async with aiosqlite.connect(temp_db.db_path) as db:
-        async with db.execute(
-            "SELECT updated_at FROM settings WHERE key = ?", ("test_key",)
-        ) as cursor:
-            row = await cursor.fetchone()
-            assert row is not None
-            assert row[0] is not None
+    async with aiosqlite.connect(temp_db.db_path) as db, db.execute(
+        "SELECT updated_at FROM settings WHERE key = ?", ("test_key",)
+    ) as cursor:
+        row = await cursor.fetchone()
+        assert row is not None
+        assert row[0] is not None
 
 
 @pytest.mark.asyncio

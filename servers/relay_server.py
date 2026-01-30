@@ -9,7 +9,6 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Set
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -38,8 +37,8 @@ class RelayServer:
 
     def __init__(self, config: Config):
         self.config = config
-        self.clients: Dict[str, RelayClient] = {}
-        self.blocked_ips: Set[str] = set()  # Track blocked/rate-limited IPs
+        self.clients: dict[str, RelayClient] = {}
+        self.blocked_ips: set[str] = set()  # Track blocked/rate-limited IPs
         self.running = False
 
         # Stats

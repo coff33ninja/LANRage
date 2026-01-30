@@ -15,7 +15,6 @@ import secrets
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 import aiosqlite
 from fastapi import FastAPI, Header, HTTPException
@@ -155,7 +154,7 @@ def generate_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-async def verify_token(authorization: Optional[str] = Header(None)) -> str:
+async def verify_token(authorization: str | None = Header(None)) -> str:
     """Verify authentication token from database"""
     if not authorization:
         raise HTTPException(401, "Missing authorization header")
@@ -165,25 +164,24 @@ async def verify_token(authorization: Optional[str] = Header(None)) -> str:
 
     token = authorization[7:]  # Remove "Bearer " prefix
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute(
-            "SELECT peer_id, expires_at FROM auth_tokens WHERE token = ?", (token,)
-        ) as cursor:
-            row = await cursor.fetchone()
+    async with aiosqlite.connect(DB_PATH) as db, db.execute(
+        "SELECT peer_id, expires_at FROM auth_tokens WHERE token = ?", (token,)
+    ) as cursor:
+        row = await cursor.fetchone()
 
-            if not row:
-                raise HTTPException(401, "Invalid or expired token")
+        if not row:
+            raise HTTPException(401, "Invalid or expired token")
 
-            peer_id, expires_at = row
-            expires_dt = datetime.fromisoformat(expires_at)
+        peer_id, expires_at = row
+        expires_dt = datetime.fromisoformat(expires_at)
 
-            if datetime.now() > expires_dt:
-                # Delete expired token
-                await db.execute("DELETE FROM auth_tokens WHERE token = ?", (token,))
-                await db.commit()
-                raise HTTPException(401, "Token expired")
+        if datetime.now() > expires_dt:
+            # Delete expired token
+            await db.execute("DELETE FROM auth_tokens WHERE token = ?", (token,))
+            await db.commit()
+            raise HTTPException(401, "Token expired")
 
-            return peer_id
+        return peer_id
 
 
 # Health check
@@ -392,7 +390,7 @@ async def leave_party(party_id: str, peer_id: str):
 
 
 @app.get("/parties/{party_id}")
-async def get_party(party_id: str) -> Optional[PartyInfo]:
+async def get_party(party_id: str) -> PartyInfo | None:
     """Get party information"""
     async with aiosqlite.connect(DB_PATH) as db:
         # Get party

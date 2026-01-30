@@ -6,7 +6,6 @@ import platform
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
@@ -41,7 +40,7 @@ class NetworkManager:
         """Log network operations to file"""
         try:
             import aiofiles
-            
+
             timestamp = asyncio.get_event_loop().time()
             log_entry = f"[{timestamp}] {message}\n"
 
@@ -101,13 +100,12 @@ class NetworkManager:
                 # wireguard.exe returns 1 for /help, but that means it's installed
                 # If it's not found, we'll get FileNotFoundError
                 return True
-            else:
-                # Check for wg command
-                result = await self._run_command(
-                    ["which", "wg"], check=False, timeout=5.0
-                )
-                return result.returncode == 0
-        except asyncio.TimeoutError:
+            # Check for wg command
+            result = await self._run_command(
+                ["which", "wg"], check=False, timeout=5.0
+            )
+            return result.returncode == 0
+        except TimeoutError:
             await self._log("WireGuard check timed out")
             return False
         except FileNotFoundError as e:
@@ -172,7 +170,7 @@ class NetworkManager:
     async def _create_interface_windows(self):
         """Create or reuse WireGuard interface on Windows"""
         import aiofiles
-        
+
         # On Windows, we need a config file for the WireGuard service
         config_path = self.config.config_dir / f"{self.interface_name}.conf"
 
@@ -209,7 +207,7 @@ ListenPort = 51820
                 ["wireguard", "/installtunnelservice", str(config_path)], timeout=30.0
             )
             await self._log(f"Tunnel installed successfully: {self.interface_name}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             error_msg = "WireGuard tunnel installation timed out after 30 seconds"
             await self._log(error_msg)
             raise WireGuardError(
@@ -386,7 +384,7 @@ ListenPort = 51820
             return None
 
     async def add_peer(
-        self, peer_public_key: str, peer_endpoint: Optional[str], allowed_ips: list[str]
+        self, peer_public_key: str, peer_endpoint: str | None, allowed_ips: list[str]
     ):
         """Add a WireGuard peer"""
         if not self.interface_created:
@@ -476,7 +474,7 @@ ListenPort = 51820
             )
 
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # Kill the process if it times out
             try:
                 proc.kill()

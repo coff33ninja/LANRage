@@ -3,7 +3,6 @@
 import asyncio
 import secrets
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -61,14 +60,14 @@ class Party(BaseModel):
     id: str
     name: str
     host_id: str
-    peers: Dict[str, Peer] = {}
+    peers: dict[str, Peer] = {}
     created_at: datetime = datetime.now()
 
-    def get_peer_list(self) -> List[Peer]:
+    def get_peer_list(self) -> list[Peer]:
         """Get list of all peers in party"""
         return list(self.peers.values())
 
-    def get_compatible_peers(self, my_nat_type: NATType) -> List[Peer]:
+    def get_compatible_peers(self, my_nat_type: NATType) -> list[Peer]:
         """Get list of peers compatible with my NAT type for direct connection
 
         Uses NAT compatibility matrix to determine which peers can establish
@@ -107,14 +106,14 @@ class PartyManager:
         self.my_peer_id = secrets.token_hex(8)
 
         # NAT traversal
-        self.nat: Optional[NATTraversal] = None
-        self.coordinator: Optional[ConnectionCoordinator] = None
+        self.nat: NATTraversal | None = None
+        self.coordinator: ConnectionCoordinator | None = None
 
         # Control plane
-        self.control: Optional[ControlPlane] = None
+        self.control: ControlPlane | None = None
 
         # Connection manager
-        self.connections: Optional[ConnectionManager] = None
+        self.connections: ConnectionManager | None = None
 
     async def initialize_nat(self):
         """Initialize NAT traversal"""

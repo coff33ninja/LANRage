@@ -3,7 +3,6 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, Optional
 
 from .config import Config
 from .control import ControlPlane, PeerInfo
@@ -34,7 +33,7 @@ class ConnectionManager:
         self.ip_pool = IPAddressPool()  # Initialize IPAM
 
         # Track active connections
-        self.connections: Dict[str, PeerConnection] = {}
+        self.connections: dict[str, PeerConnection] = {}
 
     async def connect_to_peer(self, party_id: str, peer_id: str) -> bool:
         """
@@ -142,7 +141,7 @@ class ConnectionManager:
 
         logger.info(f"Disconnected from peer {peer_id}")
 
-    async def get_connection_status(self, peer_id: str) -> Optional[dict]:
+    async def get_connection_status(self, peer_id: str) -> dict | None:
         """Get connection status for a peer"""
         if peer_id not in self.connections:
             return None
@@ -439,8 +438,8 @@ class PeerConnection:
         self.strategy = strategy
         self.connected_at = connected_at
         self.status = self.CONNECTING
-        self.last_latency: Optional[float] = None
-        self.failed_at: Optional[datetime] = None
+        self.last_latency: float | None = None
+        self.failed_at: datetime | None = None
         self.cleanup_timeout = 300  # 5 minutes before auto-cleanup
 
     def set_status(self, new_status: str) -> bool:

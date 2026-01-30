@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import Callable, Coroutine, Optional, Set
+from collections.abc import Callable, Coroutine
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class TaskManager:
     """
 
     def __init__(self):
-        self.tasks: Set[asyncio.Task] = set()
+        self.tasks: set[asyncio.Task] = set()
         self.running = True
         self.completion_callbacks: list[Callable[[asyncio.Task], None]] = []
 
@@ -33,7 +33,7 @@ class TaskManager:
         self.completion_callbacks.append(callback)
         logger.debug(f"Registered task completion callback: {callback.__name__}")
 
-    def create_task(self, coro: Coroutine, name: Optional[str] = None) -> asyncio.Task:
+    def create_task(self, coro: Coroutine, name: str | None = None) -> asyncio.Task:
         """Create and track a background task
 
         Args:
@@ -99,14 +99,14 @@ class TaskManager:
             await asyncio.wait_for(
                 asyncio.gather(*self.tasks, return_exceptions=True), timeout=timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Task cancellation timeout after {timeout}s")
             # Force-remove remaining tasks
             self.tasks.clear()
 
         logger.info("All background tasks cancelled")
 
-    async def wait_all(self, timeout: Optional[int] = None) -> None:
+    async def wait_all(self, timeout: int | None = None) -> None:
         """Wait for all tasks to complete
 
         Args:
@@ -119,20 +119,20 @@ class TaskManager:
             await asyncio.wait_for(
                 asyncio.gather(*self.tasks, return_exceptions=True), timeout=timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Task wait timeout after {timeout}s")
 
     def task_count(self) -> int:
         """Get count of currently tracked tasks"""
         return len(self.tasks)
 
-    def get_tasks(self) -> Set[asyncio.Task]:
+    def get_tasks(self) -> set[asyncio.Task]:
         """Get all tracked tasks"""
         return self.tasks.copy()
 
 
 # Global task manager instance
-_global_task_manager: Optional[TaskManager] = None
+_global_task_manager: TaskManager | None = None
 
 
 def get_task_manager() -> TaskManager:
@@ -143,7 +143,7 @@ def get_task_manager() -> TaskManager:
     return _global_task_manager
 
 
-def create_background_task(coro: Coroutine, name: Optional[str] = None) -> asyncio.Task:
+def create_background_task(coro: Coroutine, name: str | None = None) -> asyncio.Task:
     """Create a background task using the global task manager
 
     Args:

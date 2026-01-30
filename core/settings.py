@@ -8,7 +8,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import aiosqlite
 
@@ -83,15 +83,14 @@ class SettingsDatabase:
 
     async def get_setting(self, key: str, default: Any = None) -> Any:
         """Get a setting value"""
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT value, type FROM settings WHERE key = ?", (key,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                if row:
-                    value, value_type = row
-                    return self._deserialize(value, value_type)
-                return default
+        async with aiosqlite.connect(self.db_path) as db, db.execute(
+            "SELECT value, type FROM settings WHERE key = ?", (key,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                value, value_type = row
+                return self._deserialize(value, value_type)
+            return default
 
     async def set_setting(self, key: str, value: Any):
         """Set a setting value"""
@@ -146,43 +145,41 @@ class SettingsDatabase:
             await db.commit()
             return cursor.lastrowid
 
-    async def get_server_config(self, config_id: int) -> Optional[dict]:
+    async def get_server_config(self, config_id: int) -> dict | None:
         """Get a server configuration"""
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT name, mode, config, enabled FROM server_configs WHERE id = ?",
-                (config_id,),
-            ) as cursor:
-                row = await cursor.fetchone()
-                if row:
-                    name, mode, config_json, enabled = row
-                    return {
+        async with aiosqlite.connect(self.db_path) as db, db.execute(
+            "SELECT name, mode, config, enabled FROM server_configs WHERE id = ?",
+            (config_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                name, mode, config_json, enabled = row
+                return {
+                    "id": config_id,
+                    "name": name,
+                    "mode": mode,
+                    "config": json.loads(config_json),
+                    "enabled": bool(enabled),
+                }
+            return None
+
+    async def get_all_server_configs(self) -> list[dict]:
+        """Get all server configurations"""
+        configs = []
+        async with aiosqlite.connect(self.db_path) as db, db.execute(
+            "SELECT id, name, mode, config, enabled FROM server_configs ORDER BY name"
+        ) as cursor:
+            async for row in cursor:
+                config_id, name, mode, config_json, enabled = row
+                configs.append(
+                    {
                         "id": config_id,
                         "name": name,
                         "mode": mode,
                         "config": json.loads(config_json),
                         "enabled": bool(enabled),
                     }
-                return None
-
-    async def get_all_server_configs(self) -> list[dict]:
-        """Get all server configurations"""
-        configs = []
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT id, name, mode, config, enabled FROM server_configs ORDER BY name"
-            ) as cursor:
-                async for row in cursor:
-                    config_id, name, mode, config_json, enabled = row
-                    configs.append(
-                        {
-                            "id": config_id,
-                            "name": name,
-                            "mode": mode,
-                            "config": json.loads(config_json),
-                            "enabled": bool(enabled),
-                        }
-                    )
+                )
         return configs
 
     async def update_server_config(self, config_id: int, config: dict):
@@ -268,12 +265,11 @@ class SettingsDatabase:
 
     async def is_favorite(self, server_id: str) -> bool:
         """Check if a server is in favorites"""
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT 1 FROM favorite_servers WHERE server_id = ?", (server_id,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                return row is not None
+        async with aiosqlite.connect(self.db_path) as db, db.execute(
+            "SELECT 1 FROM favorite_servers WHERE server_id = ?", (server_id,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            return row is not None
 
     # Game profiles
 
@@ -297,38 +293,36 @@ class SettingsDatabase:
             await db.commit()
             return cursor.lastrowid
 
-    async def get_game_profile(self, name: str) -> Optional[dict]:
+    async def get_game_profile(self, name: str) -> dict | None:
         """Get a game profile"""
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT game, profile FROM game_profiles WHERE name = ?", (name,)
-            ) as cursor:
-                row = await cursor.fetchone()
-                if row:
-                    game, profile_json = row
-                    return {
-                        "name": name,
-                        "game": game,
-                        "profile": json.loads(profile_json),
-                    }
-                return None
+        async with aiosqlite.connect(self.db_path) as db, db.execute(
+            "SELECT game, profile FROM game_profiles WHERE name = ?", (name,)
+        ) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                game, profile_json = row
+                return {
+                    "name": name,
+                    "game": game,
+                    "profile": json.loads(profile_json),
+                }
+            return None
 
     async def get_all_game_profiles(self) -> list[dict]:
         """Get all game profiles"""
         profiles = []
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
-                "SELECT name, game, profile FROM game_profiles ORDER BY name"
-            ) as cursor:
-                async for row in cursor:
-                    name, game, profile_json = row
-                    profiles.append(
-                        {
-                            "name": name,
-                            "game": game,
-                            "profile": json.loads(profile_json),
-                        }
-                    )
+        async with aiosqlite.connect(self.db_path) as db, db.execute(
+            "SELECT name, game, profile FROM game_profiles ORDER BY name"
+        ) as cursor:
+            async for row in cursor:
+                name, game, profile_json = row
+                profiles.append(
+                    {
+                        "name": name,
+                        "game": game,
+                        "profile": json.loads(profile_json),
+                    }
+                )
         return profiles
 
     async def delete_game_profile(self, name: str):
@@ -405,33 +399,31 @@ class SettingsDatabase:
         """Serialize a value for storage"""
         if isinstance(value, bool):
             return str(value), "bool"
-        elif isinstance(value, int):
+        if isinstance(value, int):
             return str(value), "int"
-        elif isinstance(value, float):
+        if isinstance(value, float):
             return str(value), "float"
-        elif isinstance(value, str):
+        if isinstance(value, str):
             return value, "str"
-        elif isinstance(value, (dict, list)):
+        if isinstance(value, (dict, list)):
             return json.dumps(value), "json"
-        else:
-            return str(value), "str"
+        return str(value), "str"
 
     def _deserialize(self, value: str, value_type: str) -> Any:
         """Deserialize a value from storage"""
         if value_type == "bool":
             return value.lower() == "true"
-        elif value_type == "int":
+        if value_type == "int":
             return int(value)
-        elif value_type == "float":
+        if value_type == "float":
             return float(value)
-        elif value_type == "json":
+        if value_type == "json":
             return json.loads(value)
-        else:
-            return value
+        return value
 
 
 # Global settings instance
-_settings_db: Optional[SettingsDatabase] = None
+_settings_db: SettingsDatabase | None = None
 
 
 async def get_settings_db() -> SettingsDatabase:

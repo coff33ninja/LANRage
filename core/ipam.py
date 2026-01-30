@@ -2,7 +2,6 @@
 
 import ipaddress
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +94,7 @@ class IPAddressPool:
         # Recursively try next subnet
         return self.allocate(peer_id)
 
-    def release(self, peer_id: str) -> Optional[ipaddress.IPv4Address]:
+    def release(self, peer_id: str) -> ipaddress.IPv4Address | None:
         """Release an IP address back to the pool
 
         Args:
@@ -115,7 +114,7 @@ class IPAddressPool:
         logger.info(f"Released IP {ip} from peer {peer_id}")
         return ip
 
-    def get_ip(self, peer_id: str) -> Optional[ipaddress.IPv4Address]:
+    def get_ip(self, peer_id: str) -> ipaddress.IPv4Address | None:
         """Get the allocated IP for a peer
 
         Args:

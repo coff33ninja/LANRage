@@ -1,3 +1,17 @@
+# LANrage Dependencies
+# 
+# This project uses pyproject.toml (PEP 621) as the single source of truth
+# for dependencies. This file is maintained for backwards compatibility.
+#
+# To install all dependencies including dev tools:
+#   uv pip install -e ".[dev]"
+#
+# To install only production dependencies:
+#   uv pip install -e .
+#
+# Or use this file directly:
+#   uv pip install -r requirements.txt
+
 # Core networking
 wireguard-tools>=0.4.0
 pyroute2>=0.7.12
@@ -36,4 +50,4 @@ pylint>=3.0.0
 # Testing
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
-pytest-cov
+pytest-cov>=4.0.0

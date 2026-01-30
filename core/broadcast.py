@@ -4,8 +4,8 @@ import asyncio
 import logging
 import socket
 import struct
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Set
 
 from .config import Config
 from .exceptions import SocketError
@@ -41,13 +41,13 @@ class BroadcastEmulator:
         self.running = False
 
         # Broadcast listeners
-        self.listeners: Dict[int, asyncio.DatagramProtocol] = {}
+        self.listeners: dict[int, asyncio.DatagramProtocol] = {}
 
         # Track active peer IDs for filtering
-        self.active_peers: Set[str] = set()
+        self.active_peers: set[str] = set()
 
         # Callback for forwarding packets to peers
-        self.forward_callback: Optional[Callable[[BroadcastPacket], None]] = None
+        self.forward_callback: Callable[[BroadcastPacket], None] | None = None
 
         # Common game ports to monitor
         self.monitored_ports = [
@@ -212,10 +212,10 @@ class MulticastEmulator:
         ]
 
         # Listeners
-        self.listeners: Dict[tuple, asyncio.DatagramProtocol] = {}
+        self.listeners: dict[tuple, asyncio.DatagramProtocol] = {}
 
         # Forward callback
-        self.forward_callback: Optional[Callable[[BroadcastPacket], None]] = None
+        self.forward_callback: Callable[[BroadcastPacket], None] | None = None
 
     async def start(self):
         """Start multicast emulation"""
@@ -330,7 +330,7 @@ class BroadcastManager:
         self.multicast = MulticastEmulator(config)
 
         # Peer forwarding
-        self.peer_forwarders: Dict[str, Callable] = {}
+        self.peer_forwarders: dict[str, Callable] = {}
 
     async def start(self):
         """Start broadcast management"""

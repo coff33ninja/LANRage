@@ -1,10 +1,16 @@
 """Tests for game detection and profiles"""
 
 import asyncio
+
 import pytest
 
 from core.config import Config
-from core.games import GAME_PROFILES, GameDetector, GameProfile, initialize_game_profiles
+from core.games import (
+    GAME_PROFILES,
+    GameDetector,
+    GameProfile,
+    initialize_game_profiles,
+)
 
 
 @pytest.fixture

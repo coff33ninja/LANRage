@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -36,7 +36,7 @@ class Config(BaseModel):
     control_server: str = "https://control.lanrage.io"  # TODO: implement
 
     # Relay settings (for relay mode)
-    relay_public_ip: Optional[str] = None
+    relay_public_ip: str | None = None
     relay_port: int = 51820
     max_clients: int = 100
 

@@ -4,7 +4,6 @@ import asyncio
 import platform
 import subprocess
 import sys
-from typing import Optional
 
 
 async def check_admin_rights() -> bool:
@@ -50,36 +49,34 @@ async def run_elevated(command: list[str]) -> subprocess.CompletedProcess:
         raise PermissionError(
             "Admin rights required. Please run LANrage as Administrator."
         )
-    else:
-        # On Unix, use sudo
-        if not command[0] == "sudo":
-            command = ["sudo"] + command
+    # On Unix, use sudo
+    if not command[0] == "sudo":
+        command = ["sudo"] + command
 
-        proc = await asyncio.create_subprocess_exec(
-            *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
+    proc = await asyncio.create_subprocess_exec(
+        *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
 
-        stdout, stderr = await proc.communicate()
+    stdout, stderr = await proc.communicate()
 
-        return subprocess.CompletedProcess(
-            args=command,
-            returncode=proc.returncode,
-            stdout=stdout.decode("utf-8", errors="ignore"),
-            stderr=stderr.decode("utf-8", errors="ignore"),
-        )
+    return subprocess.CompletedProcess(
+        args=command,
+        returncode=proc.returncode,
+        stdout=stdout.decode("utf-8", errors="ignore"),
+        stderr=stderr.decode("utf-8", errors="ignore"),
+    )
 
 
-def format_latency(latency_ms: Optional[float]) -> str:
+def format_latency(latency_ms: float | None) -> str:
     """Format latency for display"""
     if latency_ms is None:
         return "N/A"
 
     if latency_ms < 10:
         return f"{latency_ms:.1f}ms ✓"
-    elif latency_ms < 30:
+    if latency_ms < 30:
         return f"{latency_ms:.1f}ms ⚠"
-    else:
-        return f"{latency_ms:.1f}ms ✗"
+    return f"{latency_ms:.1f}ms ✗"
 
 
 def get_connection_emoji(connection_type: str) -> str:
@@ -118,12 +115,11 @@ def format_bandwidth(bytes_per_sec: float) -> str:
     """
     if bytes_per_sec < 1024:
         return f"{bytes_per_sec:.1f} B/s"
-    elif bytes_per_sec < 1024 * 1024:
+    if bytes_per_sec < 1024 * 1024:
         return f"{bytes_per_sec / 1024:.1f} KB/s"
-    elif bytes_per_sec < 1024 * 1024 * 1024:
+    if bytes_per_sec < 1024 * 1024 * 1024:
         return f"{bytes_per_sec / (1024 * 1024):.1f} MB/s"
-    else:
-        return f"{bytes_per_sec / (1024 * 1024 * 1024):.1f} GB/s"
+    return f"{bytes_per_sec / (1024 * 1024 * 1024):.1f} GB/s"
 
 
 def parse_port_range(port_range: str) -> list[int]:
@@ -151,8 +147,7 @@ def parse_port_range(port_range: str) -> list[int]:
             )
 
         return list(range(start, end + 1))
-    else:
-        port = int(port_range.strip())
-        if port < 1 or port > 65535:
-            raise ValueError(f"Invalid port: {port} (must be 1-65535)")
-        return [port]
+    port = int(port_range.strip())
+    if port < 1 or port > 65535:
+        raise ValueError(f"Invalid port: {port} (must be 1-65535)")
+    return [port]

@@ -1,7 +1,6 @@
 """FastAPI server for local control"""
 
 from pathlib import Path
-from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -53,10 +52,10 @@ class RegisterServerRequest(BaseModel):
     game: str = Field(min_length=1, max_length=50, description="Game name")
     max_players: int = Field(ge=1, le=1000, description="Maximum players")
     current_players: int = Field(ge=0, description="Current player count")
-    map_name: Optional[str] = Field(None, max_length=100)
-    game_mode: Optional[str] = Field(None, max_length=50)
+    map_name: str | None = Field(None, max_length=100)
+    game_mode: str | None = Field(None, max_length=50)
     password_protected: bool = False
-    tags: Optional[list[str]] = Field(None, max_items=10, description="Server tags")
+    tags: list[str] | None = Field(None, max_items=10, description="Server tags")
 
     @field_validator("current_players")
     @classmethod
@@ -75,21 +74,21 @@ class UpdatePlayerCountRequest(BaseModel):
 class SettingsRequest(BaseModel):
     """Settings update request"""
 
-    mode: Optional[str] = None
-    peer_name: Optional[str] = None
-    interface_name: Optional[str] = None
-    virtual_subnet: Optional[str] = None
-    wireguard_keepalive: Optional[int] = None
-    auto_optimize_games: Optional[bool] = None
-    enable_broadcast: Optional[bool] = None
-    enable_discord: Optional[bool] = None
-    enable_metrics: Optional[bool] = None
-    relay_public_ip: Optional[str] = None
-    relay_port: Optional[int] = None
-    max_clients: Optional[int] = None
-    api_host: Optional[str] = None
-    api_port: Optional[int] = None
-    control_server: Optional[str] = None
+    mode: str | None = None
+    peer_name: str | None = None
+    interface_name: str | None = None
+    virtual_subnet: str | None = None
+    wireguard_keepalive: int | None = None
+    auto_optimize_games: bool | None = None
+    enable_broadcast: bool | None = None
+    enable_discord: bool | None = None
+    enable_metrics: bool | None = None
+    relay_public_ip: str | None = None
+    relay_port: int | None = None
+    max_clients: int | None = None
+    api_host: str | None = None
+    api_port: int | None = None
+    control_server: str | None = None
 
 
 class SaveConfigRequest(BaseModel):
@@ -330,12 +329,12 @@ async def test_discord_notification():
 
 @app.get("/api/servers")
 async def list_servers(
-    game: Optional[str] = None,
+    game: str | None = None,
     hide_full: bool = False,
     hide_empty: bool = False,
     hide_password: bool = False,
-    tags: Optional[str] = None,
-    search: Optional[str] = None,
+    tags: str | None = None,
+    search: str | None = None,
 ):
     """List all game servers with optional filtering"""
     if not server_browser:

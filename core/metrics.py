@@ -4,7 +4,6 @@ import asyncio
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Dict, List, Optional
 
 import psutil
 
@@ -25,7 +24,7 @@ class PeerMetrics:
 
     peer_id: str
     peer_name: str
-    latency: Deque[MetricPoint] = field(default_factory=lambda: deque(maxlen=360))
+    latency: deque[MetricPoint] = field(default_factory=lambda: deque(maxlen=360))
     bytes_sent: int = 0
     bytes_received: int = 0
     packets_sent: int = 0
@@ -33,7 +32,7 @@ class PeerMetrics:
     connection_uptime: float = 0
     last_seen: float = field(default_factory=time.time)
     status: str = "connected"  # "connected", "degraded", "disconnected"
-    
+
     # Connection quality tracking
     packet_loss_percent: float = 0.0
     jitter_ms: float = 0.0
@@ -45,12 +44,12 @@ class PeerMetrics:
 class SystemMetrics:
     """System-level metrics"""
 
-    cpu_percent: Deque[MetricPoint] = field(default_factory=lambda: deque(maxlen=360))
-    memory_percent: Deque[MetricPoint] = field(
+    cpu_percent: deque[MetricPoint] = field(default_factory=lambda: deque(maxlen=360))
+    memory_percent: deque[MetricPoint] = field(
         default_factory=lambda: deque(maxlen=360)
     )
-    network_sent: Deque[MetricPoint] = field(default_factory=lambda: deque(maxlen=360))
-    network_received: Deque[MetricPoint] = field(
+    network_sent: deque[MetricPoint] = field(default_factory=lambda: deque(maxlen=360))
+    network_received: deque[MetricPoint] = field(
         default_factory=lambda: deque(maxlen=360)
     )
 
@@ -80,20 +79,20 @@ def predict_connection_quality(
     """
     # Latency score: 100 at 0ms, 0 at 150ms (linear)
     latency_score = max(0, 100 - (latency_ms / 1.5))
-    
+
     # Packet loss score: 100 at 0%, 0 at 5%
     loss_score = max(0, 100 - (packet_loss_percent * 20))
-    
+
     # Jitter score: 100 at 0ms, 0 at 50ms
     jitter_score = max(0, 100 - (jitter_ms * 2))
-    
+
     # Weighted average (latency is most critical for gaming)
     quality_score = (
         latency_score * 0.40 +
         loss_score * 0.35 +
         jitter_score * 0.25
     )
-    
+
     # Determine quality status
     if quality_score >= 80:
         status = "excellent"
@@ -103,14 +102,14 @@ def predict_connection_quality(
         status = "fair"
     else:
         status = "poor"
-    
+
     return quality_score, status
 
 
 def aggregate_metrics_by_window(
     metrics: list[MetricPoint],
     window_seconds: float = 60.0,
-    current_time: Optional[float] = None,
+    current_time: float | None = None,
 ) -> dict:
     """Aggregate metrics by time window using statistical measures
     
@@ -140,18 +139,18 @@ def aggregate_metrics_by_window(
             "p95": None,
             "sum": 0,
         }
-    
+
     if current_time is None:
         current_time = time.time()
-    
+
     cutoff_time = current_time - window_seconds
-    
+
     # Filter metrics within window
     window_values = [
         m.value for m in metrics
         if m.timestamp >= cutoff_time
     ]
-    
+
     if not window_values:
         return {
             "count": 0,
@@ -161,15 +160,15 @@ def aggregate_metrics_by_window(
             "p95": None,
             "sum": 0,
         }
-    
+
     # Calculate statistics
     sorted_values = sorted(window_values)
     count = len(sorted_values)
-    
+
     # 95th percentile
     p95_index = int(count * 0.95)
     p95 = sorted_values[p95_index] if p95_index < count else sorted_values[-1]
-    
+
     return {
         "count": count,
         "min": min(sorted_values),
@@ -187,12 +186,12 @@ class GameSession:
     game_id: str
     game_name: str
     started_at: float
-    ended_at: Optional[float] = None
-    duration: Optional[float] = None
-    peers: List[str] = field(default_factory=list)
-    avg_latency: Optional[float] = None
-    max_latency: Optional[float] = None
-    min_latency: Optional[float] = None
+    ended_at: float | None = None
+    duration: float | None = None
+    peers: list[str] = field(default_factory=list)
+    avg_latency: float | None = None
+    max_latency: float | None = None
+    min_latency: float | None = None
 
 
 class MetricsCollector:
@@ -203,14 +202,14 @@ class MetricsCollector:
         self.running = False
 
         # Peer metrics
-        self.peer_metrics: Dict[str, PeerMetrics] = {}
+        self.peer_metrics: dict[str, PeerMetrics] = {}
 
         # System metrics
         self.system_metrics = SystemMetrics()
 
         # Game sessions
-        self.game_sessions: Deque[GameSession] = deque(maxlen=100)
-        self.active_session: Optional[GameSession] = None
+        self.game_sessions: deque[GameSession] = deque(maxlen=100)
+        self.active_session: GameSession | None = None
 
         # Network baseline (for calculating delta)
         self.network_baseline = None
@@ -301,7 +300,7 @@ class MetricsCollector:
         if peer_id in self.peer_metrics:
             self.peer_metrics[peer_id].status = "disconnected"
 
-    async def record_latency(self, peer_id: str, latency: Optional[float]):
+    async def record_latency(self, peer_id: str, latency: float | None):
         """Record latency measurement for a peer and update quality prediction"""
         if peer_id not in self.peer_metrics:
             return
@@ -319,18 +318,18 @@ class MetricsCollector:
                 avg_latency = sum(latencies) / len(latencies)
                 variance = sum((x - avg_latency) ** 2 for x in latencies) / len(latencies)
                 peer.jitter_ms = variance ** 0.5
-            
+
             # Update connection quality prediction
             quality_score, quality_status = predict_connection_quality(
                 latency_ms=latency,
                 packet_loss_percent=peer.packet_loss_percent,
                 jitter_ms=peer.jitter_ms
             )
-            
+
             # Track quality trend
             prev_score = peer.quality_score
             peer.quality_score = quality_score
-            
+
             if quality_score > prev_score + 5:
                 peer.quality_trend = "improving"
             elif quality_score < prev_score - 5:
@@ -369,7 +368,7 @@ class MetricsCollector:
         peer = self.peer_metrics[peer_id]
         peer.last_seen = time.time()
 
-    async def start_game_session(self, game_id: str, game_name: str, peers: List[str]):
+    async def start_game_session(self, game_id: str, game_name: str, peers: list[str]):
         """Start tracking a game session"""
         self.active_session = GameSession(
             game_id=game_id,
@@ -402,7 +401,7 @@ class MetricsCollector:
             self.game_sessions.append(self.active_session)
             self.active_session = None
 
-    async def get_peer_summary(self, peer_id: str) -> Optional[dict]:
+    async def get_peer_summary(self, peer_id: str) -> dict | None:
         """Get summary statistics for a peer"""
         if peer_id not in self.peer_metrics:
             return None
@@ -438,7 +437,7 @@ class MetricsCollector:
             "last_seen": peer.last_seen,
         }
 
-    async def get_all_peers_summary(self) -> List[dict]:
+    async def get_all_peers_summary(self) -> list[dict]:
         """Get summary for all peers"""
         summaries = []
         for peer_id in self.peer_metrics:
@@ -479,7 +478,7 @@ class MetricsCollector:
             },
         }
 
-    def get_latency_history(self, peer_id: str, duration: int = 3600) -> List[dict]:
+    def get_latency_history(self, peer_id: str, duration: int = 3600) -> list[dict]:
         """Get latency history for a peer
 
         Args:
@@ -522,7 +521,7 @@ class MetricsCollector:
             "network_received": filter_points(self.system_metrics.network_received),
         }
 
-    def get_game_sessions(self, limit: int = 10) -> List[dict]:
+    def get_game_sessions(self, limit: int = 10) -> list[dict]:
         """Get recent game sessions"""
         sessions = list(self.game_sessions)[-limit:]
 
@@ -566,7 +565,7 @@ class MetricsCollector:
 
         return sum(scores) / len(scores) if scores else 100.0
 
-    def get_peer_connection_quality(self, peer_id: str) -> Optional[dict]:
+    def get_peer_connection_quality(self, peer_id: str) -> dict | None:
         """Get detailed connection quality metrics for a peer
         
         Returns:
@@ -574,20 +573,20 @@ class MetricsCollector:
         """
         if peer_id not in self.peer_metrics:
             return None
-        
+
         peer = self.peer_metrics[peer_id]
-        
+
         # Calculate average latency
         avg_latency = None
         if peer.latency:
             avg_latency = sum(p.value for p in peer.latency) / len(peer.latency)
-        
+
         return {
             "peer_id": peer_id,
             "peer_name": peer.peer_name,
             "quality_score": peer.quality_score,
-            "quality_status": "excellent" if peer.quality_score >= 80 else 
-                             "good" if peer.quality_score >= 60 else 
+            "quality_status": "excellent" if peer.quality_score >= 80 else
+                             "good" if peer.quality_score >= 60 else
                              "fair" if peer.quality_score >= 40 else "poor",
             "quality_trend": peer.quality_trend,
             "status": peer.status,
@@ -611,7 +610,7 @@ class MetricsCollector:
             Dictionary with aggregated CPU, memory, and network stats
         """
         current_time = time.time()
-        
+
         return {
             "cpu": aggregate_metrics_by_window(
                 list(self.system_metrics.cpu_percent),
@@ -637,7 +636,7 @@ class MetricsCollector:
             "timestamp": current_time,
         }
 
-    def get_aggregated_peer_metrics(self, peer_id: str, window_seconds: float = 60.0) -> Optional[dict]:
+    def get_aggregated_peer_metrics(self, peer_id: str, window_seconds: float = 60.0) -> dict | None:
         """Get aggregated metrics for a specific peer
         
         Args:
@@ -649,10 +648,10 @@ class MetricsCollector:
         """
         if peer_id not in self.peer_metrics:
             return None
-        
+
         peer = self.peer_metrics[peer_id]
         current_time = time.time()
-        
+
         return {
             "peer_id": peer_id,
             "peer_name": peer.peer_name,

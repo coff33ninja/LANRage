@@ -5,7 +5,6 @@ import sys
 import time
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, Optional
 
 import aiohttp
 
@@ -27,7 +26,7 @@ class NotificationBatcher:
     Groups similar notifications within a time window (e.g., multiple
     peer joins) into a single message to reduce Discord API traffic.
     """
-    
+
     def __init__(self, batch_interval_ms: float = 500.0):
         """Initialize notification batcher
         
@@ -35,10 +34,10 @@ class NotificationBatcher:
             batch_interval_ms: Time window to collect notifications (milliseconds)
         """
         self.batch_interval = batch_interval_ms / 1000.0
-        self.pending_notifications: Deque[NotificationMessage] = deque()
+        self.pending_notifications: deque[NotificationMessage] = deque()
         self.last_flush_time = time.time()
         self.flush_lock = asyncio.Lock()
-    
+
     async def queue_notification(
         self,
         title: str,
@@ -52,17 +51,17 @@ class NotificationBatcher:
         """
         current_time = time.time()
         time_since_flush = current_time - self.last_flush_time
-        
+
         self.pending_notifications.append(
             NotificationMessage(title, description, color, current_time)
         )
-        
+
         # Send immediately if batch interval exceeded
         if time_since_flush >= self.batch_interval:
             return False  # Should send immediately
-        
+
         return True  # Queue for later batching
-    
+
     async def flush(self) -> list[NotificationMessage]:
         """Get pending notifications and reset batch
         
@@ -74,7 +73,7 @@ class NotificationBatcher:
             self.pending_notifications.clear()
             self.last_flush_time = time.time()
             return notifications
-    
+
     def get_pending_count(self) -> int:
         """Get count of pending notifications"""
         return len(self.pending_notifications)
@@ -85,14 +84,14 @@ class DiscordIntegration:
 
     def __init__(self, config: Config):
         self.config = config
-        self.webhook_url: Optional[str] = None
-        self.party_invite_url: Optional[str] = None
+        self.webhook_url: str | None = None
+        self.party_invite_url: str | None = None
         self.session = None
         self.running = False
-        
+
         # Notification batching (500ms batch window)
         self.notification_batcher = NotificationBatcher(batch_interval_ms=500.0)
-        self.batch_flush_task: Optional[asyncio.Task] = None
+        self.batch_flush_task: asyncio.Task | None = None
 
         # Discord Rich Presence (if pypresence is available)
         self.rpc = None
@@ -105,14 +104,14 @@ class DiscordIntegration:
 
         # Try to connect Rich Presence
         await self._connect_rich_presence()
-        
+
         # Start batch flush task for notifications (every 500ms)
         self.batch_flush_task = asyncio.create_task(self._batch_flush_loop())
 
     async def stop(self):
         """Stop Discord integration"""
         self.running = False
-        
+
         # Cancel batch flush task
         if self.batch_flush_task:
             self.batch_flush_task.cancel()
@@ -120,7 +119,7 @@ class DiscordIntegration:
                 await self.batch_flush_task
             except asyncio.CancelledError:
                 pass
-        
+
         # Final flush of pending notifications
         await self._flush_pending_notifications()
 
@@ -151,10 +150,10 @@ class DiscordIntegration:
     async def _flush_pending_notifications(self):
         """Send all pending batched notifications"""
         notifications = await self.notification_batcher.flush()
-        
+
         if not notifications:
             return
-        
+
         # If multiple notifications, combine them into one message
         if len(notifications) > 1:
             # Group by type and create summary
@@ -228,7 +227,7 @@ class DiscordIntegration:
         should_send_immediate = not await self.notification_batcher.queue_notification(
             title, message, color
         )
-        
+
         # If batch interval exceeded, send immediately
         if should_send_immediate:
             await self._send_webhook(title, message, color)
@@ -299,7 +298,7 @@ class DiscordIntegration:
         )
 
     async def notify_game_ended(
-        self, game_name: str, duration: float, avg_latency: Optional[float]
+        self, game_name: str, duration: float, avg_latency: float | None
     ):
         """Notify that a game session ended"""
         duration_str = self._format_duration(duration)
@@ -314,9 +313,9 @@ class DiscordIntegration:
     async def update_presence(
         self,
         state: str,
-        details: Optional[str] = None,
-        party_size: Optional[tuple] = None,
-        start_time: Optional[int] = None,
+        details: str | None = None,
+        party_size: tuple | None = None,
+        start_time: int | None = None,
     ):
         """Update Discord Rich Presence
 
@@ -369,7 +368,7 @@ class DiscordIntegration:
                     file=sys.stderr,
                 )
 
-    def get_party_invite_link(self) -> Optional[str]:
+    def get_party_invite_link(self) -> str | None:
         """Get Discord party invite link"""
         return self.party_invite_url
 
@@ -381,10 +380,9 @@ class DiscordIntegration:
 
         if hours > 0:
             return f"{hours}h {minutes}m"
-        elif minutes > 0:
+        if minutes > 0:
             return f"{minutes}m {secs}s"
-        else:
-            return f"{secs}s"
+        return f"{secs}s"
 
 
 class DiscordWebhookHelper:
@@ -444,7 +442,7 @@ https://discord.gg/abc123xyz
 
 
 # Quick setup helper
-async def quick_discord_setup(webhook_url: str, invite_url: Optional[str] = None):
+async def quick_discord_setup(webhook_url: str, invite_url: str | None = None):
     """Quick setup for Discord integration
 
     Args:

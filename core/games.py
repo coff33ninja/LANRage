@@ -6,7 +6,6 @@ import platform
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 import psutil
 
@@ -14,7 +13,7 @@ from .config import Config
 from .nat import NATType
 
 
-def calculate_adaptive_keepalive(nat_type: NATType, profile_keepalive: Optional[int] = None) -> int:
+def calculate_adaptive_keepalive(nat_type: NATType, profile_keepalive: int | None = None) -> int:
     """Calculate keepalive interval based on NAT type
     
     Symmetric NAT needs frequent keepalive to maintain bindings.
@@ -30,7 +29,7 @@ def calculate_adaptive_keepalive(nat_type: NATType, profile_keepalive: Optional[
     # If profile specifies a keepalive and it's not the default, use it
     if profile_keepalive and profile_keepalive != 25:
         return profile_keepalive
-    
+
     # Map NAT types to keepalive intervals
     # These are optimized for maintaining NAT bindings without excessive traffic
     nat_keepalive_map = {
@@ -41,7 +40,7 @@ def calculate_adaptive_keepalive(nat_type: NATType, profile_keepalive: Optional[
         NATType.SYMMETRIC: 8,                # Very strict, needs frequent keepalive
         NATType.UNKNOWN: 25,                 # Default to conservative value
     }
-    
+
     return nat_keepalive_map.get(nat_type, 25)
 
 
@@ -51,7 +50,7 @@ class GameProfile:
 
     name: str
     executable: str  # Process name
-    ports: List[int]  # Ports used by game
+    ports: list[int]  # Ports used by game
     protocol: str  # "udp", "tcp", or "both"
     broadcast: bool  # Uses broadcast discovery
     multicast: bool  # Uses multicast discovery
@@ -65,13 +64,13 @@ class GameProfile:
     packet_priority: str = "high"  # "low", "medium", "high"
 
 
-async def load_game_profiles() -> Dict[str, GameProfile]:
+async def load_game_profiles() -> dict[str, GameProfile]:
     """Load game profiles from JSON files organized by genre
 
     Returns:
         Dictionary mapping game_id to GameProfile
     """
-    profiles: Dict[str, GameProfile] = {}
+    profiles: dict[str, GameProfile] = {}
 
     # Get the game_profiles directory
     base_dir = Path(__file__).parent.parent / "game_profiles"
@@ -93,7 +92,7 @@ async def load_game_profiles() -> Dict[str, GameProfile]:
             # Use aiofiles for async file I/O
             import aiofiles
 
-            async with aiofiles.open(json_file, "r", encoding="utf-8") as f:
+            async with aiofiles.open(json_file, encoding="utf-8") as f:
                 content = await f.read()
                 data = json.loads(content)
 
@@ -137,20 +136,20 @@ async def load_game_profiles() -> Dict[str, GameProfile]:
 
 
 # Load profiles on module import - need to handle async loading
-GAME_PROFILES: Dict[str, GameProfile] = {}
+GAME_PROFILES: dict[str, GameProfile] = {}
 
 
 def _levenshtein_distance(s1: str, s2: str) -> int:
     """Calculate Levenshtein distance between two strings (fuzzy matching)"""
     s1 = s1.lower()
     s2 = s2.lower()
-    
+
     if len(s1) < len(s2):
         return _levenshtein_distance(s2, s1)
-    
+
     if len(s2) == 0:
         return len(s1)
-    
+
     previous_row = range(len(s2) + 1)
     for i, c1 in enumerate(s1):
         current_row = [i + 1]
@@ -160,7 +159,7 @@ def _levenshtein_distance(s1: str, s2: str) -> int:
             substitutions = previous_row[j] + (c1 != c2)
             current_row.append(min(insertions, deletions, substitutions))
         previous_row = current_row
-    
+
     return previous_row[-1]
 
 
@@ -178,35 +177,35 @@ def _fuzzy_match_executable(proc_name: str, profile_exe: str, threshold: float =
     # Exact match first (fastest path)
     if proc_name.lower() == profile_exe.lower():
         return True
-    
+
     # Remove extensions for comparison
     proc_clean = proc_name.lower().replace('.exe', '').replace('.bat', '')
     exe_clean = profile_exe.lower().replace('.exe', '').replace('.bat', '')
-    
+
     if proc_clean == exe_clean:
         return True
-    
+
     # Levenshtein distance based fuzzy match
     distance = _levenshtein_distance(proc_clean, exe_clean)
     max_len = max(len(proc_clean), len(exe_clean))
-    
+
     if max_len == 0:
         return False
-    
+
     similarity = 1.0 - (distance / max_len)
     return similarity >= threshold
 
 
 class ProfileCache:
     """Cache for game profiles with TTL"""
-    
+
     def __init__(self, ttl_seconds: float = 30.0):
         self.ttl = ttl_seconds
         self.profiles = {}
         self.last_load_time = 0
         self._lock = asyncio.Lock()
-    
-    async def get(self) -> Dict[str, GameProfile]:
+
+    async def get(self) -> dict[str, GameProfile]:
         """Get cached profiles, reload if expired"""
         async with self._lock:
             current_time = asyncio.get_event_loop().time()
@@ -214,7 +213,7 @@ class ProfileCache:
                 self.profiles = await load_game_profiles()
                 self.last_load_time = current_time
             return self.profiles
-    
+
     async def invalidate(self):
         """Force reload on next access"""
         async with self._lock:
@@ -237,16 +236,16 @@ class GameDetector:
 
     def __init__(self, config: Config, optimizer=None):
         self.config = config
-        self.detected_games: Set[str] = set()
+        self.detected_games: set[str] = set()
         self.running = False
         self._game_manager = None  # Will be set by GameManager
         self.optimizer = optimizer  # Will be set after initialization
 
         # Path for custom game profiles
         self.custom_profiles_path = Path(config.config_dir) / "game_profiles.json"
-        
+
         # Detection history tracking: (timestamp, game_id, action)
-        self.detection_history: List[Tuple[float, str, str]] = []
+        self.detection_history: list[tuple[float, str, str]] = []
 
     async def start(self):
         """Start game detection"""
@@ -262,9 +261,10 @@ class GameDetector:
         if self.custom_profiles_path.exists():
             try:
                 import json
+
                 import aiofiles
 
-                async with aiofiles.open(self.custom_profiles_path, "r", encoding="utf-8") as f:
+                async with aiofiles.open(self.custom_profiles_path, encoding="utf-8") as f:
                     content = await f.read()
                     custom_data = json.loads(content)
 
@@ -325,7 +325,7 @@ class GameDetector:
 
         # Get all running processes (run in executor to avoid blocking)
         loop = asyncio.get_event_loop()
-        
+
         def _get_processes():
             processes = []
             for proc in psutil.process_iter(["name"]):
@@ -368,7 +368,7 @@ class GameDetector:
 
         # Record in detection history with timestamp
         self.detection_history.append((time.time(), game_id, "started"))
-        
+
         # Keep history to last 100 events
         if len(self.detection_history) > 100:
             self.detection_history = self.detection_history[-100:]
@@ -384,10 +384,10 @@ class GameDetector:
         """Handle game stopped"""
         profile = GAME_PROFILES[game_id]
         print(f"🎮 Stopped: {profile.name}")
-        
+
         # Record in detection history with timestamp
         self.detection_history.append((time.time(), game_id, "stopped"))
-        
+
         # Keep history to last 100 events
         if len(self.detection_history) > 100:
             self.detection_history = self.detection_history[-100:]
@@ -398,15 +398,15 @@ class GameDetector:
             await self.optimizer.clear_profile()
             print("   ✓ Configuration reset complete")
 
-    def get_active_games(self) -> List[GameProfile]:
+    def get_active_games(self) -> list[GameProfile]:
         """Get list of active games"""
         return [GAME_PROFILES[game_id] for game_id in self.detected_games]
 
-    def get_profile(self, game_id: str) -> Optional[GameProfile]:
+    def get_profile(self, game_id: str) -> GameProfile | None:
         """Get profile for a specific game"""
         return GAME_PROFILES.get(game_id)
 
-    def get_detection_history(self) -> List[Tuple[float, str, str]]:
+    def get_detection_history(self) -> list[tuple[float, str, str]]:
         """Get game detection history
         
         Returns:
@@ -419,13 +419,14 @@ class GameDetector:
         """Save a custom game profile to disk"""
         try:
             import json
+
             import aiofiles
 
             custom_profiles = {}
 
             # Load existing profiles
             if self.custom_profiles_path.exists():
-                async with aiofiles.open(self.custom_profiles_path, "r", encoding="utf-8") as f:
+                async with aiofiles.open(self.custom_profiles_path, encoding="utf-8") as f:
                     content = await f.read()
                     custom_profiles = json.loads(content)
 
@@ -458,10 +459,10 @@ class GameDetector:
 class GameOptimizer:
     """Applies game-specific optimizations"""
 
-    def __init__(self, config: Config, nat_type: Optional[NATType] = None):
+    def __init__(self, config: Config, nat_type: NATType | None = None):
         self.config = config
         self.nat_type = nat_type or NATType.UNKNOWN
-        self.active_profile: Optional[GameProfile] = None
+        self.active_profile: GameProfile | None = None
 
     def set_nat_type(self, nat_type: NATType):
         """Update NAT type for adaptive keepalive calculation"""
@@ -487,12 +488,9 @@ class GameOptimizer:
 
         # Calculate adaptive keepalive based on NAT type
         adaptive_keepalive = calculate_adaptive_keepalive(self.nat_type, profile.keepalive)
-        
+
         # Adjust WireGuard keepalive
-        if adaptive_keepalive != 25 and network_manager:
-            print(f"   - Keepalive: {adaptive_keepalive}s (NAT: {self.nat_type.value})")
-            await self._update_keepalive(network_manager, adaptive_keepalive)
-        elif network_manager and adaptive_keepalive != 25:
+        if adaptive_keepalive != 25 and network_manager or network_manager and adaptive_keepalive != 25:
             print(f"   - Keepalive: {adaptive_keepalive}s (NAT: {self.nat_type.value})")
             await self._update_keepalive(network_manager, adaptive_keepalive)
 
@@ -875,18 +873,18 @@ class GameManager:
         global GAME_PROFILES
         if not GAME_PROFILES:
             await initialize_game_profiles()
-        
+
         # Update optimizer with current NAT type if available
         if self.nat_traversal and hasattr(self.nat_traversal, 'nat_type'):
             self.optimizer.set_nat_type(self.nat_traversal.nat_type)
-        
+
         await self.detector.start()
 
     async def stop(self):
         """Stop game management"""
         await self.detector.stop()
 
-    def get_active_games(self) -> List[GameProfile]:
+    def get_active_games(self) -> list[GameProfile]:
         """Get active games"""
         return self.detector.get_active_games()
 
@@ -906,6 +904,6 @@ class GameManager:
                 profile, self.network_manager, self.broadcast_manager
             )
 
-    def list_supported_games(self) -> List[GameProfile]:
+    def list_supported_games(self) -> list[GameProfile]:
         """List all supported games"""
         return list(GAME_PROFILES.values())

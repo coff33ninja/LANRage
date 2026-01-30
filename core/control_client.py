@@ -9,7 +9,6 @@ Uses httpx for robust async HTTP communication with:
 """
 
 import asyncio
-from typing import Dict, Optional
 
 import httpx
 
@@ -32,13 +31,13 @@ class RemoteControlPlaneClient:
     def __init__(self, config: Config):
         self.config = config
         self.server_url = config.control_server
-        self.client: Optional[httpx.AsyncClient] = None
-        self.auth_token: Optional[str] = None
-        self.my_peer_id: Optional[str] = None
-        self.my_party_id: Optional[str] = None
+        self.client: httpx.AsyncClient | None = None
+        self.auth_token: str | None = None
+        self.my_peer_id: str | None = None
+        self.my_party_id: str | None = None
 
         # Heartbeat task
-        self.heartbeat_task: Optional[asyncio.Task] = None
+        self.heartbeat_task: asyncio.Task | None = None
         self.heartbeat_interval = 30  # seconds
 
     async def initialize(self):
@@ -71,7 +70,7 @@ class RemoteControlPlaneClient:
         self,
         method: str,
         endpoint: str,
-        json_data: Optional[dict] = None,
+        json_data: dict | None = None,
         retry_count: int = 3,
     ) -> dict:
         """
@@ -259,7 +258,7 @@ class RemoteControlPlaneClient:
         except Exception as e:
             raise ControlPlaneError(f"Failed to leave party: {e}")
 
-    async def get_party(self, party_id: str) -> Optional[PartyInfo]:
+    async def get_party(self, party_id: str) -> PartyInfo | None:
         """
         Get party information
 
@@ -278,7 +277,7 @@ class RemoteControlPlaneClient:
                 return None
             raise
 
-    async def get_peers(self, party_id: str) -> Dict[str, PeerInfo]:
+    async def get_peers(self, party_id: str) -> dict[str, PeerInfo]:
         """
         Get all peers in a party
 
@@ -295,7 +294,7 @@ class RemoteControlPlaneClient:
         except Exception as e:
             raise ControlPlaneError(f"Failed to get peers: {e}")
 
-    async def discover_peer(self, party_id: str, peer_id: str) -> Optional[PeerInfo]:
+    async def discover_peer(self, party_id: str, peer_id: str) -> PeerInfo | None:
         """
         Discover a specific peer
 

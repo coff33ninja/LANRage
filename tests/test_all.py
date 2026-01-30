@@ -60,9 +60,8 @@ class LANrageTestResults:
         if self.failed == 0:
             print("\n✅ All critical tests passed!")
             return True
-        else:
-            print("\n❌ Some tests failed")
-            return False
+        print("\n❌ Some tests failed")
+        return False
 
 
 @pytest.fixture
