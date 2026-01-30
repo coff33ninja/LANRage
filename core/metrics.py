@@ -33,6 +33,12 @@ class PeerMetrics:
     connection_uptime: float = 0
     last_seen: float = field(default_factory=time.time)
     status: str = "connected"  # "connected", "degraded", "disconnected"
+    
+    # Connection quality tracking
+    packet_loss_percent: float = 0.0
+    jitter_ms: float = 0.0
+    quality_score: float = 100.0  # 0-100 score
+    quality_trend: str = "stable"  # "improving", "stable", "degrading"
 
 
 @dataclass
@@ -47,6 +53,58 @@ class SystemMetrics:
     network_received: Deque[MetricPoint] = field(
         default_factory=lambda: deque(maxlen=360)
     )
+
+
+def predict_connection_quality(
+    latency_ms: float,
+    packet_loss_percent: float = 0.0,
+    jitter_ms: float = 0.0,
+) -> tuple[float, str]:
+    """Predict connection quality based on network metrics
+    
+    Uses a weighted scoring algorithm to compute connection quality (0-100).
+    Factors:
+    - Latency (40%): Lower is better. 0ms=100pts, 150ms=0pts
+    - Packet Loss (35%): 0% loss=100pts, 5% loss=0pts
+    - Jitter (25%): Lower variance is better. 0ms=100pts, 50ms=0pts
+    
+    Args:
+        latency_ms: Round-trip latency in milliseconds
+        packet_loss_percent: Packet loss percentage (0-100)
+        jitter_ms: Jitter (standard deviation of latency) in milliseconds
+        
+    Returns:
+        Tuple of (quality_score: float, quality_status: str)
+        - quality_score: 0-100 score
+        - quality_status: "excellent", "good", "fair", "poor"
+    """
+    # Latency score: 100 at 0ms, 0 at 150ms (linear)
+    latency_score = max(0, 100 - (latency_ms / 1.5))
+    
+    # Packet loss score: 100 at 0%, 0 at 5%
+    loss_score = max(0, 100 - (packet_loss_percent * 20))
+    
+    # Jitter score: 100 at 0ms, 0 at 50ms
+    jitter_score = max(0, 100 - (jitter_ms * 2))
+    
+    # Weighted average (latency is most critical for gaming)
+    quality_score = (
+        latency_score * 0.40 +
+        loss_score * 0.35 +
+        jitter_score * 0.25
+    )
+    
+    # Determine quality status
+    if quality_score >= 80:
+        status = "excellent"
+    elif quality_score >= 60:
+        status = "good"
+    elif quality_score >= 40:
+        status = "fair"
+    else:
+        status = "poor"
+    
+    return quality_score, status
 
 
 @dataclass
@@ -171,7 +229,7 @@ class MetricsCollector:
             self.peer_metrics[peer_id].status = "disconnected"
 
     async def record_latency(self, peer_id: str, latency: Optional[float]):
-        """Record latency measurement for a peer"""
+        """Record latency measurement for a peer and update quality prediction"""
         if peer_id not in self.peer_metrics:
             return
 
@@ -182,14 +240,41 @@ class MetricsCollector:
             peer.latency.append(MetricPoint(timestamp=current_time, value=latency))
             peer.last_seen = current_time
 
-            # Update status based on latency
-            if latency > 200:
-                peer.status = "degraded"
+            # Calculate jitter (standard deviation of recent latencies)
+            if len(peer.latency) >= 2:
+                latencies = [p.value for p in peer.latency]
+                avg_latency = sum(latencies) / len(latencies)
+                variance = sum((x - avg_latency) ** 2 for x in latencies) / len(latencies)
+                peer.jitter_ms = variance ** 0.5
+            
+            # Update connection quality prediction
+            quality_score, quality_status = predict_connection_quality(
+                latency_ms=latency,
+                packet_loss_percent=peer.packet_loss_percent,
+                jitter_ms=peer.jitter_ms
+            )
+            
+            # Track quality trend
+            prev_score = peer.quality_score
+            peer.quality_score = quality_score
+            
+            if quality_score > prev_score + 5:
+                peer.quality_trend = "improving"
+            elif quality_score < prev_score - 5:
+                peer.quality_trend = "degrading"
             else:
+                peer.quality_trend = "stable"
+
+            # Update status based on quality score
+            if quality_score >= 60:
                 peer.status = "connected"
+            else:
+                peer.status = "degraded"
         else:
             # No latency = connection issue
             peer.status = "degraded"
+            peer.quality_score = 0.0
+            peer.quality_trend = "degrading"
 
     async def record_bandwidth(
         self, peer_id: str, bytes_sent: int = 0, bytes_received: int = 0
@@ -407,3 +492,36 @@ class MetricsCollector:
             scores.append(cpu_score)
 
         return sum(scores) / len(scores) if scores else 100.0
+
+    def get_peer_connection_quality(self, peer_id: str) -> Optional[dict]:
+        """Get detailed connection quality metrics for a peer
+        
+        Returns:
+            Dictionary with quality metrics or None if peer not found
+        """
+        if peer_id not in self.peer_metrics:
+            return None
+        
+        peer = self.peer_metrics[peer_id]
+        
+        # Calculate average latency
+        avg_latency = None
+        if peer.latency:
+            avg_latency = sum(p.value for p in peer.latency) / len(peer.latency)
+        
+        return {
+            "peer_id": peer_id,
+            "peer_name": peer.peer_name,
+            "quality_score": peer.quality_score,
+            "quality_status": "excellent" if peer.quality_score >= 80 else 
+                             "good" if peer.quality_score >= 60 else 
+                             "fair" if peer.quality_score >= 40 else "poor",
+            "quality_trend": peer.quality_trend,
+            "status": peer.status,
+            "avg_latency_ms": avg_latency,
+            "jitter_ms": peer.jitter_ms,
+            "packet_loss_percent": peer.packet_loss_percent,
+            "bytes_sent": peer.bytes_sent,
+            "bytes_received": peer.bytes_received,
+            "uptime_seconds": peer.connection_uptime,
+        }
