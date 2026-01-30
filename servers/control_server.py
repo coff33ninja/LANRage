@@ -164,9 +164,12 @@ async def verify_token(authorization: str | None = Header(None)) -> str:
 
     token = authorization[7:]  # Remove "Bearer " prefix
 
-    async with aiosqlite.connect(DB_PATH) as db, db.execute(
-        "SELECT peer_id, expires_at FROM auth_tokens WHERE token = ?", (token,)
-    ) as cursor:
+    async with (
+        aiosqlite.connect(DB_PATH) as db,
+        db.execute(
+            "SELECT peer_id, expires_at FROM auth_tokens WHERE token = ?", (token,)
+        ) as cursor,
+    ):
         row = await cursor.fetchone()
 
         if not row:
@@ -290,7 +293,7 @@ async def create_party(req: CreatePartyRequest, peer_id: str = Header(None)):
         return {"party_id": party_id, "party": party.to_dict()}
 
     except Exception as e:
-        raise HTTPException(500, f"Failed to create party: {e}")
+        raise HTTPException(500, f"Failed to create party: {e}") from e
 
 
 @app.post("/parties/{party_id}/join")
@@ -338,13 +341,12 @@ async def join_party(party_id: str, req: JoinPartyRequest):
             await db.commit()
 
         # Get updated party info
-        party_response = await get_party(party_id)
-        return party_response
+        return await get_party(party_id)
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, f"Failed to join party: {e}")
+        raise HTTPException(500, f"Failed to join party: {e}") from e
 
 
 @app.delete("/parties/{party_id}/peers/{peer_id}")

@@ -181,7 +181,7 @@ class TestGameProfiles:
         """Test that there are no duplicate game IDs within a profile."""
         profile = load_game_profile(profile_path)
         # Filter out comment fields
-        game_ids = [gid for gid in profile.keys() if not gid.startswith("_")]
+        game_ids = [gid for gid in profile if not gid.startswith("_")]
 
         assert len(game_ids) == len(
             set(game_ids)
@@ -194,7 +194,7 @@ class TestGameProfiles:
         for profile_path in get_all_game_profiles():
             profile = load_game_profile(profile_path)
             # Filter out comment fields
-            game_ids = [gid for gid in profile.keys() if not gid.startswith("_")]
+            game_ids = [gid for gid in profile if not gid.startswith("_")]
             all_game_ids.extend(game_ids)
 
         duplicates = [gid for gid in set(all_game_ids) if all_game_ids.count(gid) > 1]
@@ -208,7 +208,7 @@ class TestGameProfiles:
         for profile_path in get_all_game_profiles():
             profile = load_game_profile(profile_path)
             # Filter out comment fields
-            game_count = len([gid for gid in profile.keys() if not gid.startswith("_")])
+            game_count = len([gid for gid in profile if not gid.startswith("_")])
             total_games += game_count
 
         # We should have at least 75 games

@@ -55,8 +55,7 @@ class PerformanceProfiler:
             start = time.perf_counter()
 
             try:
-                result = func(*args, **kwargs)
-                return result
+                return func(*args, **kwargs)
             except Exception:
                 self.function_stats[func_name]["errors"] += 1
                 raise
@@ -73,8 +72,7 @@ class PerformanceProfiler:
             start = time.perf_counter()
 
             try:
-                result = await func(*args, **kwargs)
-                return result
+                return await func(*args, **kwargs)
             except Exception:
                 self.function_stats[func_name]["errors"] += 1
                 raise

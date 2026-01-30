@@ -50,7 +50,7 @@ async def run_elevated(command: list[str]) -> subprocess.CompletedProcess:
             "Admin rights required. Please run LANrage as Administrator."
         )
     # On Unix, use sudo
-    if not command[0] == "sudo":
+    if command[0] != "sudo":
         command = ["sudo"] + command
 
     proc = await asyncio.create_subprocess_exec(

@@ -144,8 +144,8 @@ async def join_party(req: JoinPartyRequest):
     try:
         party = await party_manager.join_party(req.party_id, req.peer_name)
         return {"party": party.model_dump()}
-    except NotImplementedError:
-        raise HTTPException(501, "Party joining not yet implemented")
+    except NotImplementedError as e:
+        raise HTTPException(501, "Party joining not yet implemented") from e
 
 
 @app.post("/party/leave")
@@ -473,10 +473,10 @@ async def join_server(server_id: str):
         }
     except NotImplementedError as e:
         # Fallback if control plane not initialized
-        raise HTTPException(501, f"Party joining not available: {e}")
+        raise HTTPException(501, f"Party joining not available: {e}") from e
     except Exception as e:
         # Handle other errors gracefully
-        raise HTTPException(500, f"Failed to join party: {e}")
+        raise HTTPException(500, f"Failed to join party: {e}") from e
 
 
 @app.post("/api/servers/{server_id}/favorite")
@@ -542,8 +542,7 @@ async def list_games():
 async def get_settings():
     """Get all settings"""
     db = await get_settings_db()
-    settings = await db.get_all_settings()
-    return settings
+    return await db.get_all_settings()
 
 
 @app.post("/api/settings")
@@ -572,7 +571,7 @@ async def reset_settings():
     current = await db.get_all_settings()
 
     # Delete all settings
-    for key in current.keys():
+    for key in current:
         await db.delete_setting(key)
 
     # Reinitialize defaults
@@ -585,8 +584,7 @@ async def reset_settings():
 async def get_saved_configs():
     """Get all saved configurations"""
     db = await get_settings_db()
-    configs = await db.get_all_server_configs()
-    return configs
+    return await db.get_all_server_configs()
 
 
 @app.post("/api/settings/configs")

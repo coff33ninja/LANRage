@@ -1,6 +1,7 @@
 """Tests for task manager"""
 
 import asyncio
+import contextlib
 
 import pytest
 
@@ -67,10 +68,8 @@ async def test_task_count(task_manager):
     task2.cancel()
     task3.cancel()
 
-    try:
+    with contextlib.suppress(Exception):
         await asyncio.gather(task1, task2, task3, return_exceptions=True)
-    except Exception:
-        pass
 
 
 @pytest.mark.asyncio
@@ -92,10 +91,8 @@ async def test_get_tasks(task_manager):
     # Cancel tasks
     task1.cancel()
     task2.cancel()
-    try:
+    with contextlib.suppress(Exception):
         await asyncio.gather(task1, task2, return_exceptions=True)
-    except Exception:
-        pass
 
 
 @pytest.mark.asyncio
@@ -167,10 +164,8 @@ async def test_task_exception_handling(task_manager):
 
     task = task_manager.create_task(failing_task(), name="failing_task")
 
-    try:
+    with contextlib.suppress(ValueError):
         await task
-    except ValueError:
-        pass
 
     await asyncio.sleep(0.01)
     # Task should be removed even after exception
@@ -189,10 +184,8 @@ async def test_task_cancellation(task_manager):
     # Cancel task
     task.cancel()
 
-    try:
+    with contextlib.suppress(asyncio.CancelledError):
         await task
-    except asyncio.CancelledError:
-        pass
 
     await asyncio.sleep(0.01)
     assert task not in task_manager.tasks
@@ -351,10 +344,8 @@ async def test_wait_all_with_timeout(task_manager):
 
     # Clean up
     task.cancel()
-    try:
+    with contextlib.suppress(asyncio.CancelledError):
         await task
-    except asyncio.CancelledError:
-        pass
 
 
 @pytest.mark.asyncio

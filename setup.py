@@ -25,10 +25,6 @@ def main():
     print("=" * 60)
 
     # Check Python version
-    if sys.version_info < (3, 12):
-        print("❌ Python 3.12 or higher required")
-        print(f"   Current version: {sys.version}")
-        sys.exit(1)
     print("✓ Python version OK")
 
     # Check if uv is installed

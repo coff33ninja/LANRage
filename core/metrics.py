@@ -60,18 +60,18 @@ def predict_connection_quality(
     jitter_ms: float = 0.0,
 ) -> tuple[float, str]:
     """Predict connection quality based on network metrics
-    
+
     Uses a weighted scoring algorithm to compute connection quality (0-100).
     Factors:
     - Latency (40%): Lower is better. 0ms=100pts, 150ms=0pts
     - Packet Loss (35%): 0% loss=100pts, 5% loss=0pts
     - Jitter (25%): Lower variance is better. 0ms=100pts, 50ms=0pts
-    
+
     Args:
         latency_ms: Round-trip latency in milliseconds
         packet_loss_percent: Packet loss percentage (0-100)
         jitter_ms: Jitter (standard deviation of latency) in milliseconds
-        
+
     Returns:
         Tuple of (quality_score: float, quality_status: str)
         - quality_score: 0-100 score
@@ -87,11 +87,7 @@ def predict_connection_quality(
     jitter_score = max(0, 100 - (jitter_ms * 2))
 
     # Weighted average (latency is most critical for gaming)
-    quality_score = (
-        latency_score * 0.40 +
-        loss_score * 0.35 +
-        jitter_score * 0.25
-    )
+    quality_score = latency_score * 0.40 + loss_score * 0.35 + jitter_score * 0.25
 
     # Determine quality status
     if quality_score >= 80:
@@ -112,15 +108,15 @@ def aggregate_metrics_by_window(
     current_time: float | None = None,
 ) -> dict:
     """Aggregate metrics by time window using statistical measures
-    
+
     Reduces data volume by aggregating raw metrics into statistical summaries
     within time windows. This is useful for long-term trending analysis.
-    
+
     Args:
         metrics: List of MetricPoint data to aggregate
         window_seconds: Time window size in seconds
         current_time: Current time (defaults to now)
-        
+
     Returns:
         Dictionary with aggregated statistics:
         - count: Number of data points in window
@@ -146,10 +142,7 @@ def aggregate_metrics_by_window(
     cutoff_time = current_time - window_seconds
 
     # Filter metrics within window
-    window_values = [
-        m.value for m in metrics
-        if m.timestamp >= cutoff_time
-    ]
+    window_values = [m.value for m in metrics if m.timestamp >= cutoff_time]
 
     if not window_values:
         return {
@@ -316,14 +309,16 @@ class MetricsCollector:
             if len(peer.latency) >= 2:
                 latencies = [p.value for p in peer.latency]
                 avg_latency = sum(latencies) / len(latencies)
-                variance = sum((x - avg_latency) ** 2 for x in latencies) / len(latencies)
-                peer.jitter_ms = variance ** 0.5
+                variance = sum((x - avg_latency) ** 2 for x in latencies) / len(
+                    latencies
+                )
+                peer.jitter_ms = variance**0.5
 
             # Update connection quality prediction
             quality_score, quality_status = predict_connection_quality(
                 latency_ms=latency,
                 packet_loss_percent=peer.packet_loss_percent,
-                jitter_ms=peer.jitter_ms
+                jitter_ms=peer.jitter_ms,
             )
 
             # Track quality trend
@@ -567,7 +562,7 @@ class MetricsCollector:
 
     def get_peer_connection_quality(self, peer_id: str) -> dict | None:
         """Get detailed connection quality metrics for a peer
-        
+
         Returns:
             Dictionary with quality metrics or None if peer not found
         """
@@ -585,9 +580,15 @@ class MetricsCollector:
             "peer_id": peer_id,
             "peer_name": peer.peer_name,
             "quality_score": peer.quality_score,
-            "quality_status": "excellent" if peer.quality_score >= 80 else
-                             "good" if peer.quality_score >= 60 else
-                             "fair" if peer.quality_score >= 40 else "poor",
+            "quality_status": (
+                "excellent"
+                if peer.quality_score >= 80
+                else (
+                    "good"
+                    if peer.quality_score >= 60
+                    else "fair" if peer.quality_score >= 40 else "poor"
+                )
+            ),
             "quality_trend": peer.quality_trend,
             "status": peer.status,
             "avg_latency_ms": avg_latency,
@@ -600,12 +601,12 @@ class MetricsCollector:
 
     def get_aggregated_system_metrics(self, window_seconds: float = 60.0) -> dict:
         """Get aggregated system metrics for a time window
-        
+
         Useful for trending analysis and long-term monitoring.
-        
+
         Args:
             window_seconds: Time window in seconds
-            
+
         Returns:
             Dictionary with aggregated CPU, memory, and network stats
         """
@@ -613,36 +614,30 @@ class MetricsCollector:
 
         return {
             "cpu": aggregate_metrics_by_window(
-                list(self.system_metrics.cpu_percent),
-                window_seconds,
-                current_time
+                list(self.system_metrics.cpu_percent), window_seconds, current_time
             ),
             "memory": aggregate_metrics_by_window(
-                list(self.system_metrics.memory_percent),
-                window_seconds,
-                current_time
+                list(self.system_metrics.memory_percent), window_seconds, current_time
             ),
             "network_sent": aggregate_metrics_by_window(
-                list(self.system_metrics.network_sent),
-                window_seconds,
-                current_time
+                list(self.system_metrics.network_sent), window_seconds, current_time
             ),
             "network_received": aggregate_metrics_by_window(
-                list(self.system_metrics.network_received),
-                window_seconds,
-                current_time
+                list(self.system_metrics.network_received), window_seconds, current_time
             ),
             "window_seconds": window_seconds,
             "timestamp": current_time,
         }
 
-    def get_aggregated_peer_metrics(self, peer_id: str, window_seconds: float = 60.0) -> dict | None:
+    def get_aggregated_peer_metrics(
+        self, peer_id: str, window_seconds: float = 60.0
+    ) -> dict | None:
         """Get aggregated metrics for a specific peer
-        
+
         Args:
             peer_id: Peer ID to get metrics for
             window_seconds: Time window in seconds
-            
+
         Returns:
             Dictionary with aggregated latency stats or None if peer not found
         """
@@ -656,9 +651,7 @@ class MetricsCollector:
             "peer_id": peer_id,
             "peer_name": peer.peer_name,
             "latency": aggregate_metrics_by_window(
-                list(peer.latency),
-                window_seconds,
-                current_time
+                list(peer.latency), window_seconds, current_time
             ),
             "quality_score": peer.quality_score,
             "quality_trend": peer.quality_trend,

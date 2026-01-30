@@ -1,6 +1,7 @@
 """Discord integration for party chat and presence"""
 
 import asyncio
+import contextlib
 import sys
 import time
 from collections import deque
@@ -14,6 +15,7 @@ from .config import Config
 @dataclass
 class NotificationMessage:
     """A queued notification message"""
+
     title: str
     description: str
     color: int
@@ -22,14 +24,14 @@ class NotificationMessage:
 
 class NotificationBatcher:
     """Batches Discord notifications to reduce API calls
-    
+
     Groups similar notifications within a time window (e.g., multiple
     peer joins) into a single message to reduce Discord API traffic.
     """
 
     def __init__(self, batch_interval_ms: float = 500.0):
         """Initialize notification batcher
-        
+
         Args:
             batch_interval_ms: Time window to collect notifications (milliseconds)
         """
@@ -39,13 +41,10 @@ class NotificationBatcher:
         self.flush_lock = asyncio.Lock()
 
     async def queue_notification(
-        self,
-        title: str,
-        description: str,
-        color: int
+        self, title: str, description: str, color: int
     ) -> bool:
         """Queue a notification for batched sending
-        
+
         Returns:
             True if notification was queued, False if should send immediately
         """
@@ -64,7 +63,7 @@ class NotificationBatcher:
 
     async def flush(self) -> list[NotificationMessage]:
         """Get pending notifications and reset batch
-        
+
         Returns:
             List of pending notifications
         """
@@ -115,10 +114,8 @@ class DiscordIntegration:
         # Cancel batch flush task
         if self.batch_flush_task:
             self.batch_flush_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.batch_flush_task
-            except asyncio.CancelledError:
-                pass
 
         # Final flush of pending notifications
         await self._flush_pending_notifications()
@@ -158,9 +155,7 @@ class DiscordIntegration:
         if len(notifications) > 1:
             # Group by type and create summary
             combined_title = f"📋 {len(notifications)} Events"
-            combined_desc = "\n".join(
-                [f"• {n.title}" for n in notifications]
-            )
+            combined_desc = "\n".join([f"• {n.title}" for n in notifications])
             await self._send_webhook(combined_title, combined_desc, color=0x757575)
         else:
             # Single notification, send as-is

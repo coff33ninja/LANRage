@@ -72,10 +72,7 @@ async def test_nat_traversal():
         can_direct = nat.can_direct_connect(peer_nat)
         strategy = nat.get_connection_strategy(peer_nat)
 
-        if can_direct:
-            emoji = "✓"
-        else:
-            emoji = "⚠"
+        emoji = "✓" if can_direct else "⚠"
 
         print(f"   - vs {name}: {strategy.title()} {emoji}")
 

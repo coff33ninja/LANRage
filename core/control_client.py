@@ -9,6 +9,7 @@ Uses httpx for robust async HTTP communication with:
 """
 
 import asyncio
+import contextlib
 
 import httpx
 
@@ -56,10 +57,8 @@ class RemoteControlPlaneClient:
         """Close the client and cleanup"""
         if self.heartbeat_task and not self.heartbeat_task.done():
             self.heartbeat_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.heartbeat_task
-            except asyncio.CancelledError:
-                pass
             self.heartbeat_task = None
 
         if self.client:
@@ -117,22 +116,22 @@ class RemoteControlPlaneClient:
                 if attempt < retry_count - 1:
                     await asyncio.sleep(1 * (attempt + 1))  # Exponential backoff
                     continue
-                raise ControlPlaneError("Request timeout")
+                raise ControlPlaneError("Request timeout") from None
 
             except httpx.ConnectError as e:
                 if attempt < retry_count - 1:
                     await asyncio.sleep(1 * (attempt + 1))
                     continue
-                raise ControlPlaneError(f"Connection failed: {e}")
+                raise ControlPlaneError(f"Connection failed: {e}") from None
 
             except httpx.HTTPError as e:
                 if attempt < retry_count - 1:
                     await asyncio.sleep(1 * (attempt + 1))
                     continue
-                raise ControlPlaneError(f"HTTP error: {e}")
+                raise ControlPlaneError(f"HTTP error: {e}") from None
 
             except Exception as e:
-                raise ControlPlaneError(f"Request failed: {e}")
+                raise ControlPlaneError(f"Request failed: {e}") from e
 
         raise ControlPlaneError("Max retries exceeded")
 
@@ -160,7 +159,7 @@ class RemoteControlPlaneClient:
             return self.auth_token
 
         except Exception as e:
-            raise ControlPlaneError(f"Failed to register peer: {e}")
+            raise ControlPlaneError(f"Failed to register peer: {e}") from e
 
     async def register_party(
         self, party_id: str, name: str, host_peer_info: PeerInfo
@@ -196,7 +195,7 @@ class RemoteControlPlaneClient:
             return party
 
         except Exception as e:
-            raise ControlPlaneError(f"Failed to register party: {e}")
+            raise ControlPlaneError(f"Failed to register party: {e}") from e
 
     async def join_party(self, party_id: str, peer_info: PeerInfo) -> PartyInfo:
         """
@@ -229,7 +228,7 @@ class RemoteControlPlaneClient:
             return party
 
         except Exception as e:
-            raise ControlPlaneError(f"Failed to join party: {e}")
+            raise ControlPlaneError(f"Failed to join party: {e}") from e
 
     async def leave_party(self, party_id: str, peer_id: str):
         """
@@ -256,7 +255,7 @@ class RemoteControlPlaneClient:
             print("✓ Left party")
 
         except Exception as e:
-            raise ControlPlaneError(f"Failed to leave party: {e}")
+            raise ControlPlaneError(f"Failed to leave party: {e}") from e
 
     async def get_party(self, party_id: str) -> PartyInfo | None:
         """
@@ -292,7 +291,7 @@ class RemoteControlPlaneClient:
             return {k: PeerInfo.from_dict(v) for k, v in response["peers"].items()}
 
         except Exception as e:
-            raise ControlPlaneError(f"Failed to get peers: {e}")
+            raise ControlPlaneError(f"Failed to get peers: {e}") from e
 
     async def discover_peer(self, party_id: str, peer_id: str) -> PeerInfo | None:
         """
@@ -346,7 +345,7 @@ class RemoteControlPlaneClient:
             return response["relays"]
 
         except Exception as e:
-            raise ControlPlaneError(f"Failed to list relays: {e}")
+            raise ControlPlaneError(f"Failed to list relays: {e}") from e
 
     async def get_relays_by_region(self, region: str) -> list[dict]:
         """
@@ -363,7 +362,7 @@ class RemoteControlPlaneClient:
             return response["relays"]
 
         except Exception as e:
-            raise ControlPlaneError(f"Failed to get relays: {e}")
+            raise ControlPlaneError(f"Failed to get relays: {e}") from e
 
     async def _start_heartbeat(self):
         """Start heartbeat task"""

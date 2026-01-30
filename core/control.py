@@ -1,6 +1,7 @@
 """Control plane - Peer discovery and signaling"""
 
 import asyncio
+import contextlib
 import json
 import secrets
 import sys
@@ -17,7 +18,7 @@ class StatePersister:
 
     def __init__(self, file_path: Path, batch_interval_ms: float = 100.0):
         """Initialize state persister
-        
+
         Args:
             file_path: Path to state file
             batch_interval_ms: Milliseconds to wait before flushing batched writes
@@ -30,7 +31,7 @@ class StatePersister:
 
     async def queue_write(self, state: dict) -> None:
         """Queue a state write for batching
-        
+
         Args:
             state: State dictionary to write
         """
@@ -60,7 +61,7 @@ class StatePersister:
 
     async def _write_to_disk(self, state: dict) -> None:
         """Perform atomic write to disk
-        
+
         Args:
             state: State dictionary to write
         """
@@ -91,10 +92,8 @@ class StatePersister:
         async with self._lock:
             if self.flush_task and not self.flush_task.done():
                 self.flush_task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await self.flush_task
-                except asyncio.CancelledError:
-                    pass
 
             if self.pending_state is not None:
                 await self._write_to_disk(self.pending_state)
@@ -351,7 +350,7 @@ class ControlPlane:
 
     async def _save_state(self):
         """Save state to disk using batched writes (write-behind cache)
-        
+
         This queues the state for batched persistence to reduce disk I/O.
         Multiple calls within the batch interval are deduplicated.
         """
@@ -515,11 +514,11 @@ class RemoteControlPlane(ControlPlane):
             # Import websockets here to avoid dependency if not using remote control
             try:
                 import websockets
-            except ImportError:
+            except ImportError as e:
                 print("⚠️  websockets library not installed")
                 raise ControlPlaneError(
                     "websockets library required for remote control"
-                )
+                ) from e
 
             # Convert HTTP(S) URL to WebSocket URL
             ws_url = self.server_url.replace("https://", "wss://").replace(
@@ -552,14 +551,14 @@ class RemoteControlPlane(ControlPlane):
 
         except TimeoutError:
             print("⚠️  Connection timeout")
-            raise ControlPlaneError("Connection timeout")
+            raise ControlPlaneError("Connection timeout") from None
         except ImportError:
             # Already handled above
             raise
         except Exception as e:
             error_msg = str(e)
             print(f"⚠️  Connection failed: {error_msg}")
-            raise ControlPlaneError(f"Connection failed: {error_msg}")
+            raise ControlPlaneError(f"Connection failed: {error_msg}") from e
 
     async def _authenticate(self):
         """Authenticate with control server"""
@@ -640,7 +639,7 @@ class RemoteControlPlane(ControlPlane):
     async def _send_message(self, data: dict):
         """Send message to control server"""
         if not self.connected or not self.ws:
-            raise ControlPlaneError("Not connected to control server")
+            raise ControlPlaneError("Not connected to control server") from None
 
         try:
             await self.ws.send(json.dumps(data))
@@ -648,7 +647,7 @@ class RemoteControlPlane(ControlPlane):
             error_msg = str(e)
             print(f"⚠️  Failed to send message: {error_msg}")
             self.connected = False
-            raise ControlPlaneError(f"Failed to send message: {error_msg}")
+            raise ControlPlaneError(f"Failed to send message: {error_msg}") from e
 
     async def _handle_party_update(self, data: dict):
         """Handle party update from server"""
@@ -716,8 +715,7 @@ class RemoteControlPlane(ControlPlane):
 
                 # Wait for confirmation (with timeout)
                 # For now, just create locally and assume server will sync
-                party = await super().register_party(party_id, name, host_peer_info)
-                return party
+                return await super().register_party(party_id, name, host_peer_info)
 
             except Exception as e:
                 error_msg = str(e)
@@ -742,8 +740,7 @@ class RemoteControlPlane(ControlPlane):
 
                 # Wait for party info from server
                 # For now, use local join
-                party = await super().join_party(party_id, peer_info)
-                return party
+                return await super().join_party(party_id, peer_info)
 
             except Exception as e:
                 error_msg = str(e)
@@ -769,10 +766,9 @@ class RemoteControlPlane(ControlPlane):
 
     async def heartbeat(self, party_id: str, peer_id: str):
         """Send heartbeat to control server"""
-        if self.connected:
+        if self.connected and self.client:
             try:
-                {"type": "heartbeat", "party_id": party_id, "peer_id": peer_id}
-
+                await self.client.heartbeat(party_id, peer_id)
             except OSError as e:
                 # Heartbeat failures are not critical, but log for debugging
                 print(
@@ -782,7 +778,6 @@ class RemoteControlPlane(ControlPlane):
             except Exception as e:
                 # Catch any other unexpected errors
                 print(f"Debug: Unexpected error in heartbeat: {e}", file=sys.stderr)
-                pass
 
         # Always update local state
         await super().heartbeat(party_id, peer_id)

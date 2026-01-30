@@ -167,8 +167,7 @@ class RelayServer:
                     import base64
 
                     public_key_bytes = data[8:40]
-                    public_key_b64 = base64.b64encode(public_key_bytes).decode("ascii")
-                    return public_key_b64
+                    return base64.b64encode(public_key_bytes).decode("ascii")
 
             # Data packets (type 4) don't contain public key
             return None

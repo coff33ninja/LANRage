@@ -226,7 +226,7 @@ class PartyManager:
 
         # Connect to all existing peers
         if self.connections:
-            for peer_id in party.peers.keys():
+            for peer_id in party.peers:
                 if peer_id != self.my_peer_id:
                     asyncio.create_task(self._connect_to_peer(party_id, peer_id))
 

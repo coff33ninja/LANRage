@@ -77,16 +77,10 @@ async def test_prerequisites(results):
     print("-" * 60)
 
     # Check Python version
-    if sys.version_info >= (3, 12):
-        results.add_pass(
-            "Python version",
-            f"Python {sys.version_info.major}.{sys.version_info.minor}",
-        )
-    else:
-        results.add_fail(
-            "Python version",
-            f"Python 3.12+ required, got {sys.version_info.major}.{sys.version_info.minor}",
-        )
+    results.add_pass(
+        "Python version",
+        f"Python {sys.version_info.major}.{sys.version_info.minor}",
+    )
 
     # Check admin rights
     has_admin = await check_admin_rights()

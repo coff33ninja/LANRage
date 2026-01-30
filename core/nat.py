@@ -102,9 +102,7 @@ class NATTraversal:
         logger.error(error_msg)
         raise NATError(error_msg)
 
-    async def _stun_request(
-        self, stun_server: tuple[str, int]
-    ) -> STUNResponse | None:
+    async def _stun_request(self, stun_server: tuple[str, int]) -> STUNResponse | None:
         """Send STUN request to server"""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(3)
@@ -178,9 +176,7 @@ class NATTraversal:
         finally:
             sock.close()
 
-    def _parse_stun_attributes(
-        self, data: bytes
-    ) -> tuple[str | None, int | None]:
+    def _parse_stun_attributes(self, data: bytes) -> tuple[str | None, int | None]:
         """Parse STUN attributes to extract mapped address"""
         offset = 0
         public_ip = None
@@ -198,26 +194,27 @@ class NATTraversal:
                 break
 
             # MAPPED-ADDRESS (0x0001) or XOR-MAPPED-ADDRESS (0x0020)
-            if attr_type in (0x0001, 0x0020):
-                if attr_len >= 8:
-                    # Parse address
-                    family = data[offset + 1]
-                    port = struct.unpack("!H", data[offset + 2 : offset + 4])[0]
+            if attr_type in (0x0001, 0x0020) and attr_len >= 8:
+                # Parse address
+                family = data[offset + 1]
+                port = struct.unpack("!H", data[offset + 2 : offset + 4])[0]
+
+                if attr_type == 0x0020:  # XOR-MAPPED-ADDRESS
+                    # XOR with magic cookie
+                    port ^= 0x2112
+
+                if family == 0x01:  # IPv4
+                    ip_bytes = data[offset + 4 : offset + 8]
 
                     if attr_type == 0x0020:  # XOR-MAPPED-ADDRESS
                         # XOR with magic cookie
-                        port ^= 0x2112
+                        magic = struct.pack("!I", 0x2112A442)
+                        ip_bytes = bytes(
+                            a ^ b for a, b in zip(ip_bytes, magic, strict=False)
+                        )
 
-                    if family == 0x01:  # IPv4
-                        ip_bytes = data[offset + 4 : offset + 8]
-
-                        if attr_type == 0x0020:  # XOR-MAPPED-ADDRESS
-                            # XOR with magic cookie
-                            magic = struct.pack("!I", 0x2112A442)
-                            ip_bytes = bytes(a ^ b for a, b in zip(ip_bytes, magic))
-
-                        public_ip = ".".join(str(b) for b in ip_bytes)
-                        public_port = port
+                    public_ip = ".".join(str(b) for b in ip_bytes)
+                    public_port = port
 
             # Move to next attribute (with padding)
             offset += attr_len
@@ -296,13 +293,12 @@ class NATTraversal:
             NATType.FULL_CONE,
             NATType.RESTRICTED_CONE,
             NATType.PORT_RESTRICTED_CONE,
+        ) and peer_nat_type in (
+            NATType.FULL_CONE,
+            NATType.RESTRICTED_CONE,
+            NATType.PORT_RESTRICTED_CONE,
         ):
-            if peer_nat_type in (
-                NATType.FULL_CONE,
-                NATType.RESTRICTED_CONE,
-                NATType.PORT_RESTRICTED_CONE,
-            ):
-                return True
+            return True
 
         # Symmetric NAT needs relay
         if self.nat_type == NATType.SYMMETRIC or peer_nat_type == NATType.SYMMETRIC:
@@ -364,9 +360,7 @@ class ConnectionCoordinator:
         peer_port = peer_nat_info["public_port"]
 
         # Attempt hole punching
-        success = await self.nat.attempt_hole_punch(peer_ip, peer_port)
-
-        return success
+        return await self.nat.attempt_hole_punch(peer_ip, peer_port)
 
     async def _get_relay_endpoint(self) -> str:
         """Get relay server endpoint with discovery and latency measurement"""

@@ -110,7 +110,7 @@ class TestPerformanceProfiling:
         iterations = 1000
         times = []
 
-        for i in range(iterations):
+        for _i in range(iterations):
             start = time.perf_counter()
             await collector.record_latency("test_peer", 10.5)
             await collector.record_bandwidth("test_peer", 1024 * 1024)  # 1MB

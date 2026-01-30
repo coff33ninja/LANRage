@@ -13,16 +13,18 @@ from .config import Config
 from .nat import NATType
 
 
-def calculate_adaptive_keepalive(nat_type: NATType, profile_keepalive: int | None = None) -> int:
+def calculate_adaptive_keepalive(
+    nat_type: NATType, profile_keepalive: int | None = None
+) -> int:
     """Calculate keepalive interval based on NAT type
-    
+
     Symmetric NAT needs frequent keepalive to maintain bindings.
     Cone NAT is more forgiving and can use longer intervals.
-    
+
     Args:
         nat_type: Detected NAT type
         profile_keepalive: Optional keepalive override from game profile
-        
+
     Returns:
         Keepalive interval in seconds
     """
@@ -33,12 +35,12 @@ def calculate_adaptive_keepalive(nat_type: NATType, profile_keepalive: int | Non
     # Map NAT types to keepalive intervals
     # These are optimized for maintaining NAT bindings without excessive traffic
     nat_keepalive_map = {
-        NATType.OPEN: 60,                    # No NAT, can be very relaxed
-        NATType.FULL_CONE: 45,               # Relaxed, mapping is stable
-        NATType.RESTRICTED_CONE: 30,         # Moderate, address restricted
-        NATType.PORT_RESTRICTED_CONE: 15,    # Strict, port restricted
-        NATType.SYMMETRIC: 8,                # Very strict, needs frequent keepalive
-        NATType.UNKNOWN: 25,                 # Default to conservative value
+        NATType.OPEN: 60,  # No NAT, can be very relaxed
+        NATType.FULL_CONE: 45,  # Relaxed, mapping is stable
+        NATType.RESTRICTED_CONE: 30,  # Moderate, address restricted
+        NATType.PORT_RESTRICTED_CONE: 15,  # Strict, port restricted
+        NATType.SYMMETRIC: 8,  # Very strict, needs frequent keepalive
+        NATType.UNKNOWN: 25,  # Default to conservative value
     }
 
     return nat_keepalive_map.get(nat_type, 25)
@@ -163,14 +165,16 @@ def _levenshtein_distance(s1: str, s2: str) -> int:
     return previous_row[-1]
 
 
-def _fuzzy_match_executable(proc_name: str, profile_exe: str, threshold: float = 0.85) -> bool:
+def _fuzzy_match_executable(
+    proc_name: str, profile_exe: str, threshold: float = 0.85
+) -> bool:
     """Check if process name fuzzy matches profile executable
-    
+
     Args:
         proc_name: Running process name
         profile_exe: Profile executable name
         threshold: Match threshold (0-1, higher = stricter)
-    
+
     Returns:
         True if fuzzy match passes
     """
@@ -179,8 +183,8 @@ def _fuzzy_match_executable(proc_name: str, profile_exe: str, threshold: float =
         return True
 
     # Remove extensions for comparison
-    proc_clean = proc_name.lower().replace('.exe', '').replace('.bat', '')
-    exe_clean = profile_exe.lower().replace('.exe', '').replace('.bat', '')
+    proc_clean = proc_name.lower().replace(".exe", "").replace(".bat", "")
+    exe_clean = profile_exe.lower().replace(".exe", "").replace(".bat", "")
 
     if proc_clean == exe_clean:
         return True
@@ -264,7 +268,9 @@ class GameDetector:
 
                 import aiofiles
 
-                async with aiofiles.open(self.custom_profiles_path, encoding="utf-8") as f:
+                async with aiofiles.open(
+                    self.custom_profiles_path, encoding="utf-8"
+                ) as f:
                     content = await f.read()
                     custom_data = json.loads(content)
 
@@ -393,7 +399,11 @@ class GameDetector:
             self.detection_history = self.detection_history[-100:]
 
         # Clear active profile and reset to defaults
-        if hasattr(self, 'optimizer') and self.optimizer.active_profile and self.optimizer.active_profile.name == profile.name:
+        if (
+            hasattr(self, "optimizer")
+            and self.optimizer.active_profile
+            and self.optimizer.active_profile.name == profile.name
+        ):
             print("   Resetting network configuration to defaults...")
             await self.optimizer.clear_profile()
             print("   ✓ Configuration reset complete")
@@ -408,7 +418,7 @@ class GameDetector:
 
     def get_detection_history(self) -> list[tuple[float, str, str]]:
         """Get game detection history
-        
+
         Returns:
             List of tuples: (timestamp, game_id, action)
             where action is 'started' or 'stopped'
@@ -426,7 +436,9 @@ class GameDetector:
 
             # Load existing profiles
             if self.custom_profiles_path.exists():
-                async with aiofiles.open(self.custom_profiles_path, encoding="utf-8") as f:
+                async with aiofiles.open(
+                    self.custom_profiles_path, encoding="utf-8"
+                ) as f:
                     content = await f.read()
                     custom_profiles = json.loads(content)
 
@@ -448,7 +460,9 @@ class GameDetector:
 
             # Save to file
             self.custom_profiles_path.parent.mkdir(parents=True, exist_ok=True)
-            async with aiofiles.open(self.custom_profiles_path, "w", encoding="utf-8") as f:
+            async with aiofiles.open(
+                self.custom_profiles_path, "w", encoding="utf-8"
+            ) as f:
                 await f.write(json.dumps(custom_profiles, indent=2))
 
             print(f"Saved custom profile for {profile.name}")
@@ -487,10 +501,17 @@ class GameOptimizer:
         print(f"⚙️  Applying optimizations for {profile.name}")
 
         # Calculate adaptive keepalive based on NAT type
-        adaptive_keepalive = calculate_adaptive_keepalive(self.nat_type, profile.keepalive)
+        adaptive_keepalive = calculate_adaptive_keepalive(
+            self.nat_type, profile.keepalive
+        )
 
         # Adjust WireGuard keepalive
-        if adaptive_keepalive != 25 and network_manager or network_manager and adaptive_keepalive != 25:
+        if (
+            adaptive_keepalive != 25
+            and network_manager
+            or network_manager
+            and adaptive_keepalive != 25
+        ):
             print(f"   - Keepalive: {adaptive_keepalive}s (NAT: {self.nat_type.value})")
             await self._update_keepalive(network_manager, adaptive_keepalive)
 
@@ -856,7 +877,13 @@ class GameOptimizer:
 class GameManager:
     """Manages game detection and optimization"""
 
-    def __init__(self, config: Config, network_manager=None, broadcast_manager=None, nat_traversal=None):
+    def __init__(
+        self,
+        config: Config,
+        network_manager=None,
+        broadcast_manager=None,
+        nat_traversal=None,
+    ):
         self.config = config
         self.optimizer = GameOptimizer(config)
         self.detector = GameDetector(config, optimizer=self.optimizer)
@@ -875,7 +902,7 @@ class GameManager:
             await initialize_game_profiles()
 
         # Update optimizer with current NAT type if available
-        if self.nat_traversal and hasattr(self.nat_traversal, 'nat_type'):
+        if self.nat_traversal and hasattr(self.nat_traversal, "nat_type"):
             self.optimizer.set_nat_type(self.nat_traversal.nat_type)
 
         await self.detector.start()

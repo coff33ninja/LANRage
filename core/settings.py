@@ -83,9 +83,12 @@ class SettingsDatabase:
 
     async def get_setting(self, key: str, default: Any = None) -> Any:
         """Get a setting value"""
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT value, type FROM settings WHERE key = ?", (key,)
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT value, type FROM settings WHERE key = ?", (key,)
+            ) as cursor,
+        ):
             row = await cursor.fetchone()
             if row:
                 value, value_type = row
@@ -147,10 +150,13 @@ class SettingsDatabase:
 
     async def get_server_config(self, config_id: int) -> dict | None:
         """Get a server configuration"""
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT name, mode, config, enabled FROM server_configs WHERE id = ?",
-            (config_id,),
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT name, mode, config, enabled FROM server_configs WHERE id = ?",
+                (config_id,),
+            ) as cursor,
+        ):
             row = await cursor.fetchone()
             if row:
                 name, mode, config_json, enabled = row
@@ -166,9 +172,12 @@ class SettingsDatabase:
     async def get_all_server_configs(self) -> list[dict]:
         """Get all server configurations"""
         configs = []
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT id, name, mode, config, enabled FROM server_configs ORDER BY name"
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT id, name, mode, config, enabled FROM server_configs ORDER BY name"
+            ) as cursor,
+        ):
             async for row in cursor:
                 config_id, name, mode, config_json, enabled = row
                 configs.append(
@@ -265,9 +274,12 @@ class SettingsDatabase:
 
     async def is_favorite(self, server_id: str) -> bool:
         """Check if a server is in favorites"""
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT 1 FROM favorite_servers WHERE server_id = ?", (server_id,)
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT 1 FROM favorite_servers WHERE server_id = ?", (server_id,)
+            ) as cursor,
+        ):
             row = await cursor.fetchone()
             return row is not None
 
@@ -295,9 +307,12 @@ class SettingsDatabase:
 
     async def get_game_profile(self, name: str) -> dict | None:
         """Get a game profile"""
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT game, profile FROM game_profiles WHERE name = ?", (name,)
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT game, profile FROM game_profiles WHERE name = ?", (name,)
+            ) as cursor,
+        ):
             row = await cursor.fetchone()
             if row:
                 game, profile_json = row
@@ -311,9 +326,12 @@ class SettingsDatabase:
     async def get_all_game_profiles(self) -> list[dict]:
         """Get all game profiles"""
         profiles = []
-        async with aiosqlite.connect(self.db_path) as db, db.execute(
-            "SELECT name, game, profile FROM game_profiles ORDER BY name"
-        ) as cursor:
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
+                "SELECT name, game, profile FROM game_profiles ORDER BY name"
+            ) as cursor,
+        ):
             async for row in cursor:
                 name, game, profile_json = row
                 profiles.append(

@@ -1,6 +1,7 @@
 """Game server browser and discovery"""
 
 import asyncio
+import contextlib
 import statistics
 import time
 from dataclasses import dataclass, field
@@ -80,10 +81,8 @@ class ServerBrowser:
         self.running = False
         if self._cleanup_task:
             self._cleanup_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
         print("✓ Server browser stopped")
 
     async def register_server(
@@ -272,7 +271,7 @@ class ServerBrowser:
         Returns:
             Sorted list of game names
         """
-        games = set(server.game for server in self.servers.values())
+        games = {server.game for server in self.servers.values()}
         return sorted(games)
 
     def add_favorite(self, server_id: str):
@@ -330,6 +329,7 @@ class ServerBrowser:
         try:
             # Take multiple samples for more reliable latency measurement
             import platform
+
             param = "-n" if platform.system().lower() == "windows" else "-c"
 
             # Collect 3 ping samples in parallel
@@ -345,7 +345,8 @@ class ServerBrowser:
 
             # Filter out exceptions and failed measurements
             valid_latencies = [
-                latency for latency in results
+                latency
+                for latency in results
                 if isinstance(latency, (int, float)) and latency < 999
             ]
 
@@ -366,10 +367,10 @@ class ServerBrowser:
 
     async def _single_ping(self, command: list) -> float | None:
         """Execute a single ping and return latency
-        
+
         Args:
             command: Ping command as list
-            
+
         Returns:
             Latency in milliseconds or 999 on timeout/failure
         """
@@ -391,8 +392,7 @@ class ServerBrowser:
                     if "time=" in output:
                         # Extract time value from ping output
                         time_str = output.split("time=")[1].split()[0]
-                        latency = float(time_str.replace("ms", ""))
-                        return latency
+                        return float(time_str.replace("ms", ""))
                     return elapsed
                 return elapsed
             except TimeoutError:

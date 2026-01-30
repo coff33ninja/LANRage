@@ -86,7 +86,7 @@ class NetworkManager:
             await self._log(f"Interface {self.interface_name} created successfully")
         except Exception as e:
             await self._log(f"Failed to create interface: {e}")
-            raise WireGuardError(f"Failed to create interface: {e}")
+            raise WireGuardError(f"Failed to create interface: {e}") from e
 
     async def _check_wireguard(self) -> bool:
         """Check if WireGuard is installed"""
@@ -101,9 +101,7 @@ class NetworkManager:
                 # If it's not found, we'll get FileNotFoundError
                 return True
             # Check for wg command
-            result = await self._run_command(
-                ["which", "wg"], check=False, timeout=5.0
-            )
+            result = await self._run_command(["which", "wg"], check=False, timeout=5.0)
             return result.returncode == 0
         except TimeoutError:
             await self._log("WireGuard check timed out")
@@ -194,7 +192,9 @@ ListenPort = 51820
                 ["sc", "query", service_name], check=False, timeout=5.0
             )
             if check_result.returncode == 0:
-                await self._log(f"Tunnel service {service_name} already exists, reusing it")
+                await self._log(
+                    f"Tunnel service {service_name} already exists, reusing it"
+                )
                 # Service exists, no need to install
                 return
         except Exception as e:
@@ -207,14 +207,14 @@ ListenPort = 51820
                 ["wireguard", "/installtunnelservice", str(config_path)], timeout=30.0
             )
             await self._log(f"Tunnel installed successfully: {self.interface_name}")
-        except TimeoutError:
+        except TimeoutError as e:
             error_msg = "WireGuard tunnel installation timed out after 30 seconds"
             await self._log(error_msg)
             raise WireGuardError(
                 f"Failed to create Windows interface: Installation timed out. "
                 f"The tunnel service may already exist. Check Windows Services for '{service_name}'. "
                 f"Or try manually: wireguard /installtunnelservice {config_path}"
-            )
+            ) from e
         except subprocess.CalledProcessError as e:
             error_msg = (
                 f"WireGuard tunnel installation failed with exit code {e.returncode}"
@@ -224,16 +224,18 @@ ListenPort = 51820
             if e.stdout:
                 error_msg += f"\nStdout: {e.stdout}"
             await self._log(error_msg)
-            raise WireGuardError(f"Failed to create Windows interface: {e}")
+            raise WireGuardError(f"Failed to create Windows interface: {e}") from None
         except Exception as e:
             await self._log(f"Unexpected error creating Windows interface: {e}")
-            raise WireGuardError(f"Failed to create Windows interface: {e}")
+            raise WireGuardError(f"Failed to create Windows interface: {e}") from e
 
     async def _create_interface_linux(self):
         """Create WireGuard interface on Linux"""
         # Check if we have root/sudo
         if not await self._check_root():
-            raise WireGuardError("Root/sudo required to create WireGuard interface")
+            raise WireGuardError(
+                "Root/sudo required to create WireGuard interface"
+            ) from None
 
         try:
             # Create interface
@@ -300,7 +302,7 @@ ListenPort = 51820
         except Exception as e:
             # Cleanup on failure
             await self._cleanup_interface_linux()
-            raise WireGuardError(f"Failed to create Linux interface: {e}")
+            raise WireGuardError(f"Failed to create Linux interface: {e}") from e
 
     async def _check_root(self) -> bool:
         """Check if we have root/sudo access"""
@@ -404,12 +406,12 @@ ListenPort = 51820
             await self._run_command(cmd)
 
         except Exception as e:
-            raise WireGuardError(f"Failed to add peer: {e}")
+            raise WireGuardError(f"Failed to add peer: {e}") from e
 
     async def remove_peer(self, peer_public_key: str):
         """Remove a WireGuard peer"""
         if not self.interface_created:
-            raise WireGuardError("Interface not created")
+            raise WireGuardError("Interface not created") from None
 
         try:
             await self._run_command(
@@ -424,7 +426,7 @@ ListenPort = 51820
                 ]
             )
         except Exception as e:
-            raise WireGuardError(f"Failed to remove peer: {e}")
+            raise WireGuardError(f"Failed to remove peer: {e}") from e
 
     async def get_interface_status(self) -> dict:
         """Get WireGuard interface status"""
@@ -481,7 +483,7 @@ ListenPort = 51820
                 await proc.wait()
             except Exception:
                 pass
-            raise subprocess.TimeoutExpired(cmd, timeout)
+            raise subprocess.TimeoutExpired(cmd, timeout) from None
 
         result = subprocess.CompletedProcess(
             args=cmd,

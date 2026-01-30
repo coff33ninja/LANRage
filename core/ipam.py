@@ -157,7 +157,7 @@ class IPAddressPool:
         # Check that all allocated IPs are within subnets
         max_subnet_index = self.current_subnet_index
 
-        for peer_id, ip_addr in self.peer_id_to_ip.items():
+        for _peer_id, ip_addr in self.peer_id_to_ip.items():
             # Get subnet index from IP
             network_int = int(self.base_subnet.network_address)
             ip_int = int(ip_addr)

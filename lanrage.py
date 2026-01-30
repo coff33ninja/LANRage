@@ -5,6 +5,7 @@ Main entry point
 """
 
 import asyncio
+import contextlib
 import logging
 import signal
 import sys
@@ -146,10 +147,8 @@ async def main():
         # Cancel remaining tasks
         for task in pending:
             task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await task
-            except asyncio.CancelledError:
-                pass
 
     except Exception as e:
         logger.error(f"API server error: {type(e).__name__}: {e}")
