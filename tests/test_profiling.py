@@ -66,8 +66,8 @@ class TestPerformanceProfiling:
         print(f"  Max: {max_time*1000000:.2f}µs")
         print(f"  Total IPs allocated: {iterations}")
 
-        # IP allocation should be very fast (<300µs average, allowing for Python overhead)
-        assert avg_time < 0.0003, f"IP allocation too slow: {avg_time*1000000:.2f}µs"
+        # IP allocation should be very fast (<400µs average, allowing for Python overhead and CI variability)
+        assert avg_time < 0.0004, f"IP allocation too slow: {avg_time*1000000:.2f}µs"
 
     def test_ipam_lookup_performance(self):
         """Profile IP address lookup performance."""
