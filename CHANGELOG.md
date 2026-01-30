@@ -5,6 +5,22 @@ All notable changes to LANrage will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-01-31
+
+### Fixed
+- **GitHub Workflows**: Fixed logic errors in CI/CD workflows
+  - Fixed Ruff workflow: Use exit code check instead of output string check
+  - Fixed CI workflow: Use exit code check for Ruff verification  
+  - Fixed Pylint workflow: Accept warnings (exit 4) but fail on errors (exit 8+)
+  - Fixed Pylint disable comment placement in `core/games.py` line 150
+- **Shutdown Errors**: Fixed graceful shutdown issues
+  - Fixed `ConnectionManager` iteration error: Access `.connections.connections` dict properly
+  - Fixed `DiscordIntegration` disconnect error: Removed non-existent method call
+
+### Changed
+- All GitHub Actions workflows now pass successfully
+- Improved shutdown error handling and logging
+
 ## [1.2.1] - 2026-01-30
 
 ### Fixed

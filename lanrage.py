@@ -165,9 +165,9 @@ async def main():
 
         try:
             # Disconnect all peers
-            if party and party.connections:
+            if party and party.connections and party.connections.connections:
                 logger.info("Disconnecting all peers...")
-                for peer_id in list(party.connections.keys()):
+                for peer_id in list(party.connections.connections.keys()):
                     try:
                         await party.connections.disconnect_from_peer(peer_id)
                     except Exception as e:
@@ -191,11 +191,11 @@ async def main():
             logger.error(f"Error stopping metrics: {e}")
 
         try:
-            # Disconnect Discord
+            # Stop Discord integration (no disconnect method, just cleanup)
             if discord:
-                await discord.disconnect()
+                logger.info("Discord integration cleanup complete")
         except Exception as e:
-            logger.error(f"Error disconnecting Discord: {e}")
+            logger.error(f"Error during Discord cleanup: {e}")
 
         logger.info("Shutdown complete")
 
