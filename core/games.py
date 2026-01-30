@@ -32,7 +32,7 @@ class GameProfile:
     packet_priority: str = "high"  # "low", "medium", "high"
 
 
-def load_game_profiles() -> Dict[str, GameProfile]:
+async def load_game_profiles() -> Dict[str, GameProfile]:
     """Load game profiles from JSON files organized by genre
 
     Returns:
@@ -57,8 +57,12 @@ def load_game_profiles() -> Dict[str, GameProfile]:
 
     for json_file in json_files:
         try:
-            with open(json_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
+            # Use aiofiles for async file I/O
+            import aiofiles
+
+            async with aiofiles.open(json_file, "r", encoding="utf-8") as f:
+                content = await f.read()
+                data = json.loads(content)
 
             # Skip files with comments (like example.json)
             if "_comment" in data:
@@ -99,8 +103,14 @@ def load_game_profiles() -> Dict[str, GameProfile]:
     return profiles
 
 
-# Load profiles on module import
-GAME_PROFILES: Dict[str, GameProfile] = load_game_profiles()
+# Load profiles on module import - need to handle async loading
+GAME_PROFILES: Dict[str, GameProfile] = {}
+
+
+async def initialize_game_profiles():
+    """Initialize game profiles asynchronously"""
+    global GAME_PROFILES
+    GAME_PROFILES = await load_game_profiles()
 
 
 class GameDetector:
