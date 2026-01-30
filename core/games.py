@@ -244,6 +244,9 @@ class GameDetector:
 
         # Path for custom game profiles
         self.custom_profiles_path = Path(config.config_dir) / "game_profiles.json"
+        
+        # Detection history tracking: (timestamp, game_id, action)
+        self.detection_history: List[Tuple[float, str, str]] = []
 
     async def start(self):
         """Start game detection"""
@@ -363,6 +366,13 @@ class GameDetector:
         print(f"🎮 Detected: {profile.name}")
         print(f"   Optimizing for {profile.name}...")
 
+        # Record in detection history with timestamp
+        self.detection_history.append((time.time(), game_id, "started"))
+        
+        # Keep history to last 100 events
+        if len(self.detection_history) > 100:
+            self.detection_history = self.detection_history[-100:]
+
         # Apply game-specific optimizations through optimizer
         # This will be called by the GameManager which has access to the optimizer
         # For now, just log the detection
@@ -374,6 +384,13 @@ class GameDetector:
         """Handle game stopped"""
         profile = GAME_PROFILES[game_id]
         print(f"🎮 Stopped: {profile.name}")
+        
+        # Record in detection history with timestamp
+        self.detection_history.append((time.time(), game_id, "stopped"))
+        
+        # Keep history to last 100 events
+        if len(self.detection_history) > 100:
+            self.detection_history = self.detection_history[-100:]
 
         # Clear active profile and reset to defaults
         if hasattr(self, 'optimizer') and self.optimizer.active_profile and self.optimizer.active_profile.name == profile.name:
@@ -388,6 +405,15 @@ class GameDetector:
     def get_profile(self, game_id: str) -> Optional[GameProfile]:
         """Get profile for a specific game"""
         return GAME_PROFILES.get(game_id)
+
+    def get_detection_history(self) -> List[Tuple[float, str, str]]:
+        """Get game detection history
+        
+        Returns:
+            List of tuples: (timestamp, game_id, action)
+            where action is 'started' or 'stopped'
+        """
+        return self.detection_history.copy()
 
     async def save_custom_profile(self, game_id: str, profile: GameProfile):
         """Save a custom game profile to disk"""
