@@ -43,7 +43,22 @@
 - [ ] Latency trend detection (increasing/decreasing/stable)
 - [ ] Per-server measurement interval adaptation (if latency is good, measure every 60s; if bad, every 10s)
 
-**Status**: ✅ COMPLETED - Multi-sample & parallel pinging implemented
+**Implementation Details**:
+```python
+# Median of 3 measurements
+samples = await asyncio.gather(
+    ping(server, timeout=1),
+    ping(server, timeout=1),
+    ping(server, timeout=1),
+    return_exceptions=True
+)
+valid_samples = [s for s in samples if s is not None]
+server.latency_ms = statistics.median(valid_samples) if valid_samples else None
+
+# EMA calculation
+server.latency_ema = 0.7 * server.latency_ema + 0.3 * new_measurement
+```
+
 **Expected Impact**: 60% more reliable latency readings, better server selection
 
 ---
@@ -70,7 +85,7 @@
 ## Priority 2: Network & State Management
 
 ### 2.1 Adaptive Keepalive
-**File**: `core/games.py`
+**File**: `core/games.py`, `core/network.py`
 **Current**: Fixed 25s keepalive for all, can be overridden per game
 **Problems**:
 - Doesn't adapt to NAT type
