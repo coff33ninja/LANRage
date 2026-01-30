@@ -43,43 +43,43 @@ class SettingsDatabase:
                     )
                 """)
 
-                # Server configurations table
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS server_configs (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL,
-                        mode TEXT NOT NULL,
-                        enabled INTEGER DEFAULT 1,
-                        config TEXT NOT NULL,
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL
-                    )
-                """)
+            # Server configurations table
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS server_configs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    mode TEXT NOT NULL,
+                    enabled INTEGER DEFAULT 1,
+                    config TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                )
+            """)
 
-                # Favorite servers table
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS favorite_servers (
-                        server_id TEXT PRIMARY KEY,
-                        name TEXT NOT NULL,
-                        game TEXT NOT NULL,
-                        address TEXT NOT NULL,
-                        added_at TEXT NOT NULL
-                    )
-                """)
+            # Favorite servers table
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS favorite_servers (
+                    server_id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    game TEXT NOT NULL,
+                    address TEXT NOT NULL,
+                    added_at TEXT NOT NULL
+                )
+            """)
 
-                # Game profiles table
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS game_profiles (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL UNIQUE,
-                        game TEXT NOT NULL,
-                        profile TEXT NOT NULL,
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL
-                    )
-                """)
+            # Game profiles table
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS game_profiles (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL UNIQUE,
+                    game TEXT NOT NULL,
+                    profile TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                )
+            """)
 
-                await db.commit()
+            await db.commit()
 
     async def get_setting(self, key: str, default: Any = None) -> Any:
         """Get a setting value"""
@@ -117,11 +117,13 @@ class SettingsDatabase:
     async def get_all_settings(self) -> dict[str, Any]:
         """Get all settings"""
         settings = {}
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute("SELECT key, value, type FROM settings") as cursor:
-                async for row in cursor:
-                    key, value, value_type = row
-                    settings[key] = self._deserialize(value, value_type)
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute("SELECT key, value, type FROM settings") as cursor,
+        ):
+            async for row in cursor:
+                key, value, value_type = row
+                settings[key] = self._deserialize(value, value_type)
         return settings
 
     async def delete_setting(self, key: str):
@@ -255,21 +257,23 @@ class SettingsDatabase:
     async def get_favorite_servers(self) -> list[dict]:
         """Get all favorite servers"""
         favorites = []
-        async with aiosqlite.connect(self.db_path) as db:
-            async with db.execute(
+        async with (
+            aiosqlite.connect(self.db_path) as db,
+            db.execute(
                 "SELECT server_id, name, game, address, added_at FROM favorite_servers ORDER BY added_at DESC"
-            ) as cursor:
-                async for row in cursor:
-                    server_id, name, game, address, added_at = row
-                    favorites.append(
-                        {
-                            "server_id": server_id,
-                            "name": name,
-                            "game": game,
-                            "address": address,
-                            "added_at": added_at,
-                        }
-                    )
+            ) as cursor,
+        ):
+            async for row in cursor:
+                server_id, name, game, address, added_at = row
+                favorites.append(
+                    {
+                        "server_id": server_id,
+                        "name": name,
+                        "game": game,
+                        "address": address,
+                        "added_at": added_at,
+                    }
+                )
         return favorites
 
     async def is_favorite(self, server_id: str) -> bool:

@@ -616,14 +616,14 @@ class GameOptimizer:
             )
             stdout, stderr = await result.communicate()
 
-            if result.returncode != 0:
+            if (
+                result.returncode != 0
+                and b"already exists" not in stderr
+                and b"Chain already exists" not in stderr
+            ):
                 # Rule might already exist, check if it's a duplicate error
-                if (
-                    b"already exists" not in stderr
-                    and b"Chain already exists" not in stderr
-                ):
-                    error_msg = stderr.decode().strip()
-                    print(f"   ℹ iptables rule setup: {error_msg}")
+                error_msg = stderr.decode().strip()
+                print(f"   ℹ iptables rule setup: {error_msg}")
 
             # Set up tc (Traffic Control) for advanced egress shaping
             # This provides bandwidth management and priority queuing

@@ -119,10 +119,9 @@ class PartyManager:
         """Initialize NAT traversal"""
         # Pass control client if available for relay discovery
         control_client = None
-        if self.control:
+        if self.control and hasattr(self.control, "client"):
             # Get the control client from control plane
-            if hasattr(self.control, "client"):
-                control_client = self.control.client
+            control_client = self.control.client
 
         self.nat = NATTraversal(self.config, control_client)
 

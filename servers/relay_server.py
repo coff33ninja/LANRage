@@ -161,13 +161,13 @@ class RelayServer:
             msg_type = struct.unpack("<I", data[:4])[0]
 
             # Handshake Initiation (type 1) or Response (type 2)
-            if msg_type in (1, 2):
+            if msg_type in (1, 2) and len(data) >= 40:
                 # Public key is 32 bytes starting at offset 8
-                if len(data) >= 40:  # 4 (type) + 4 (reserved) + 32 (public key)
-                    import base64
+                # 4 (type) + 4 (reserved) + 32 (public key)
+                import base64
 
-                    public_key_bytes = data[8:40]
-                    return base64.b64encode(public_key_bytes).decode("ascii")
+                public_key_bytes = data[8:40]
+                return base64.b64encode(public_key_bytes).decode("ascii")
 
             # Data packets (type 4) don't contain public key
             return None

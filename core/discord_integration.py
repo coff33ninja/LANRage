@@ -56,10 +56,7 @@ class NotificationBatcher:
         )
 
         # Send immediately if batch interval exceeded
-        if time_since_flush >= self.batch_interval:
-            return False  # Should send immediately
-
-        return True  # Queue for later batching
+        return time_since_flush < self.batch_interval  # Queue if within interval
 
     async def flush(self) -> list[NotificationMessage]:
         """Get pending notifications and reset batch

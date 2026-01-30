@@ -167,11 +167,11 @@ async def test_party_creation_includes_nat_type(network_manager):
         party_manager = PartyManager(config, network_manager)
 
         # Initialize NAT (this will detect NAT type)
-        try:
-            await party_manager.initialize_nat()
-        except Exception:
+        from contextlib import suppress
+
+        with suppress(Exception):
             # NAT detection might fail in test environment, that's okay
-            pass
+            await party_manager.initialize_nat()
 
         # Create party
         party = await party_manager.create_party("Test Party")

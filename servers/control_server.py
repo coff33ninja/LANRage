@@ -578,22 +578,24 @@ async def list_relays():
     """List available relay servers"""
     relays = []
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute(
+    async with (
+        aiosqlite.connect(DB_PATH) as db,
+        db.execute(
             "SELECT relay_id, public_ip, port, region, capacity, registered_at FROM relay_servers ORDER BY region, relay_id"
-        ) as cursor:
-            async for row in cursor:
-                relay_id, public_ip, port, region, capacity, registered_at = row
-                relays.append(
-                    {
-                        "relay_id": relay_id,
-                        "public_ip": public_ip,
-                        "port": port,
-                        "region": region,
-                        "capacity": capacity,
-                        "registered_at": registered_at,
-                    }
-                )
+        ) as cursor,
+    ):
+        async for row in cursor:
+            relay_id, public_ip, port, region, capacity, registered_at = row
+            relays.append(
+                {
+                    "relay_id": relay_id,
+                    "public_ip": public_ip,
+                    "port": port,
+                    "region": region,
+                    "capacity": capacity,
+                    "registered_at": registered_at,
+                }
+            )
 
     return {"relays": relays}
 
@@ -603,23 +605,25 @@ async def get_relays_by_region(region: str):
     """Get relay servers in a specific region"""
     relays = []
 
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute(
+    async with (
+        aiosqlite.connect(DB_PATH) as db,
+        db.execute(
             "SELECT relay_id, public_ip, port, region, capacity, registered_at FROM relay_servers WHERE region = ? ORDER BY relay_id",
             (region,),
-        ) as cursor:
-            async for row in cursor:
-                relay_id, public_ip, port, region, capacity, registered_at = row
-                relays.append(
-                    {
-                        "relay_id": relay_id,
-                        "public_ip": public_ip,
-                        "port": port,
-                        "region": region,
-                        "capacity": capacity,
-                        "registered_at": registered_at,
-                    }
-                )
+        ) as cursor,
+    ):
+        async for row in cursor:
+            relay_id, public_ip, port, region, capacity, registered_at = row
+            relays.append(
+                {
+                    "relay_id": relay_id,
+                    "public_ip": public_ip,
+                    "port": port,
+                    "region": region,
+                    "capacity": capacity,
+                    "registered_at": registered_at,
+                }
+            )
 
     return {"relays": relays}
 

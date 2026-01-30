@@ -682,12 +682,16 @@ class RemoteControlPlane(ControlPlane):
             party_id = data.get("party_id")
             peer_id = data.get("peer_id")
 
-            if party_id and peer_id and party_id in self.parties:
-                if peer_id in self.parties[party_id].peers:
-                    peer_name = self.parties[party_id].peers[peer_id].name
-                    del self.parties[party_id].peers[peer_id]
-                    print(f"👤 Peer {peer_name} left party")
-                    await self._save_state()
+            if (
+                party_id
+                and peer_id
+                and party_id in self.parties
+                and peer_id in self.parties[party_id].peers
+            ):
+                peer_name = self.parties[party_id].peers[peer_id].name
+                del self.parties[party_id].peers[peer_id]
+                print(f"👤 Peer {peer_name} left party")
+                await self._save_state()
         except Exception as e:
             error_msg = str(e)
             print(f"⚠️  Error handling peer left: {error_msg}")
