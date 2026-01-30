@@ -98,6 +98,19 @@ class DiscordIntegration:
         self.running = True
         self.session = aiohttp.ClientSession()
 
+        # Load Discord settings from database
+        from .settings import get_settings_db
+
+        db = await get_settings_db()
+        discord_webhook = await db.get_setting("discord_webhook", "")
+        discord_invite = await db.get_setting("discord_invite", "")
+
+        # Set webhook and invite if configured
+        if discord_webhook:
+            self.set_webhook(discord_webhook)
+        if discord_invite:
+            self.set_party_invite(discord_invite)
+
         # Try to connect Rich Presence
         await self._connect_rich_presence()
 

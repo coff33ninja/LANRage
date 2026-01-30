@@ -5,6 +5,15 @@ All notable changes to LANrage will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Discord Rich Presence**: Fixed Discord Rich Presence not connecting
+  - Added missing `await discord.start()` call in `lanrage.py`
+  - Discord integration now properly initializes and attempts to connect
+  - Users will see "ℹ Discord Rich Presence not configured" message if App ID not set
+  - Users will see "✓ Discord Rich Presence connected" when properly configured
+
 ## [1.2.3] - 2026-01-31
 
 ### Fixed

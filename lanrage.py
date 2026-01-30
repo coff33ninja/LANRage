@@ -118,6 +118,7 @@ async def main():
     # Initialize Discord integration
     print("✓ Initializing Discord integration...")
     discord = DiscordIntegration(config)
+    await discord.start()
     logger.info("Discord integration ready")
 
     # Initialize server browser

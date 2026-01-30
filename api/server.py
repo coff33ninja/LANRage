@@ -89,6 +89,9 @@ class SettingsRequest(BaseModel):
     api_host: str | None = None
     api_port: int | None = None
     control_server: str | None = None
+    discord_app_id: str | None = None
+    discord_webhook: str | None = None
+    discord_invite: str | None = None
 
 
 class SaveConfigRequest(BaseModel):
@@ -576,6 +579,21 @@ async def update_settings(req: SettingsRequest):
     updates = req.model_dump(exclude_none=True)
     for key, value in updates.items():
         await db.set_setting(key, value)
+
+    # If Discord settings changed, reconnect Discord integration
+    discord_keys = {"discord_app_id", "discord_webhook", "discord_invite"}
+    if discord_keys & set(updates.keys()) and discord_integration:
+        # Stop current Discord integration
+        await discord_integration.stop()
+
+        # Reconnect with new settings
+        await discord_integration.start()
+
+        # Update webhook and invite if provided
+        if "discord_webhook" in updates and updates["discord_webhook"]:
+            discord_integration.set_webhook(updates["discord_webhook"])
+        if "discord_invite" in updates and updates["discord_invite"]:
+            discord_integration.set_party_invite(updates["discord_invite"])
 
     return {
         "status": "ok",
