@@ -11,6 +11,38 @@ from typing import Dict, List, Optional, Set, Tuple
 import psutil
 
 from .config import Config
+from .nat import NATType
+
+
+def calculate_adaptive_keepalive(nat_type: NATType, profile_keepalive: Optional[int] = None) -> int:
+    """Calculate keepalive interval based on NAT type
+    
+    Symmetric NAT needs frequent keepalive to maintain bindings.
+    Cone NAT is more forgiving and can use longer intervals.
+    
+    Args:
+        nat_type: Detected NAT type
+        profile_keepalive: Optional keepalive override from game profile
+        
+    Returns:
+        Keepalive interval in seconds
+    """
+    # If profile specifies a keepalive and it's not the default, use it
+    if profile_keepalive and profile_keepalive != 25:
+        return profile_keepalive
+    
+    # Map NAT types to keepalive intervals
+    # These are optimized for maintaining NAT bindings without excessive traffic
+    nat_keepalive_map = {
+        NATType.OPEN: 60,                    # No NAT, can be very relaxed
+        NATType.FULL_CONE: 45,               # Relaxed, mapping is stable
+        NATType.RESTRICTED_CONE: 30,         # Moderate, address restricted
+        NATType.PORT_RESTRICTED_CONE: 15,    # Strict, port restricted
+        NATType.SYMMETRIC: 8,                # Very strict, needs frequent keepalive
+        NATType.UNKNOWN: 25,                 # Default to conservative value
+    }
+    
+    return nat_keepalive_map.get(nat_type, 25)
 
 
 @dataclass
@@ -400,14 +432,19 @@ class GameDetector:
 class GameOptimizer:
     """Applies game-specific optimizations"""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, nat_type: Optional[NATType] = None):
         self.config = config
+        self.nat_type = nat_type or NATType.UNKNOWN
         self.active_profile: Optional[GameProfile] = None
+
+    def set_nat_type(self, nat_type: NATType):
+        """Update NAT type for adaptive keepalive calculation"""
+        self.nat_type = nat_type
 
     async def apply_profile(
         self, profile: GameProfile, network_manager=None, broadcast_manager=None
     ):
-        """Apply game profile optimizations
+        """Apply game profile optimizations with NAT-aware keepalive
 
         Args:
             profile: Game profile to apply
@@ -422,10 +459,16 @@ class GameOptimizer:
 
         print(f"⚙️  Applying optimizations for {profile.name}")
 
+        # Calculate adaptive keepalive based on NAT type
+        adaptive_keepalive = calculate_adaptive_keepalive(self.nat_type, profile.keepalive)
+        
         # Adjust WireGuard keepalive
-        if profile.keepalive != 25 and network_manager:
-            print(f"   - Keepalive: {profile.keepalive}s")
-            await self._update_keepalive(network_manager, profile.keepalive)
+        if adaptive_keepalive != 25 and network_manager:
+            print(f"   - Keepalive: {adaptive_keepalive}s (NAT: {self.nat_type.value})")
+            await self._update_keepalive(network_manager, adaptive_keepalive)
+        elif network_manager and adaptive_keepalive != 25:
+            print(f"   - Keepalive: {adaptive_keepalive}s (NAT: {self.nat_type.value})")
+            await self._update_keepalive(network_manager, adaptive_keepalive)
 
         # Enable broadcast emulation if needed
         if profile.broadcast and broadcast_manager:
@@ -789,12 +832,13 @@ class GameOptimizer:
 class GameManager:
     """Manages game detection and optimization"""
 
-    def __init__(self, config: Config, network_manager=None, broadcast_manager=None):
+    def __init__(self, config: Config, network_manager=None, broadcast_manager=None, nat_traversal=None):
         self.config = config
         self.optimizer = GameOptimizer(config)
         self.detector = GameDetector(config, optimizer=self.optimizer)
         self.network_manager = network_manager
         self.broadcast_manager = broadcast_manager
+        self.nat_traversal = nat_traversal
 
         # Hook up detector to game manager
         self.detector._game_manager = self
@@ -805,6 +849,11 @@ class GameManager:
         global GAME_PROFILES
         if not GAME_PROFILES:
             await initialize_game_profiles()
+        
+        # Update optimizer with current NAT type if available
+        if self.nat_traversal and hasattr(self.nat_traversal, 'nat_type'):
+            self.optimizer.set_nat_type(self.nat_traversal.nat_type)
+        
         await self.detector.start()
 
     async def stop(self):
