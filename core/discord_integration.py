@@ -93,6 +93,11 @@ class DiscordIntegration:
         self.rpc = None
         self.rpc_connected = False
 
+        # Discord Bot (if discord.py is available)
+        self.bot = None
+        self.bot_connected = False
+        self.bot_task: asyncio.Task | None = None
+
     async def start(self):
         """Start Discord integration"""
         self.running = True
@@ -114,6 +119,9 @@ class DiscordIntegration:
         # Try to connect Rich Presence
         await self._connect_rich_presence()
 
+        # Try to connect Discord bot
+        await self._connect_bot()
+
         # Start batch flush task for notifications (every 500ms)
         self.batch_flush_task = asyncio.create_task(self._batch_flush_loop())
 
@@ -129,6 +137,21 @@ class DiscordIntegration:
 
         # Final flush of pending notifications
         await self._flush_pending_notifications()
+
+        # Stop Discord bot
+        if self.bot and self.bot_connected:
+            try:
+                await self.bot.close()
+                self.bot_connected = False
+                print("✓ Discord bot disconnected")
+            except Exception as e:
+                print(f"Debug: Discord bot cleanup failed: {e}", file=sys.stderr)
+
+        # Cancel bot task
+        if self.bot_task:
+            self.bot_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self.bot_task
 
         if self.session:
             await self.session.close()
@@ -208,6 +231,70 @@ class DiscordIntegration:
             error_msg = str(e)
             print(f"⚠ Discord Rich Presence failed: {error_msg}")
 
+    async def _connect_bot(self):
+        """Connect Discord bot for online presence"""
+        try:
+            import discord
+
+            # Load Discord bot settings from database
+            from .settings import get_settings_db
+
+            db = await get_settings_db()
+            bot_token = await db.get_setting("discord_bot_token", "")
+            channel_id = await db.get_setting("discord_channel_id", "")
+
+            if not bot_token:
+                print("ℹ Discord bot not configured (set bot token in settings)")
+                return
+
+            # Create bot with minimal intents
+            intents = discord.Intents.default()
+            intents.message_content = False  # Don't need message content
+            intents.guilds = True  # Need guild info
+            intents.guild_messages = True  # Need to send messages
+
+            self.bot = discord.Client(intents=intents)
+            self.bot_channel_id = int(channel_id) if channel_id else None
+
+            @self.bot.event
+            async def on_ready():
+                """Bot connected successfully"""
+                self.bot_connected = True
+                print(f"✓ Discord bot connected as {self.bot.user}")
+
+                # Send startup message if channel configured
+                if self.bot_channel_id:
+                    try:
+                        channel = self.bot.get_channel(self.bot_channel_id)
+                        if channel:
+                            await channel.send("🎮 LANrage bot is now online!")
+                    except Exception as e:
+                        print(f"⚠ Failed to send bot startup message: {e}")
+
+            @self.bot.event
+            async def on_disconnect():
+                """Bot disconnected"""
+                self.bot_connected = False
+                print("⚠ Discord bot disconnected")
+
+            # Start bot in background task
+            self.bot_task = asyncio.create_task(self._run_bot(bot_token))
+
+        except ImportError:
+            print("ℹ Discord bot not available (install discord.py)")
+        except Exception as e:
+            error_msg = str(e)
+            print(f"⚠ Discord bot connection failed: {error_msg}")
+
+    async def _run_bot(self, token: str):
+        """Run Discord bot in background"""
+        try:
+            await self.bot.start(token)
+        except Exception as e:
+            error_msg = str(e)
+            print(f"⚠ Discord bot error: {error_msg}")
+            self.bot_connected = False
+
     def set_webhook(self, webhook_url: str):
         """Set Discord webhook URL for notifications
 
@@ -245,6 +332,23 @@ class DiscordIntegration:
         # If batch interval exceeded, send immediately
         if should_send_immediate:
             await self._send_webhook(title, message, color)
+
+    async def send_bot_message(self, message: str):
+        """Send message via Discord bot to configured channel
+
+        Args:
+            message: Message to send
+        """
+        if not self.bot or not self.bot_connected or not self.bot_channel_id:
+            return
+
+        try:
+            channel = self.bot.get_channel(self.bot_channel_id)
+            if channel:
+                await channel.send(message)
+        except Exception as e:
+            error_msg = str(e)
+            print(f"⚠ Failed to send bot message: {error_msg}")
 
     async def _send_webhook(self, title: str, message: str, color: int = 0x667EEA):
         """Send notification directly to Discord webhook

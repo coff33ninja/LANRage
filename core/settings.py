@@ -478,6 +478,8 @@ async def init_default_settings():
         "discord_app_id": "",  # Discord Application ID for Rich Presence
         "discord_webhook": "",  # Discord webhook URL for notifications
         "discord_invite": "",  # Discord voice channel invite URL
+        "discord_bot_token": "",  # Discord bot token for bot presence
+        "discord_channel_id": "",  # Discord channel ID for bot notifications
         "enable_metrics": True,
     }
 

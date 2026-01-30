@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-01-31
+
+### Added
+- **Discord Bot Integration**: Added Discord bot support for online presence in Discord servers
+  - Bot shows as online in Discord server when configured with bot token
+  - Bot sends startup message to configured channel when connecting
+  - Bot status displayed in Discord tab UI (Online/Configured/Not Configured)
+  - Added `discord_bot_token` and `discord_channel_id` settings fields
+  - Bot automatically reconnects when settings are updated
+  - Uses discord.py library for bot functionality
+  - Bot runs in background task to avoid blocking main event loop
+
+### Changed
+- **Settings UI**: Added Discord bot configuration fields to Settings tab
+  - Added Discord Bot Token input field (password type for security)
+  - Added Discord Channel ID input field for bot notifications
+  - Both fields include helpful descriptions and links to Discord Developer Portal
+  - Settings now persist across restarts via SQLite database
+
+### Fixed
+- **API Syntax Error**: Fixed duplicate line in `/api/discord/status` endpoint
+  - Removed duplicate `"rich_presence": discord_integration.rpc_connected` line
+  - Endpoint now returns proper JSON response without syntax errors
+
+## [1.2.3] - 2026-01-31
+
 ### Fixed
 - **Discord Rich Presence**: Fixed Discord Rich Presence not connecting
   - Added missing `await discord.start()` call in `lanrage.py`

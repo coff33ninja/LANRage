@@ -870,6 +870,10 @@
                             <strong>Rich Presence:</strong>
                             <span id="presenceStatus" style="margin-left: 10px; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; background: rgba(239, 68, 68, 0.3);">Disconnected</span>
                         </div>
+                        <div>
+                            <strong>Bot:</strong>
+                            <span id="botStatus" style="margin-left: 10px; padding: 4px 12px; border-radius: 12px; font-size: 0.9em; background: rgba(239, 68, 68, 0.3);">Offline</span>
+                        </div>
                     </div>
                     <div id="inviteLinkDisplay" style="display: none; margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;">
                         <strong>Your Discord Invite:</strong><br>
@@ -1053,10 +1057,26 @@
                     </div>
 
                     <div class="input-group">
+                        <label>Discord Bot Token</label>
+                        <input type="password" id="settingsDiscordBotToken" placeholder="MTIzNDU2Nzg5MDEyMzQ1Njc4OQ...">
+                        <p style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">
+                            For bot presence (shows bot online in Discord). Get from <a href="https://discord.com/developers/applications" target="_blank" style="color: #10b981;">Bot section</a>
+                        </p>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Discord Channel ID</label>
+                        <input type="text" id="settingsDiscordChannelId" placeholder="1234567890123456789">
+                        <p style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">
+                            Channel for bot notifications. Right-click channel → Copy ID (requires Developer Mode)
+                        </p>
+                    </div>
+
+                    <div class="input-group">
                         <label>Discord Webhook URL</label>
                         <input type="text" id="settingsDiscordWebhook" placeholder="https://discord.com/api/webhooks/...">
                         <p style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">
-                            For party notifications (optional)
+                            For party notifications (alternative to bot, optional)
                         </p>
                     </div>
 
@@ -1654,6 +1674,19 @@
                     presenceStatus.textContent = 'Disconnected';
                     presenceStatus.style.background = 'rgba(239, 68, 68, 0.3)';
                 }
+
+                // Update bot status
+                const botStatus = document.getElementById('botStatus');
+                if (data.bot_online) {
+                    botStatus.textContent = 'Online';
+                    botStatus.style.background = 'rgba(16, 185, 129, 0.3)';
+                } else if (data.bot_configured) {
+                    botStatus.textContent = 'Configured (Offline)';
+                    botStatus.style.background = 'rgba(251, 191, 36, 0.3)';
+                } else {
+                    botStatus.textContent = 'Not Configured';
+                    botStatus.style.background = 'rgba(239, 68, 68, 0.3)';
+                }
             } catch (err) {
                 console.error('Failed to load Discord settings:', err);
             }
@@ -1801,6 +1834,8 @@
                 document.getElementById('settingsControlServer').value = settings.control_server || 'https://control.lanrage.io';
                 
                 document.getElementById('settingsDiscordAppId').value = settings.discord_app_id || '';
+                document.getElementById('settingsDiscordBotToken').value = settings.discord_bot_token || '';
+                document.getElementById('settingsDiscordChannelId').value = settings.discord_channel_id || '';
                 document.getElementById('settingsDiscordWebhook').value = settings.discord_webhook || '';
                 document.getElementById('settingsDiscordInvite').value = settings.discord_invite || '';
                 
@@ -1829,6 +1864,8 @@
                 api_port: parseInt(document.getElementById('settingsApiPort').value),
                 control_server: document.getElementById('settingsControlServer').value,
                 discord_app_id: document.getElementById('settingsDiscordAppId').value || '',
+                discord_bot_token: document.getElementById('settingsDiscordBotToken').value || '',
+                discord_channel_id: document.getElementById('settingsDiscordChannelId').value || '',
                 discord_webhook: document.getElementById('settingsDiscordWebhook').value || '',
                 discord_invite: document.getElementById('settingsDiscordInvite').value || '',
             };

@@ -41,6 +41,9 @@ aiofiles>=24.1.0
 # Optional: Discord Rich Presence
 pypresence>=4.3.0
 
+# Optional: Discord Bot
+discord.py>=2.3.0
+
 # Code Quality
 black>=23.3.0
 isort>=5.12.0

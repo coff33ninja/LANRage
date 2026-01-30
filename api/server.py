@@ -92,6 +92,8 @@ class SettingsRequest(BaseModel):
     discord_app_id: str | None = None
     discord_webhook: str | None = None
     discord_invite: str | None = None
+    discord_bot_token: str | None = None
+    discord_channel_id: str | None = None
 
 
 class SaveConfigRequest(BaseModel):
@@ -312,11 +314,18 @@ async def get_discord_status():
     if not discord_integration:
         raise HTTPException(500, "Discord integration not initialized")
 
+    # Check if bot token is configured
+    db = await get_settings_db()
+    bot_token = await db.get_setting("discord_bot_token", "")
+    bot_configured = bool(bot_token)
+
     return {
         "webhook_configured": discord_integration.webhook_url is not None,
         "invite_configured": discord_integration.party_invite_url is not None,
         "invite_url": discord_integration.get_party_invite_link(),
         "rich_presence": discord_integration.rpc_connected,
+        "bot_configured": bot_configured,
+        "bot_online": discord_integration.bot_connected,
     }
 
 
