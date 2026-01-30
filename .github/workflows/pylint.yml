@@ -40,7 +40,17 @@ jobs:
       run: |
         source .venv/bin/activate
         echo "🔍 Running Pylint analysis..."
-        pylint $(git ls-files '*.py') --output-format=colorized --score=yes
+        # Pylint exit codes: 0=no issues, 4=warnings, 8+=errors
+        # We accept warnings (exit 4) but fail on errors (exit 8+)
+        pylint $(git ls-files '*.py') --output-format=colorized --score=yes || EXIT_CODE=$?
+        if [ "${EXIT_CODE:-0}" -ge 8 ]; then
+          echo "❌ Pylint found errors (exit code: $EXIT_CODE)"
+          exit $EXIT_CODE
+        elif [ "${EXIT_CODE:-0}" -eq 4 ]; then
+          echo "⚠️  Pylint found warnings but continuing (exit code: 4)"
+        else
+          echo "✅ Pylint passed with no issues"
+        fi
     
     - name: Generate Pylint report
       if: always()

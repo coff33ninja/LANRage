@@ -50,13 +50,14 @@ jobs:
     - name: Verify zero Ruff warnings
       run: |
         source .venv/bin/activate
-        RUFF_OUTPUT=$(python -m ruff check . 2>&1)
-        if [ -n "$RUFF_OUTPUT" ]; then
+        # Run ruff and capture exit code
+        if python -m ruff check . --quiet; then
+          echo "✅ Zero Ruff warnings - code quality: 100%"
+        else
           echo "❌ Ruff found issues:"
-          echo "$RUFF_OUTPUT"
+          python -m ruff check .
           exit 1
         fi
-        echo "✅ Zero Ruff warnings - code quality: 100%"
 
   test:
     name: Test Suite

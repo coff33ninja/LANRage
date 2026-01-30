@@ -147,6 +147,7 @@ def _levenshtein_distance(s1: str, s2: str) -> int:
     s2 = s2.lower()
 
     if len(s1) < len(s2):
+        # pylint: disable=arguments-out-of-order  # Intentional swap for algorithm
         return _levenshtein_distance(s2, s1)
 
     if len(s2) == 0:

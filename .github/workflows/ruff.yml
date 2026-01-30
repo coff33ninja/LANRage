@@ -41,13 +41,14 @@ jobs:
     - name: Verify zero warnings (strict mode)
       run: |
         source .venv/bin/activate
-        RUFF_OUTPUT=$(python -m ruff check . 2>&1)
-        if [ -n "$RUFF_OUTPUT" ]; then
+        # Run ruff and capture exit code
+        if python -m ruff check . --quiet; then
+          echo "✅ Zero Ruff warnings - maintaining 100% code quality!"
+        else
           echo "❌ Ruff found issues - LANrage requires 100% compliance"
-          echo "$RUFF_OUTPUT"
+          python -m ruff check .
           exit 1
         fi
-        echo "✅ Zero Ruff warnings - maintaining 100% code quality!"
     
     - name: Generate Ruff report
       if: always()
