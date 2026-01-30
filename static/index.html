@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%);
             color: white;
             min-height: 100vh;
             padding: 20px;
@@ -49,15 +49,16 @@
         }
 
         .main-card {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(20, 10, 15, 0.6);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(196, 30, 58, 0.3);
+            border: 1px solid rgba(196, 30, 58, 0.2);
         }
 
         .status-bar {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.15);
             padding: 15px 20px;
             border-radius: 10px;
             margin-bottom: 25px;
@@ -66,6 +67,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            border: 1px solid rgba(196, 30, 58, 0.3);
         }
 
         .status-left {
@@ -80,9 +82,10 @@
             align-items: center;
             gap: 8px;
             padding: 5px 12px;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.4);
             border-radius: 8px;
             font-size: 0.9em;
+            border: 1px solid rgba(196, 30, 58, 0.2);
         }
 
         .status-indicator {
@@ -93,15 +96,16 @@
         }
 
         .status-indicator.connected {
-            background: #10b981;
+            background: #ff4d6d;
+            box-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
         }
 
         .status-indicator.disconnected {
-            background: #ef4444;
+            background: #6b7280;
         }
 
         .status-indicator.warning {
-            background: #f59e0b;
+            background: #fbbf24;
         }
 
         @keyframes pulse {
@@ -142,7 +146,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 25px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 2px solid rgba(196, 30, 58, 0.3);
             padding-bottom: 10px;
         }
 
@@ -159,13 +163,14 @@
         }
 
         .tab:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.2);
             color: white;
         }
 
         .tab.active {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(196, 30, 58, 0.4);
             color: white;
+            border-bottom: 2px solid #ff4d6d;
         }
 
         .tab-content {
@@ -211,22 +216,24 @@
         }
 
         .big-button.primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #C41E3A 0%, #8B1538 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4);
         }
 
         .big-button.primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 10px 30px rgba(196, 30, 58, 0.6);
         }
 
         .big-button.secondary {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.15);
             color: white;
+            border: 1px solid rgba(196, 30, 58, 0.3);
         }
 
         .big-button.secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(196, 30, 58, 0.25);
         }
 
         .big-button.danger {
@@ -254,12 +261,19 @@
         textarea {
             width: 100%;
             padding: 12px;
-            border: none;
+            border: 1px solid rgba(196, 30, 58, 0.3);
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
             color: white;
             font-size: 1em;
             font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #ff4d6d;
+            box-shadow: 0 0 10px rgba(255, 77, 109, 0.3);
         }
 
         input::placeholder,
@@ -268,10 +282,11 @@
         }
 
         .party-info {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.1);
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
+            border: 1px solid rgba(196, 30, 58, 0.3);
         }
 
         .party-id-display {
@@ -293,8 +308,8 @@
 
         .copy-button {
             padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
+            background: rgba(196, 30, 58, 0.3);
+            border: 1px solid rgba(196, 30, 58, 0.5);
             border-radius: 8px;
             color: white;
             cursor: pointer;
@@ -302,7 +317,7 @@
         }
 
         .copy-button:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(196, 30, 58, 0.5);
         }
 
         .peers-list {
@@ -311,12 +326,13 @@
         }
 
         .peer-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.1);
             padding: 15px;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid rgba(196, 30, 58, 0.2);
         }
 
         .peer-name {
@@ -336,7 +352,7 @@
 
         .peer-stat-value {
             font-weight: bold;
-            color: #10b981;
+            color: #ff4d6d;
         }
 
         .peer-stat-value.warning {
@@ -358,15 +374,17 @@
         }
 
         .server-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.1);
             padding: 20px;
             border-radius: 10px;
             transition: all 0.3s;
+            border: 1px solid rgba(196, 30, 58, 0.2);
         }
 
         .server-card:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(196, 30, 58, 0.2);
             transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(196, 30, 58, 0.3);
         }
 
         .server-header {
@@ -384,7 +402,7 @@
         .server-game {
             font-size: 0.9em;
             opacity: 0.8;
-            color: #10b981;
+            color: #ff4d6d;
             font-weight: 600;
         }
 
@@ -417,7 +435,7 @@
         }
 
         .btn-join {
-            background: #10b981;
+            background: #C41E3A;
             color: white;
             padding: 8px 20px;
             border: none;
@@ -428,7 +446,8 @@
         }
 
         .btn-join:hover {
-            background: #059669;
+            background: #8B1538;
+            box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4);
         }
 
         .btn-join:disabled {
@@ -437,17 +456,17 @@
         }
 
         .btn-favorite {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.2);
             color: white;
             padding: 8px 15px;
-            border: none;
+            border: 1px solid rgba(196, 30, 58, 0.3);
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .btn-favorite:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(196, 30, 58, 0.3);
         }
 
         .btn-favorite.active {
@@ -481,7 +500,7 @@
         }
 
         .latency {
-            color: #10b981;
+            color: #ff4d6d;
             font-weight: 600;
         }
 
@@ -501,10 +520,11 @@
         }
 
         .metric-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(196, 30, 58, 0.1);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            border: 1px solid rgba(196, 30, 58, 0.2);
         }
 
         .metric-value {
@@ -531,21 +551,23 @@
 
         .mode-option {
             padding: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(196, 30, 58, 0.3);
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
+            background: rgba(0, 0, 0, 0.2);
         }
 
         .mode-option:hover {
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.05);
+            border-color: #ff4d6d;
+            background: rgba(196, 30, 58, 0.1);
         }
 
         .mode-option.selected {
-            border-color: #10b981;
-            background: rgba(16, 185, 129, 0.2);
+            border-color: #ff4d6d;
+            background: rgba(196, 30, 58, 0.3);
+            box-shadow: 0 0 20px rgba(255, 77, 109, 0.3);
         }
 
         .mode-option h4 {
@@ -560,8 +582,8 @@
         }
 
         .status-message.success {
-            background: rgba(16, 185, 129, 0.3);
-            border: 1px solid rgba(16, 185, 129, 0.5);
+            background: rgba(196, 30, 58, 0.3);
+            border: 1px solid rgba(196, 30, 58, 0.5);
         }
 
         .status-message.error {
@@ -580,8 +602,8 @@
         }
 
         .config-item.active {
-            border-color: #10b981;
-            background: rgba(16, 185, 129, 0.1);
+            border-color: #ff4d6d;
+            background: rgba(196, 30, 58, 0.2);
         }
 
         .config-info h4 {
@@ -608,12 +630,12 @@
         }
 
         .btn-activate {
-            background: #10b981;
+            background: #C41E3A;
             color: white;
         }
 
         .btn-activate:hover {
-            background: #059669;
+            background: #8B1538;
         }
 
         .btn-delete {
