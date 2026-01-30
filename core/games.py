@@ -190,6 +190,7 @@ def _fuzzy_match_executable(
         return True
 
     # Levenshtein distance based fuzzy match
+    # pylint: disable=arguments-out-of-order
     distance = _levenshtein_distance(proc_clean, exe_clean)
     max_len = max(len(proc_clean), len(exe_clean))
 
@@ -229,7 +230,7 @@ _profile_cache = ProfileCache(ttl_seconds=30.0)
 
 async def initialize_game_profiles():
     """Initialize game profiles asynchronously"""
-    global GAME_PROFILES
+    global GAME_PROFILES  # pylint: disable=global-variable-not-assigned
     profiles = await load_game_profiles()
     GAME_PROFILES.clear()
     GAME_PROFILES.update(profiles)
@@ -897,7 +898,6 @@ class GameManager:
     async def start(self):
         """Start game management"""
         # Ensure game profiles are loaded
-        global GAME_PROFILES
         if not GAME_PROFILES:
             await initialize_game_profiles()
 

@@ -31,17 +31,16 @@ class SettingsDatabase:
 
     async def initialize(self):
         """Initialize database schema"""
-        async with self._lock:  # Use asyncio lock for concurrent access protection
-            async with aiosqlite.connect(self.db_path) as db:
-                # Settings table
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS settings (
-                        key TEXT PRIMARY KEY,
-                        value TEXT NOT NULL,
-                        type TEXT NOT NULL,
-                        updated_at TEXT NOT NULL
-                    )
-                """)
+        async with self._lock, aiosqlite.connect(self.db_path) as db:
+            # Settings table
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                )
+            """)
 
             # Server configurations table
             await db.execute("""
