@@ -107,6 +107,79 @@ def predict_connection_quality(
     return quality_score, status
 
 
+def aggregate_metrics_by_window(
+    metrics: list[MetricPoint],
+    window_seconds: float = 60.0,
+    current_time: Optional[float] = None,
+) -> dict:
+    """Aggregate metrics by time window using statistical measures
+    
+    Reduces data volume by aggregating raw metrics into statistical summaries
+    within time windows. This is useful for long-term trending analysis.
+    
+    Args:
+        metrics: List of MetricPoint data to aggregate
+        window_seconds: Time window size in seconds
+        current_time: Current time (defaults to now)
+        
+    Returns:
+        Dictionary with aggregated statistics:
+        - count: Number of data points in window
+        - min: Minimum value
+        - max: Maximum value
+        - avg: Average value
+        - p95: 95th percentile
+        - sum: Sum of values
+    """
+    if not metrics:
+        return {
+            "count": 0,
+            "min": None,
+            "max": None,
+            "avg": None,
+            "p95": None,
+            "sum": 0,
+        }
+    
+    if current_time is None:
+        current_time = time.time()
+    
+    cutoff_time = current_time - window_seconds
+    
+    # Filter metrics within window
+    window_values = [
+        m.value for m in metrics
+        if m.timestamp >= cutoff_time
+    ]
+    
+    if not window_values:
+        return {
+            "count": 0,
+            "min": None,
+            "max": None,
+            "avg": None,
+            "p95": None,
+            "sum": 0,
+        }
+    
+    # Calculate statistics
+    sorted_values = sorted(window_values)
+    count = len(sorted_values)
+    
+    # 95th percentile
+    p95_index = int(count * 0.95)
+    p95 = sorted_values[p95_index] if p95_index < count else sorted_values[-1]
+    
+    return {
+        "count": count,
+        "min": min(sorted_values),
+        "max": max(sorted_values),
+        "avg": sum(sorted_values) / count,
+        "p95": p95,
+        "sum": sum(sorted_values),
+    }
+
+
 @dataclass
 class GameSession:
     """A game session record"""
@@ -524,4 +597,73 @@ class MetricsCollector:
             "bytes_sent": peer.bytes_sent,
             "bytes_received": peer.bytes_received,
             "uptime_seconds": peer.connection_uptime,
+        }
+
+    def get_aggregated_system_metrics(self, window_seconds: float = 60.0) -> dict:
+        """Get aggregated system metrics for a time window
+        
+        Useful for trending analysis and long-term monitoring.
+        
+        Args:
+            window_seconds: Time window in seconds
+            
+        Returns:
+            Dictionary with aggregated CPU, memory, and network stats
+        """
+        current_time = time.time()
+        
+        return {
+            "cpu": aggregate_metrics_by_window(
+                list(self.system_metrics.cpu_percent),
+                window_seconds,
+                current_time
+            ),
+            "memory": aggregate_metrics_by_window(
+                list(self.system_metrics.memory_percent),
+                window_seconds,
+                current_time
+            ),
+            "network_sent": aggregate_metrics_by_window(
+                list(self.system_metrics.network_sent),
+                window_seconds,
+                current_time
+            ),
+            "network_received": aggregate_metrics_by_window(
+                list(self.system_metrics.network_received),
+                window_seconds,
+                current_time
+            ),
+            "window_seconds": window_seconds,
+            "timestamp": current_time,
+        }
+
+    def get_aggregated_peer_metrics(self, peer_id: str, window_seconds: float = 60.0) -> Optional[dict]:
+        """Get aggregated metrics for a specific peer
+        
+        Args:
+            peer_id: Peer ID to get metrics for
+            window_seconds: Time window in seconds
+            
+        Returns:
+            Dictionary with aggregated latency stats or None if peer not found
+        """
+        if peer_id not in self.peer_metrics:
+            return None
+        
+        peer = self.peer_metrics[peer_id]
+        current_time = time.time()
+        
+        return {
+            "peer_id": peer_id,
+            "peer_name": peer.peer_name,
+            "latency": aggregate_metrics_by_window(
+                list(peer.latency),
+                window_seconds,
+                current_time
+            ),
+            "quality_score": peer.quality_score,
+            "quality_trend": peer.quality_trend,
+            "status": peer.status,
+            "window_seconds": window_seconds,
+            "timestamp": current_time,
         }
