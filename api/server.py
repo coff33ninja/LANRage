@@ -127,6 +127,17 @@ async def serve_logo():
     raise HTTPException(404, "Logo not found")
 
 
+@app.get("/favicon.ico")
+async def serve_favicon():
+    """Serve the favicon"""
+    from fastapi.responses import FileResponse
+
+    favicon_path = Path(__file__).parent.parent / "logo.ico"
+    if favicon_path.exists():
+        return FileResponse(favicon_path, media_type="image/x-icon")
+    raise HTTPException(404, "Favicon not found")
+
+
 @app.get("/status")
 async def get_status():
     """Get current status"""
