@@ -77,11 +77,13 @@ async def test_close_with_heartbeat(client):
         await asyncio.sleep(100)
 
     client.heartbeat_task = asyncio.create_task(mock_heartbeat())
+    task = client.heartbeat_task  # Keep reference before close()
 
     await client.close()
 
-    # Task should be cancelled
-    assert client.heartbeat_task.cancelled()
+    # Task should be cancelled and heartbeat_task should be None
+    assert task.cancelled()
+    assert client.heartbeat_task is None
 
 
 def test_server_url_configuration(client):

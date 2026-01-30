@@ -55,15 +55,17 @@ class RemoteControlPlaneClient:
 
     async def close(self):
         """Close the client and cleanup"""
-        if self.heartbeat_task:
+        if self.heartbeat_task and not self.heartbeat_task.done():
             self.heartbeat_task.cancel()
             try:
                 await self.heartbeat_task
             except asyncio.CancelledError:
                 pass
+            self.heartbeat_task = None
 
         if self.client:
             await self.client.aclose()
+            self.client = None
 
     async def _request(
         self,
