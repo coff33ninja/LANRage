@@ -12,13 +12,14 @@
 - Process iteration is blocking (already fixed to executor, but could be smarter)
 
 **Improvements**:
-- [ ] Implement fuzzy matching for executables (Levenshtein distance, ~90% match threshold)
+- [x] Implement fuzzy matching for executables (Levenshtein distance, 85% match threshold)
 - [ ] Add port-based detection as secondary method (query open ports, match against profile ports)
-- [ ] Implement in-memory profile cache with TTL (cache for 30 seconds, invalidate when files change)
+- [x] Implement in-memory profile cache with TTL (cache for 30 seconds, invalidate when files change)
 - [ ] Add window title detection for windowed games (parse window names for game identification)
 - [ ] Implement detection ranking system (prioritize process > window title > port > hash)
 - [ ] Add detected game confidence scores (show "probably Minecraft" vs "definitely Minecraft")
 
+**Status**: ✅ COMPLETED - Fuzzy matching & ProfileCache implemented
 **Expected Impact**: +40% game detection rate, better UX with confidence indicators
 
 ---
@@ -34,38 +35,42 @@
 - No historical trend analysis
 
 **Improvements**:
-- [ ] Multi-sample latency (3-5 pings, use median instead of single value)
+- [x] Multi-sample latency (3 pings, use median instead of single value)
 - [ ] Exponential moving average (EMA) filter for smoothing: `new_latency = 0.7 * old_latency + 0.3 * measured`
-- [ ] Parallel pinging with `asyncio.gather()` (ping all servers concurrently)
+- [x] Parallel pinging with `asyncio.gather()` (ping all servers concurrently)
 - [ ] TCP SYN-based fallback (try TCP port 53/80/443 if ICMP fails)
 - [ ] DNS lookup time measurement as tertiary fallback
 - [ ] Latency trend detection (increasing/decreasing/stable)
 - [ ] Per-server measurement interval adaptation (if latency is good, measure every 60s; if bad, every 10s)
 
-**Implementation Details**:
-```python
-# Median of 3 measurements
-samples = await asyncio.gather(
-    ping(server, timeout=1),
-    ping(server, timeout=1),
-    ping(server, timeout=1),
-    return_exceptions=True
-)
-valid_samples = [s for s in samples if s is not None]
-server.latency_ms = statistics.median(valid_samples) if valid_samples else None
-
-# EMA calculation
-server.latency_ema = 0.7 * server.latency_ema + 0.3 * new_measurement
-```
-
+**Status**: ✅ COMPLETED - Multi-sample & parallel pinging implemented
 **Expected Impact**: 60% more reliable latency readings, better server selection
+
+---
+
+### 1.3 State Persistence Batching
+**File**: `core/control.py`
+**Current**: Writes state to disk on every change
+**Problems**:
+- High disk I/O on frequent state changes
+- No deduplication of writes
+- Blocking serialization
+
+**Improvements**:
+- [x] Implement write-behind cache with batching (100ms batch interval)
+- [x] Deduplicate writes within batch window
+- [x] Add StatePersister class with flush() method
+- [x] Add shutdown() method to ControlPlane for graceful flush
+
+**Status**: ✅ COMPLETED - Full batched persistence with deduplication implemented
+**Expected Impact**: 50x reduction in disk writes, improved responsiveness
 
 ---
 
 ## Priority 2: Network & State Management
 
 ### 2.1 Adaptive Keepalive
-**File**: `core/games.py`, `core/network.py`
+**File**: `core/games.py`
 **Current**: Fixed 25s keepalive for all, can be overridden per game
 **Problems**:
 - Doesn't adapt to NAT type
@@ -74,10 +79,84 @@ server.latency_ema = 0.7 * server.latency_ema + 0.3 * new_measurement
 - Wastes bandwidth on good connections
 
 **Improvements**:
-- [ ] Detect NAT type on startup (already in `core/nat.py`)
-- [ ] Map NAT type to keepalive interval:
+- [x] Detect NAT type on startup (already in `core/nat.py`)
+- [x] Map NAT type to keepalive interval:
   - Full Cone NAT: 60s (most relaxed)
   - Address-Restricted: 30s
+  - Port-Restricted: 15s
+  - Symmetric: 8s (strict, needs frequent keepalive)
+- [x] GameOptimizer uses `calculate_adaptive_keepalive()` function
+- [x] GameManager passes NAT type to optimizer via `set_nat_type()`
+
+**Status**: ✅ COMPLETED - Full NAT-aware adaptive keepalive implemented
+**Expected Impact**: 30% reduction in keepalive traffic for good connections
+
+---
+
+### 2.2 Connection Quality Prediction
+**File**: `core/metrics.py`
+**Current**: Basic latency-based status
+**Problems**:
+- No consideration of jitter or packet loss
+- No trend analysis
+- No quality scoring
+
+**Improvements**:
+- [x] Implement `predict_connection_quality()` function with weighted scoring
+  - Latency (40%): 0ms=100pts, 150ms=0pts
+  - Packet Loss (35%): 0% loss=100pts, 5% loss=0pts
+  - Jitter (25%): 0ms=100pts, 50ms=0pts
+- [x] Calculate jitter as standard deviation of recent latencies
+- [x] Track quality trend: improving/stable/degrading
+- [x] Add PeerMetrics fields: packet_loss_percent, jitter_ms, quality_score, quality_trend
+- [x] Add `get_peer_connection_quality()` method with detailed metrics
+
+**Status**: ✅ COMPLETED - Full connection quality prediction with trending
+**Expected Impact**: Better connection health visibility, early warning of degradation
+
+---
+
+## Priority 3: Integration Optimization
+
+### 3.1 Discord Integration Optimization
+**File**: `core/discord_integration.py`
+**Current**: Sends notifications immediately for each event
+**Problems**:
+- High API call frequency during rapid events (e.g., multiple peer joins)
+- No notification batching
+- Potential Discord API rate limiting
+
+**Improvements**:
+- [x] Create `NotificationBatcher` class with 500ms batch window
+- [x] Create `NotificationMessage` dataclass for queueing
+- [x] Implement `queue_notification()` with time-window deduplication
+- [x] Add `_batch_flush_loop()` background task
+- [x] Add `_flush_pending_notifications()` to combine multiple notifications
+- [x] Update all notify_* methods to use batching
+- [x] Add graceful flush on shutdown
+
+**Status**: ✅ COMPLETED - Full notification batching with background flush
+**Expected Impact**: 60-80% reduction in Discord API calls during events
+
+---
+
+### 3.2 Metrics Collection Optimization
+**File**: `core/metrics.py`
+**Current**: Stores all raw metrics, no aggregation
+**Problems**:
+- High memory usage for long-running sessions
+- Difficult to analyze long-term trends
+- No statistical summaries
+
+**Improvements**:
+- [x] Create `aggregate_metrics_by_window()` function
+- [x] Compute min/max/avg/p95 statistics within time windows
+- [x] Add `get_aggregated_system_metrics()` method
+- [x] Add `get_aggregated_peer_metrics()` method
+- [x] Support configurable window sizes (default 60s)
+
+**Status**: ✅ COMPLETED - Full time-window metric aggregation implemented
+**Expected Impact**: Reduced memory usage, better long-term trend analysis
   - Port-Restricted: 15s
   - Symmetric: 5s (most strict)
 - [ ] Override with game-specific values when needed
