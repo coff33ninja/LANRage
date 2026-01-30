@@ -37,18 +37,20 @@ class NetworkManager:
         # Log file for network operations
         self.log_file = Path(config.config_dir) / "network.log"
 
-    def _log(self, message: str):
+    async def _log(self, message: str):
         """Log network operations to file"""
         try:
+            import aiofiles
+            
             timestamp = asyncio.get_event_loop().time()
             log_entry = f"[{timestamp}] {message}\n"
 
             # Ensure log directory exists
             self.log_file.parent.mkdir(parents=True, exist_ok=True)
 
-            # Append to log file
-            with open(self.log_file, "a") as f:
-                f.write(log_entry)
+            # Append to log file asynchronously
+            async with aiofiles.open(self.log_file, "a", encoding="utf-8") as f:
+                await f.write(log_entry)
         except OSError as e:
             # Log to stderr if file logging fails (disk full, permissions, etc.)
             import sys
@@ -65,26 +67,26 @@ class NetworkManager:
 
     async def initialize(self):
         """Initialize network interface"""
-        self._log("Initializing network interface")
+        await self._log("Initializing network interface")
 
         # Check if WireGuard is installed
         if not await self._check_wireguard():
-            self._log("WireGuard not found")
+            await self._log("WireGuard not found")
             raise WireGuardError(
                 "WireGuard not found. Install from: https://www.wireguard.com/install/"
             )
 
         # Generate or load WireGuard keys
         await self._ensure_keys()
-        self._log(f"Keys loaded: {self.public_key_b64[:20]}...")
+        await self._log(f"Keys loaded: {self.public_key_b64[:20]}...")
 
         # Create WireGuard interface (platform-specific)
         try:
             await self._create_interface()
             self.interface_created = True
-            self._log(f"Interface {self.interface_name} created successfully")
+            await self._log(f"Interface {self.interface_name} created successfully")
         except Exception as e:
-            self._log(f"Failed to create interface: {e}")
+            await self._log(f"Failed to create interface: {e}")
             raise WireGuardError(f"Failed to create interface: {e}")
 
     async def _check_wireguard(self) -> bool:
@@ -106,16 +108,16 @@ class NetworkManager:
                 )
                 return result.returncode == 0
         except asyncio.TimeoutError:
-            self._log("WireGuard check timed out")
+            await self._log("WireGuard check timed out")
             return False
         except FileNotFoundError as e:
-            self._log(f"WireGuard check failed - command not found: {e}")
+            await self._log(f"WireGuard check failed - command not found: {e}")
             return False
         except subprocess.CalledProcessError as e:
-            self._log(f"WireGuard check failed - command error: {e}")
+            await self._log(f"WireGuard check failed - command error: {e}")
             return False
         except Exception as e:
-            self._log(f"WireGuard check failed - unexpected error: {e}")
+            await self._log(f"WireGuard check failed - unexpected error: {e}")
             return False
 
     async def _ensure_keys(self):
@@ -164,11 +166,13 @@ class NetworkManager:
             await self._create_interface_linux()
         else:
             platform_name = sys.platform
-            self._log(f"Unsupported platform: {platform_name}")
+            await self._log(f"Unsupported platform: {platform_name}")
             raise WireGuardError(f"Unsupported platform: {platform_name}")
 
     async def _create_interface_windows(self):
         """Create or reuse WireGuard interface on Windows"""
+        import aiofiles
+        
         # On Windows, we need a config file for the WireGuard service
         config_path = self.config.config_dir / f"{self.interface_name}.conf"
 
@@ -180,8 +184,10 @@ ListenPort = 51820
 """
 
         # Always update the config file (in case keys changed)
-        config_path.write_text(config_content)
-        self._log(f"Updated config file: {config_path}")
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(config_path, "w", encoding="utf-8") as f:
+            await f.write(config_content)
+        await self._log(f"Updated config file: {config_path}")
 
         # Check if tunnel service already exists
         service_name = f"WireGuardTunnel${self.interface_name}"
@@ -190,22 +196,22 @@ ListenPort = 51820
                 ["sc", "query", service_name], check=False, timeout=5.0
             )
             if check_result.returncode == 0:
-                self._log(f"Tunnel service {service_name} already exists, reusing it")
+                await self._log(f"Tunnel service {service_name} already exists, reusing it")
                 # Service exists, no need to install
                 return
         except Exception as e:
-            self._log(f"Service check failed (will try to install): {e}")
+            await self._log(f"Service check failed (will try to install): {e}")
 
         # Service doesn't exist, install it
-        self._log(f"Installing new tunnel service: {service_name}")
+        await self._log(f"Installing new tunnel service: {service_name}")
         try:
             await self._run_command(
                 ["wireguard", "/installtunnelservice", str(config_path)], timeout=30.0
             )
-            self._log(f"Tunnel installed successfully: {self.interface_name}")
+            await self._log(f"Tunnel installed successfully: {self.interface_name}")
         except asyncio.TimeoutError:
             error_msg = "WireGuard tunnel installation timed out after 30 seconds"
-            self._log(error_msg)
+            await self._log(error_msg)
             raise WireGuardError(
                 f"Failed to create Windows interface: Installation timed out. "
                 f"The tunnel service may already exist. Check Windows Services for '{service_name}'. "
@@ -219,10 +225,10 @@ ListenPort = 51820
                 error_msg += f"\nStderr: {e.stderr}"
             if e.stdout:
                 error_msg += f"\nStdout: {e.stdout}"
-            self._log(error_msg)
+            await self._log(error_msg)
             raise WireGuardError(f"Failed to create Windows interface: {e}")
         except Exception as e:
-            self._log(f"Unexpected error creating Windows interface: {e}")
+            await self._log(f"Unexpected error creating Windows interface: {e}")
             raise WireGuardError(f"Failed to create Windows interface: {e}")
 
     async def _create_interface_linux(self):
@@ -304,13 +310,13 @@ ListenPort = 51820
             result = await self._run_command(["sudo", "-n", "true"], check=False)
             return result.returncode == 0
         except FileNotFoundError as e:
-            self._log(f"Sudo check failed - sudo not found: {e}")
+            await self._log(f"Sudo check failed - sudo not found: {e}")
             return False
         except subprocess.CalledProcessError as e:
-            self._log(f"Sudo check failed - command error: {e}")
+            await self._log(f"Sudo check failed - command error: {e}")
             return False
         except Exception as e:
-            self._log(f"Sudo check failed - unexpected error: {e}")
+            await self._log(f"Sudo check failed - unexpected error: {e}")
             return False
 
     async def _cleanup_interface_linux(self):
@@ -321,7 +327,7 @@ ListenPort = 51820
                 check=False,
             )
         except subprocess.CalledProcessError as e:
-            self._log(f"Interface cleanup failed (non-critical): {e}")
+            await self._log(f"Interface cleanup failed (non-critical): {e}")
         except Exception as e:
             self._log(
                 f"Interface cleanup failed with unexpected error (non-critical): {e}"
