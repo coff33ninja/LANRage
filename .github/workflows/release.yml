@@ -5,16 +5,21 @@ on:
     tags:
       - 'v*.*.*'
 
+# Set permissions at workflow level
 permissions:
   contents: write
+  discussions: write
+  pull-requests: write
 
 jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
+    # Inherit workflow-level permissions
     permissions:
       contents: write
       discussions: write
+      pull-requests: write
     
     steps:
     - uses: actions/checkout@v4
@@ -50,6 +55,12 @@ jobs:
         fail_on_unmatched_files: false
         generate_release_notes: true
       env:
+        # Using default GITHUB_TOKEN with workflow permissions
+        # If this fails with 403, create a PAT with 'repo' scope:
+        # 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+        # 2. Generate new token with 'repo' scope
+        # 3. Add as repository secret named GH_PAT
+        # 4. Change this line to: GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Check release creation
