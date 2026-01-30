@@ -3,9 +3,10 @@
 import asyncio
 import json
 import platform
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 import psutil
 
@@ -105,6 +106,90 @@ async def load_game_profiles() -> Dict[str, GameProfile]:
 
 # Load profiles on module import - need to handle async loading
 GAME_PROFILES: Dict[str, GameProfile] = {}
+
+
+def _levenshtein_distance(s1: str, s2: str) -> int:
+    """Calculate Levenshtein distance between two strings (fuzzy matching)"""
+    s1 = s1.lower()
+    s2 = s2.lower()
+    
+    if len(s1) < len(s2):
+        return _levenshtein_distance(s2, s1)
+    
+    if len(s2) == 0:
+        return len(s1)
+    
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    
+    return previous_row[-1]
+
+
+def _fuzzy_match_executable(proc_name: str, profile_exe: str, threshold: float = 0.85) -> bool:
+    """Check if process name fuzzy matches profile executable
+    
+    Args:
+        proc_name: Running process name
+        profile_exe: Profile executable name
+        threshold: Match threshold (0-1, higher = stricter)
+    
+    Returns:
+        True if fuzzy match passes
+    """
+    # Exact match first (fastest path)
+    if proc_name.lower() == profile_exe.lower():
+        return True
+    
+    # Remove extensions for comparison
+    proc_clean = proc_name.lower().replace('.exe', '').replace('.bat', '')
+    exe_clean = profile_exe.lower().replace('.exe', '').replace('.bat', '')
+    
+    if proc_clean == exe_clean:
+        return True
+    
+    # Levenshtein distance based fuzzy match
+    distance = _levenshtein_distance(proc_clean, exe_clean)
+    max_len = max(len(proc_clean), len(exe_clean))
+    
+    if max_len == 0:
+        return False
+    
+    similarity = 1.0 - (distance / max_len)
+    return similarity >= threshold
+
+
+class ProfileCache:
+    """Cache for game profiles with TTL"""
+    
+    def __init__(self, ttl_seconds: float = 30.0):
+        self.ttl = ttl_seconds
+        self.profiles = {}
+        self.last_load_time = 0
+        self._lock = asyncio.Lock()
+    
+    async def get(self) -> Dict[str, GameProfile]:
+        """Get cached profiles, reload if expired"""
+        async with self._lock:
+            current_time = asyncio.get_event_loop().time()
+            if current_time - self.last_load_time > self.ttl:
+                self.profiles = await load_game_profiles()
+                self.last_load_time = current_time
+            return self.profiles
+    
+    async def invalidate(self):
+        """Force reload on next access"""
+        async with self._lock:
+            self.last_load_time = 0
+
+
+_profile_cache = ProfileCache(ttl_seconds=30.0)
 
 
 async def initialize_game_profiles():
