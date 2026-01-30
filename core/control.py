@@ -6,10 +6,100 @@ import secrets
 import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, Optional, Set
 
 from .config import Config
 from .nat import NATType
+
+
+class StatePersister:
+    """Batches state writes to reduce disk I/O with write-behind cache"""
+
+    def __init__(self, file_path: Path, batch_interval_ms: float = 100.0):
+        """Initialize state persister
+        
+        Args:
+            file_path: Path to state file
+            batch_interval_ms: Milliseconds to wait before flushing batched writes
+        """
+        self.file_path = file_path
+        self.batch_interval_ms = batch_interval_ms
+        self.pending_state: Optional[dict] = None
+        self.flush_task: Optional[asyncio.Task] = None
+        self._lock = asyncio.Lock()
+
+    async def queue_write(self, state: dict) -> None:
+        """Queue a state write for batching
+        
+        Args:
+            state: State dictionary to write
+        """
+        async with self._lock:
+            # Update pending state (deduplicates rapid successive writes)
+            self.pending_state = state
+            
+            # Schedule flush if not already scheduled
+            if self.flush_task is None or self.flush_task.done():
+                self.flush_task = asyncio.create_task(self._flush_after_delay())
+
+    async def _flush_after_delay(self) -> None:
+        """Wait for batch interval then flush to disk"""
+        try:
+            # Wait for batch interval
+            await asyncio.sleep(self.batch_interval_ms / 1000.0)
+            
+            async with self._lock:
+                if self.pending_state is not None:
+                    await self._write_to_disk(self.pending_state)
+                    self.pending_state = None
+        except asyncio.CancelledError:
+            # Task cancelled, state will be flushed on next write
+            pass
+        except Exception as e:
+            print(f"Error flushing state: {e}", file=sys.stderr)
+
+    async def _write_to_disk(self, state: dict) -> None:
+        """Perform atomic write to disk
+        
+        Args:
+            state: State dictionary to write
+        """
+        try:
+            import aiofiles
+            
+            # Create parent directory if it doesn't exist
+            self.file_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Use async file I/O
+            async with aiofiles.open(self.file_path, "w", encoding="utf-8") as f:
+                await f.write(json.dumps(state, indent=2))
+        except OSError as e:
+            # Log but don't fail if we can't save (disk full, permissions, etc.)
+            print(
+                f"Warning: Failed to save state to {self.file_path}: {e}",
+                file=sys.stderr,
+            )
+        except json.JSONEncodeError as e:
+            # Log serialization errors
+            print(f"Warning: Failed to serialize state: {e}", file=sys.stderr)
+        except Exception as e:
+            # Catch any other unexpected errors
+            print(f"Warning: Unexpected error saving state: {e}", file=sys.stderr)
+
+    async def flush(self) -> None:
+        """Force immediate flush of pending writes"""
+        async with self._lock:
+            if self.flush_task and not self.flush_task.done():
+                self.flush_task.cancel()
+                try:
+                    await self.flush_task
+                except asyncio.CancelledError:
+                    pass
+            
+            if self.pending_state is not None:
+                await self._write_to_disk(self.pending_state)
+                self.pending_state = None
 
 
 @dataclass
@@ -102,8 +192,9 @@ class ControlPlane:
         # Track active party IDs for quick lookup
         self.active_party_ids: Set[str] = set()
 
-        # Persistence
+        # Persistence with batched writes (100ms default batch interval)
         self.state_file = config.config_dir / "control_state.json"
+        self.state_persister = StatePersister(self.state_file, batch_interval_ms=100.0)
 
     async def initialize(self):
         """Initialize control plane"""
@@ -112,6 +203,11 @@ class ControlPlane:
 
         # Start cleanup task
         asyncio.create_task(self._cleanup_task())
+
+    async def shutdown(self):
+        """Shutdown control plane and flush pending state writes"""
+        # Ensure any pending state writes are flushed to disk
+        await self.state_persister.flush()
 
     async def register_party(
         self, party_id: str, name: str, host_peer_info: PeerInfo
@@ -255,34 +351,19 @@ class ControlPlane:
                 await self._save_state()
 
     async def _save_state(self):
-        """Save state to disk"""
-        try:
-            import aiofiles
-            
-            state = {
-                "parties": {k: v.to_dict() for k, v in self.parties.items()},
-                "my_peer_id": self.my_peer_id,
-                "my_party_id": self.my_party_id,
-            }
-
-            # Create parent directory if it doesn't exist
-            self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Use async file I/O
-            async with aiofiles.open(self.state_file, "w", encoding="utf-8") as f:
-                await f.write(json.dumps(state, indent=2))
-        except OSError as e:
-            # Log but don't fail if we can't save (disk full, permissions, etc.)
-            print(
-                f"Warning: Failed to save state to {self.state_file}: {e}",
-                file=sys.stderr,
-            )
-        except json.JSONEncodeError as e:
-            # Log serialization errors
-            print(f"Warning: Failed to serialize state: {e}", file=sys.stderr)
-        except Exception as e:
-            # Catch any other unexpected errors
-            print(f"Warning: Unexpected error saving state: {e}", file=sys.stderr)
+        """Save state to disk using batched writes (write-behind cache)
+        
+        This queues the state for batched persistence to reduce disk I/O.
+        Multiple calls within the batch interval are deduplicated.
+        """
+        state = {
+            "parties": {k: v.to_dict() for k, v in self.parties.items()},
+            "my_peer_id": self.my_peer_id,
+            "my_party_id": self.my_party_id,
+        }
+        
+        # Queue write through batched persister (deduplicated, 100ms batch interval)
+        await self.state_persister.queue_write(state)
 
     async def _load_state(self):
         """Load state from disk"""
