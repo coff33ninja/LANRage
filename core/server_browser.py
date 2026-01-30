@@ -328,29 +328,40 @@ class ServerBrowser:
             return None
 
         try:
-            # Use ICMP ping to measure latency
+            # Use ICMP ping to measure latency asynchronously
             import platform
-            import subprocess
 
             param = "-n" if platform.system().lower() == "windows" else "-c"
             command = ["ping", param, "1", server.host_ip]
 
             start_time = time.time()
-            result = subprocess.run(command, capture_output=True, text=True, timeout=2)
-            elapsed = (time.time() - start_time) * 1000
-
-            if result.returncode == 0:
-                # Parse ping output for more accurate latency
-                output = result.stdout.lower()
-                if "time=" in output:
-                    # Extract time value from ping output
-                    time_str = output.split("time=")[1].split()[0]
-                    latency = float(time_str.replace("ms", ""))
-                    server.latency_ms = latency
-                    return latency
+            # Use async subprocess instead of blocking subprocess.run
+            proc = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            
+            try:
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=2.0)
+                elapsed = (time.time() - start_time) * 1000
+                
+                if proc.returncode == 0:
+                    # Parse ping output for more accurate latency
+                    output = stdout.decode().lower()
+                    if "time=" in output:
+                        # Extract time value from ping output
+                        time_str = output.split("time=")[1].split()[0]
+                        latency = float(time_str.replace("ms", ""))
+                        server.latency_ms = latency
+                        return latency
                 else:
                     server.latency_ms = elapsed
                     return elapsed
+            except asyncio.TimeoutError:
+                # Ping timed out
+                server.latency_ms = 999  # Mark as very high latency
+                return 999.0
 
         except Exception as e:
             error_msg = str(e)

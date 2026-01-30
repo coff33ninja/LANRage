@@ -108,9 +108,9 @@ async def test_latency_history(metrics):
     """Test latency history retrieval"""
     metrics.add_peer("peer1", "Peer 1")
     await metrics.record_latency("peer1", 20.0)
-    time.sleep(0.1)
+    await asyncio.sleep(0.1)
     await metrics.record_latency("peer1", 25.0)
-    time.sleep(0.1)
+    await asyncio.sleep(0.1)
     await metrics.record_latency("peer1", 30.0)
 
     history = metrics.get_latency_history("peer1", duration=10)
@@ -178,7 +178,7 @@ async def test_start_game_session(metrics):
 async def test_end_game_session(metrics):
     """Test ending a game session"""
     await metrics.start_game_session("minecraft", "Minecraft", ["Alice", "Bob"])
-    time.sleep(0.1)
+    await asyncio.sleep(0.1)
     await metrics.end_game_session()
 
     sessions = metrics.get_game_sessions(limit=10)
@@ -231,7 +231,7 @@ async def test_peer_uptime(metrics):
     """Test peer uptime calculation"""
     metrics.add_peer("peer1", "Peer 1")
     await metrics.record_latency("peer1", 25.0)
-    time.sleep(0.2)
+    await asyncio.sleep(0.2)
 
     summary = await metrics.get_peer_summary("peer1")
     # Uptime is calculated as time.time() - last_seen, which should be small
