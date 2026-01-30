@@ -189,8 +189,17 @@ class DiscordIntegration:
                 )
                 return
 
-            self.rpc = Presence(discord_app_id)
-            self.rpc.connect()
+            # Run pypresence connection in thread pool to avoid event loop conflicts
+            loop = asyncio.get_event_loop()
+
+            def connect_rpc():
+                """Connect to Discord RPC in a separate thread"""
+                rpc = Presence(discord_app_id)
+                rpc.connect()
+                return rpc
+
+            # Run blocking RPC connection in executor
+            self.rpc = await loop.run_in_executor(None, connect_rpc)
             self.rpc_connected = True
             print("✓ Discord Rich Presence connected")
         except ImportError:
@@ -352,7 +361,9 @@ class DiscordIntegration:
             if start_time:
                 kwargs["start"] = start_time
 
-            self.rpc.update(**kwargs)
+            # Run RPC update in executor to avoid blocking
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, lambda: self.rpc.update(**kwargs))
 
         except Exception as e:
             error_msg = str(e)
@@ -362,7 +373,9 @@ class DiscordIntegration:
         """Clear Discord Rich Presence"""
         if self.rpc and self.rpc_connected:
             try:
-                self.rpc.clear()
+                # Run RPC clear in executor to avoid blocking
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, self.rpc.clear)
             except OSError as e:
                 # Discord RPC clear is optional, log but don't fail
                 print(f"Debug: Discord RPC clear failed: {e}", file=sys.stderr)
