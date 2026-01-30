@@ -342,13 +342,22 @@ class LocalControlPlane(ControlPlane):
     async def _announce_party(self, party: PartyInfo):
         """Announce party on local network"""
         try:
+            import aiofiles
+            
             # Write party info to shared discovery file
             discovery = {}
             if self.discovery_file.exists():
-                discovery = json.loads(self.discovery_file.read_text())
+                async with aiofiles.open(self.discovery_file, "r", encoding="utf-8") as f:
+                    content = await f.read()
+                    discovery = json.loads(content)
 
             discovery[party.party_id] = party.to_dict()
-            self.discovery_file.write_text(json.dumps(discovery, indent=2))
+            
+            # Create parent directory if it doesn't exist
+            self.discovery_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            async with aiofiles.open(self.discovery_file, "w", encoding="utf-8") as f:
+                await f.write(json.dumps(discovery, indent=2))
         except OSError as e:
             # Log but don't fail if we can't announce (disk full, permissions, etc.)
             print(
@@ -365,8 +374,12 @@ class LocalControlPlane(ControlPlane):
     async def discover_parties(self) -> Dict[str, PartyInfo]:
         """Discover parties on local network"""
         try:
+            import aiofiles
+            
             if self.discovery_file.exists():
-                discovery = json.loads(self.discovery_file.read_text())
+                async with aiofiles.open(self.discovery_file, "r", encoding="utf-8") as f:
+                    content = await f.read()
+                    discovery = json.loads(content)
                 return {k: PartyInfo.from_dict(v) for k, v in discovery.items()}
         except OSError as e:
             # Log but return empty if we can't read discovery file

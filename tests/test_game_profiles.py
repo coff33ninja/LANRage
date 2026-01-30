@@ -4,6 +4,7 @@ Test suite for game profile validation.
 Ensures all game profiles are valid JSON with required fields.
 """
 
+import asyncio
 import json
 from pathlib import Path
 
@@ -22,10 +23,18 @@ def get_all_game_profiles():
     return profile_files
 
 
+async def load_game_profile_async(profile_path):
+    """Load and parse a game profile JSON file asynchronously."""
+    import aiofiles
+    
+    async with aiofiles.open(profile_path, "r", encoding="utf-8") as f:
+        content = await f.read()
+        return json.loads(content)
+
+
 def load_game_profile(profile_path):
-    """Load and parse a game profile JSON file."""
-    with open(profile_path, encoding="utf-8") as f:
-        return json.load(f)
+    """Load and parse a game profile JSON file (sync wrapper for backwards compatibility)."""
+    return asyncio.run(load_game_profile_async(profile_path))
 
 
 class TestGameProfiles:
