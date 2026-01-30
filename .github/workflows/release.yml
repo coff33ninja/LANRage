@@ -36,7 +36,9 @@ jobs:
         fi
     
     - name: Create GitHub Release
+      id: create_release
       uses: softprops/action-gh-release@v1
+      continue-on-error: true
       with:
         name: LANrage v${{ steps.get_version.outputs.VERSION }}
         body_path: release_notes.md
@@ -46,6 +48,12 @@ jobs:
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Check release creation
+      if: steps.create_release.outcome == 'failure'
+      run: |
+        echo "::warning::Release creation failed, but continuing with build steps"
+        echo "This may be because the release already exists or there's a permissions issue"
     
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
@@ -76,6 +84,7 @@ jobs:
         python setup.py sdist
     
     - name: Upload release assets
+      if: steps.create_release.outcome == 'success'
       uses: softprops/action-gh-release@v1
       with:
         files: |
