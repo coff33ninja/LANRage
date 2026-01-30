@@ -110,17 +110,20 @@ GAME_PROFILES: Dict[str, GameProfile] = {}
 async def initialize_game_profiles():
     """Initialize game profiles asynchronously"""
     global GAME_PROFILES
-    GAME_PROFILES = await load_game_profiles()
+    profiles = await load_game_profiles()
+    GAME_PROFILES.clear()
+    GAME_PROFILES.update(profiles)
 
 
 class GameDetector:
     """Detects running games"""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, optimizer=None):
         self.config = config
         self.detected_games: Set[str] = set()
         self.running = False
         self._game_manager = None  # Will be set by GameManager
+        self.optimizer = optimizer  # Will be set after initialization
 
         # Path for custom game profiles
         self.custom_profiles_path = Path(config.config_dir) / "game_profiles.json"
@@ -139,9 +142,11 @@ class GameDetector:
         if self.custom_profiles_path.exists():
             try:
                 import json
+                import aiofiles
 
-                with open(self.custom_profiles_path, "r") as f:
-                    custom_data = json.load(f)
+                async with aiofiles.open(self.custom_profiles_path, "r", encoding="utf-8") as f:
+                    content = await f.read()
+                    custom_data = json.loads(content)
 
                 # Parse and add custom profiles to GAME_PROFILES
                 for game_id, profile_data in custom_data.items():
@@ -198,17 +203,25 @@ class GameDetector:
         """Detect currently running games"""
         current_games = set()
 
-        # Get all running processes
-        for proc in psutil.process_iter(["name"]):
-            try:
-                proc_name = proc.info["name"]
+        # Get all running processes (run in executor to avoid blocking)
+        loop = asyncio.get_event_loop()
+        
+        def _get_processes():
+            processes = []
+            for proc in psutil.process_iter(["name"]):
+                try:
+                    processes.append(proc.info["name"])
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            return processes
 
-                # Check against game profiles
-                for game_id, profile in GAME_PROFILES.items():
-                    if proc_name.lower() == profile.executable.lower():
-                        current_games.add(game_id)
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
+        proc_names = await loop.run_in_executor(None, _get_processes)
+
+        # Check against game profiles
+        for proc_name in proc_names:
+            for game_id, profile in GAME_PROFILES.items():
+                if proc_name.lower() == profile.executable.lower():
+                    current_games.add(game_id)
 
         # Detect new games
         new_games = current_games - self.detected_games
@@ -246,9 +259,9 @@ class GameDetector:
         print(f"🎮 Stopped: {profile.name}")
 
         # Clear active profile and reset to defaults
-        if self.active_profile and self.active_profile.name == profile.name:
+        if hasattr(self, 'optimizer') and self.optimizer.active_profile and self.optimizer.active_profile.name == profile.name:
             print("   Resetting network configuration to defaults...")
-            await self.clear_profile()
+            await self.optimizer.clear_profile()
             print("   ✓ Configuration reset complete")
 
     def get_active_games(self) -> List[GameProfile]:
@@ -263,13 +276,15 @@ class GameDetector:
         """Save a custom game profile to disk"""
         try:
             import json
+            import aiofiles
 
             custom_profiles = {}
 
             # Load existing profiles
             if self.custom_profiles_path.exists():
-                with open(self.custom_profiles_path, "r") as f:
-                    custom_profiles = json.load(f)
+                async with aiofiles.open(self.custom_profiles_path, "r", encoding="utf-8") as f:
+                    content = await f.read()
+                    custom_profiles = json.loads(content)
 
             # Add new profile
             custom_profiles[game_id] = {
@@ -289,8 +304,8 @@ class GameDetector:
 
             # Save to file
             self.custom_profiles_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.custom_profiles_path, "w") as f:
-                json.dump(custom_profiles, f, indent=2)
+            async with aiofiles.open(self.custom_profiles_path, "w", encoding="utf-8") as f:
+                await f.write(json.dumps(custom_profiles, indent=2))
 
             print(f"Saved custom profile for {profile.name}")
         except Exception as e:
@@ -691,16 +706,20 @@ class GameManager:
 
     def __init__(self, config: Config, network_manager=None, broadcast_manager=None):
         self.config = config
-        self.detector = GameDetector(config)
         self.optimizer = GameOptimizer(config)
+        self.detector = GameDetector(config, optimizer=self.optimizer)
         self.network_manager = network_manager
         self.broadcast_manager = broadcast_manager
 
-        # Hook up detector to optimizer
+        # Hook up detector to game manager
         self.detector._game_manager = self
 
     async def start(self):
         """Start game management"""
+        # Ensure game profiles are loaded
+        global GAME_PROFILES
+        if not GAME_PROFILES:
+            await initialize_game_profiles()
         await self.detector.start()
 
     async def stop(self):

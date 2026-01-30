@@ -1,9 +1,10 @@
 """Tests for game detection and profiles"""
 
+import asyncio
 import pytest
 
 from core.config import Config
-from core.games import GAME_PROFILES, GameDetector, GameProfile
+from core.games import GAME_PROFILES, GameDetector, GameProfile, initialize_game_profiles
 
 
 @pytest.fixture
@@ -16,6 +17,12 @@ def config():
 def detector(config):
     """Create game detector"""
     return GameDetector(config)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def init_profiles():
+    """Initialize game profiles for all tests"""
+    asyncio.run(initialize_game_profiles())
 
 
 def test_detector_initialization(detector):

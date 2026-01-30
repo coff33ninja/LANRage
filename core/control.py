@@ -257,13 +257,20 @@ class ControlPlane:
     async def _save_state(self):
         """Save state to disk"""
         try:
+            import aiofiles
+            
             state = {
                 "parties": {k: v.to_dict() for k, v in self.parties.items()},
                 "my_peer_id": self.my_peer_id,
                 "my_party_id": self.my_party_id,
             }
 
-            self.state_file.write_text(json.dumps(state, indent=2))
+            # Create parent directory if it doesn't exist
+            self.state_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Use async file I/O
+            async with aiofiles.open(self.state_file, "w", encoding="utf-8") as f:
+                await f.write(json.dumps(state, indent=2))
         except OSError as e:
             # Log but don't fail if we can't save (disk full, permissions, etc.)
             print(
@@ -280,8 +287,12 @@ class ControlPlane:
     async def _load_state(self):
         """Load state from disk"""
         try:
+            import aiofiles
+            
             if self.state_file.exists():
-                state = json.loads(self.state_file.read_text())
+                async with aiofiles.open(self.state_file, "r", encoding="utf-8") as f:
+                    content = await f.read()
+                    state = json.loads(content)
 
                 self.parties = {
                     k: PartyInfo.from_dict(v)
