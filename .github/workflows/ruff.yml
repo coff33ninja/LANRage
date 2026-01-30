@@ -1,0 +1,114 @@
+name: Ruff Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  ruff-check:
+    name: Ruff Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Create virtual environment
+      run: uv venv --python 3.12
+    
+    - name: Install dependencies
+      run: |
+        source .venv/bin/activate
+        uv pip install ruff
+    
+    - name: Run Ruff linter
+      run: |
+        source .venv/bin/activate
+        python -m ruff check . --output-format=github --statistics
+    
+    - name: Verify zero warnings (strict mode)
+      run: |
+        source .venv/bin/activate
+        RUFF_OUTPUT=$(python -m ruff check . 2>&1)
+        if [ -n "$RUFF_OUTPUT" ]; then
+          echo "❌ Ruff found issues - LANrage requires 100% compliance"
+          echo "$RUFF_OUTPUT"
+          exit 1
+        fi
+        echo "✅ Zero Ruff warnings - maintaining 100% code quality!"
+    
+    - name: Generate Ruff report
+      if: always()
+      run: |
+        source .venv/bin/activate
+        python -m ruff check . --output-format=json > ruff-report.json || true
+    
+    - name: Upload Ruff report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ruff-report
+        path: ruff-report.json
+
+  ruff-format-check:
+    name: Ruff Format Check (Experimental)
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Don't fail build, just informational
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Create virtual environment
+      run: uv venv --python 3.12
+    
+    - name: Install dependencies
+      run: |
+        source .venv/bin/activate
+        uv pip install ruff
+    
+    - name: Check Ruff format compatibility
+      run: |
+        source .venv/bin/activate
+        echo "ℹ️  Checking Ruff format compatibility (experimental)"
+        python -m ruff format --check --diff . || echo "⚠️  Ruff format differs from Black - this is informational only"
+
+  code-quality-summary:
+    name: Code Quality Summary
+    runs-on: ubuntu-latest
+    needs: [ruff-check]
+    if: always()
+    
+    steps:
+    - name: Check results
+      run: |
+        if [ "${{ needs.ruff-check.result }}" == "success" ]; then
+          echo "✅ All code quality checks passed!"
+          echo "📊 LANrage maintains 100% Ruff compliance"
+          echo "🎯 Zero warnings, zero errors"
+        else
+          echo "❌ Code quality checks failed"
+          echo "Please run: ruff check --fix . && black . && isort ."
+          exit 1
+        fi

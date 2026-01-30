@@ -1,13 +1,20 @@
 name: Pylint
 
-on: [push]
+on: 
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  pylint:
+    name: Pylint Analysis
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -32,4 +39,29 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         source .venv/bin/activate
-        pylint $(git ls-files '*.py')
+        echo "🔍 Running Pylint analysis..."
+        pylint $(git ls-files '*.py') --output-format=colorized --score=yes
+    
+    - name: Generate Pylint report
+      if: always()
+      run: |
+        source .venv/bin/activate
+        pylint $(git ls-files '*.py') --output-format=json > pylint-report-${{ matrix.python-version }}.json || true
+    
+    - name: Upload Pylint report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pylint-report-${{ matrix.python-version }}
+        path: pylint-report-${{ matrix.python-version }}.json
+    
+    - name: Check Pylint score
+      run: |
+        source .venv/bin/activate
+        SCORE=$(pylint $(git ls-files '*.py') --score=yes 2>&1 | grep "Your code has been rated at" | awk '{print $7}' | cut -d'/' -f1)
+        echo "📊 Pylint Score: $SCORE/10.00"
+        if (( $(echo "$SCORE < 9.0" | bc -l) )); then
+          echo "⚠️  Warning: Pylint score below 9.0"
+        else
+          echo "✅ Excellent code quality!"
+        fi

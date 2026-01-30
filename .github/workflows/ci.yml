@@ -35,17 +35,28 @@ jobs:
     - name: Check import sorting with isort
       run: |
         source .venv/bin/activate
-        python -m isort --check-only .
+        python -m isort --check-only --diff .
     
     - name: Check code formatting with black
       run: |
         source .venv/bin/activate
-        python -m black --check .
+        python -m black --check --diff .
     
-    - name: Lint with ruff
+    - name: Lint with ruff (strict mode)
       run: |
         source .venv/bin/activate
-        python -m ruff check .
+        python -m ruff check . --output-format=github
+    
+    - name: Verify zero Ruff warnings
+      run: |
+        source .venv/bin/activate
+        RUFF_OUTPUT=$(python -m ruff check . 2>&1)
+        if [ -n "$RUFF_OUTPUT" ]; then
+          echo "❌ Ruff found issues:"
+          echo "$RUFF_OUTPUT"
+          exit 1
+        fi
+        echo "✅ Zero Ruff warnings - code quality: 100%"
 
   test:
     name: Test Suite
