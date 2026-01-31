@@ -1,13 +1,16 @@
-"""Configuration management"""
+"""Configuration management - Database-first approach"""
 
 import logging
-import os
+
+# import os  # Removed: Environment variable loading replaced by database-first approach
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .exceptions import ConfigError, DatabaseConfigError
+from .exceptions import ConfigError
+
+# from .exceptions import DatabaseConfigError  # Removed: No longer raised after database-first refactoring
 
 logger = logging.getLogger(__name__)
 
@@ -45,49 +48,27 @@ class Config(BaseModel):
     keys_dir: Path = Field(default_factory=lambda: Path.home() / ".lanrage" / "keys")
 
     @classmethod
-    def load(cls) -> "Config":
-        """Load config from environment or defaults"""
-        try:
-            api_port = int(os.getenv("LANRAGE_API_PORT", "8666"))
-        except ValueError as e:
-            raise ConfigError(
-                f"Invalid LANRAGE_API_PORT: must be an integer: {e}"
-            ) from e
-
-        try:
-            config = cls(
-                mode=os.getenv("LANRAGE_MODE", "client"),
-                api_host=os.getenv("LANRAGE_API_HOST", "127.0.0.1"),
-                api_port=api_port,
-                peer_name=os.getenv("LANRAGE_PEER_NAME", "Player"),
-                relay_public_ip=os.getenv("LANRAGE_RELAY_IP"),
-            )
-        except Exception as e:
-            raise ConfigError(
-                f"Failed to create config: {type(e).__name__}: {e}"
-            ) from e
-
-        # Ensure directories exist
-        try:
-            config.config_dir.mkdir(parents=True, exist_ok=True)
-            config.keys_dir.mkdir(parents=True, exist_ok=True)
-        except OSError as e:
-            raise ConfigError(f"Failed to create config directories: {e}") from e
-
-        logger.info("Configuration loaded from environment")
-        return config
-
-    @classmethod
-    async def load_from_db(cls) -> "Config":
+    async def load(cls) -> "Config":
         """
-        Load config from settings database
-        Falls back to environment variables if database not available
+        Load config from settings database (primary and only source)
+
+        Returns:
+            Config: Configuration loaded from database
+
+        Raises:
+            ConfigError: If database cannot be loaded or is not initialized
         """
         try:
             from core.settings import get_settings_db
 
             db = await get_settings_db()
             settings = await db.get_all_settings()
+
+            # Check if database is initialized (has required settings)
+            if not settings:
+                raise ConfigError(
+                    "Settings database is empty. Please configure LANrage through the WebUI at http://localhost:8666/settings.html"
+                )
 
             config = cls(
                 mode=settings.get("mode", "client"),
@@ -113,14 +94,12 @@ class Config(BaseModel):
             return config
 
         except ImportError as e:
-            logger.warning(
-                f"Settings database not available: {e}. Falling back to environment variables."
-            )
-            raise DatabaseConfigError(f"Settings module import failed: {e}") from e
+            raise ConfigError(
+                f"Settings database module not available: {e}. "
+                "This is a critical error - please reinstall LANrage."
+            ) from e
         except Exception as e:
-            logger.warning(
-                f"Failed to load config from database ({type(e).__name__}: {e}). Falling back to environment variables."
-            )
-            raise DatabaseConfigError(
-                f"Database configuration loading failed: {type(e).__name__}: {e}"
+            raise ConfigError(
+                f"Failed to load configuration from database: {type(e).__name__}: {e}. "
+                "Please ensure the database is initialized by running setup.py or accessing the WebUI."
             ) from e

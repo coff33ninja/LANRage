@@ -4,6 +4,7 @@ LANrage setup script
 Handles initial setup and dependency installation
 """
 
+import asyncio
 import subprocess
 import sys
 from pathlib import Path
@@ -17,6 +18,28 @@ def run_command(cmd: list[str], check: bool = True) -> bool:
     except subprocess.CalledProcessError as e:
         print(f"❌ Command failed: {' '.join(cmd)}")
         print(f"   Error: {e.stderr}")
+        return False
+
+
+async def initialize_database():
+    """Initialize the settings database with defaults"""
+    try:
+        # Import here to avoid issues if dependencies not installed yet
+        from core.settings import get_settings_db, init_default_settings
+
+        print("Initializing settings database...")
+        db = await get_settings_db()
+        await init_default_settings()
+
+        # Validate
+        if db.validate_database_integrity():
+            print("✓ Settings database initialized")
+            return True
+        print("⚠ Database integrity check failed")
+        return False
+    except Exception as e:
+        print(f"⚠ Database initialization failed: {e}")
+        print("  You can configure settings through the WebUI after starting LANrage")
         return False
 
 
@@ -50,12 +73,13 @@ def main():
         sys.exit(1)
     print("✓ Dependencies installed")
 
-    # Create .env if it doesn't exist
-    env_path = Path(".env")
-    if not env_path.exists():
-        print("Creating .env file...")
-        env_path.write_text(Path(".env.example").read_text())
-        print("✓ .env created")
+    # Initialize database (replaces .env file creation)
+    print("\nInitializing configuration database...")
+    try:
+        asyncio.run(initialize_database())
+    except Exception as e:
+        print(f"⚠ Could not initialize database: {e}")
+        print("  Settings will be initialized on first run")
 
     print("\n" + "=" * 60)
     print("✅ Setup complete!")
@@ -65,8 +89,10 @@ def main():
     print("     Linux/Mac: source .venv/bin/activate")
     print("  2. Run LANrage:")
     print("     python lanrage.py")
-    print("  3. Open browser:")
-    print("     http://localhost:8666")
+    print("  3. Configure settings in your browser:")
+    print("     http://localhost:8666/settings.html")
+    print("\n💡 All configuration is now done through the WebUI!")
+    print("   No need to edit .env files manually.")
 
 
 if __name__ == "__main__":

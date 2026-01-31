@@ -49,10 +49,8 @@ class ConfigError(LANrageError):
     pass
 
 
-class DatabaseConfigError(ConfigError):
-    """Database configuration loading error"""
-
-    pass
+# DatabaseConfigError removed - no longer needed as database is the only config source
+# Kept ConfigError for general configuration errors
 
 
 class BroadcastError(LANrageError):

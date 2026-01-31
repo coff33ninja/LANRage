@@ -488,3 +488,21 @@ async def init_default_settings():
         current = await db.get_setting(key)
         if current is None:
             await db.set_setting(key, value)
+
+
+async def is_database_initialized() -> bool:
+    """
+    Check if the settings database is initialized with required settings
+
+    Returns:
+        bool: True if database has settings, False if empty/uninitialized
+    """
+    try:
+        db = await get_settings_db()
+        settings = await db.get_all_settings()
+
+        # Check for at least one required setting
+        required_keys = ["mode", "peer_name", "api_port"]
+        return any(key in settings for key in required_keys)
+    except Exception:
+        return False

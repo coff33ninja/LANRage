@@ -65,17 +65,31 @@ async def main():
         db_size = db.get_database_size()
         logger.info(f"Database size: {db_size / 1024:.2f} KB")
     except Exception as e:
-        logger.warning(f"Settings database initialization failed: {e}")
-        logger.info("Falling back to environment variables")
+        logger.error(f"Settings database initialization failed: {e}")
+        print("\n❌ Failed to initialize settings database")
+        print("   This is a critical error. Please check:")
+        print("   - File permissions in ~/.lanrage/")
+        print("   - Disk space availability")
+        sys.exit(1)
 
-    # Load config from database
+    # Load config from database (only source)
     try:
-        config = await Config.load_from_db()
-        logger.info(f"Config loaded from database (mode: {config.mode})")
+        config = await Config.load()
+        logger.info(f"Configuration loaded from database (mode: {config.mode})")
     except Exception as e:
-        logger.warning(f"Failed to load from database: {e}")
-        config = Config.load()
-        logger.info(f"Config loaded from environment (mode: {config.mode})")
+        logger.error(f"Failed to load configuration: {e}")
+        print("\n❌ Configuration Error")
+        print(f"   {e}")
+        print("\n📝 First-time setup:")
+        print("   1. LANrage will start with default settings")
+        print("   2. Open your browser: http://localhost:8666/settings.html")
+        print("   3. Configure your settings through the WebUI")
+        print("   4. Restart LANrage")
+        print("\n   Starting with defaults...")
+
+        # Use defaults for first run
+        config = Config()
+        logger.info("Using default configuration for first run")
 
     # Initialize network manager
     network = NetworkManager(config)
