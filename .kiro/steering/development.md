@@ -81,11 +81,12 @@ uv pip install -r requirements.txt
 
 ### Code Quality Tools
 
-The project uses three main code quality tools:
+The project uses **four main code quality tools** (all configured in `pyproject.toml`):
 
-1. **isort** - Organizes and sorts imports alphabetically
-2. **black** - Opinionated code formatter for consistent style
-3. **ruff** - Fast Python linter for catching errors and style issues
+1. **isort** - Organizes and sorts imports alphabetically (black profile)
+2. **black** - Opinionated code formatter for consistent style (line length 88)
+3. **ruff** - Fast Python linter with 9 rule categories (replaces flake8, pyupgrade, etc.)
+4. **pylint** - Static analysis for complex issues (current score: 10.00/10)
 
 ### Run Code Quality Checks
 
@@ -108,7 +109,11 @@ The project uses three main code quality tools:
 .venv\Scripts\python.exe -m ruff check --fix .  # Windows
 .venv/bin/python -m ruff check --fix .          # Linux/Mac
 
-# 5. Run tests
+# 5. Static analysis with Pylint
+.venv\Scripts\python.exe -m pylint core/ api/ servers/  # Windows
+.venv/bin/python -m pylint core/ api/ servers/          # Linux/Mac
+
+# 6. Run tests
 .venv\Scripts\python.exe -m pytest tests/  # Windows
 .venv/bin/python -m pytest tests/          # Linux/Mac
 ```
@@ -127,6 +132,10 @@ The project uses three main code quality tools:
 # Lint without fixing
 .venv\Scripts\python.exe -m ruff check .  # Windows
 .venv/bin/python -m ruff check .          # Linux/Mac
+
+# Static analysis
+.venv\Scripts\python.exe -m pylint core/ api/ servers/  # Windows
+.venv/bin/python -m pylint core/ api/ servers/          # Linux/Mac
 ```
 
 ### Pre-commit Setup (Recommended)
@@ -194,29 +203,32 @@ python lanrage.py
 .venv\Scripts\python.exe -m ruff check --fix .  # Windows
 .venv/bin/python -m ruff check --fix .          # Linux/Mac
 
-# 4. Run tests
+# 4. Static analysis
+.venv\Scripts\python.exe -m pylint core/ api/ servers/  # Windows
+.venv/bin/python -m pylint core/ api/ servers/          # Linux/Mac
+
+# 5. Run tests
 .venv\Scripts\python.exe -m pytest tests/  # Windows
 .venv/bin/python -m pytest tests/          # Linux/Mac
 
-# 5. Commit if all pass
+# 6. Commit if all pass
 git add .
 git commit -m "your message"
 ```
 
 ## Adding Dependencies
 
-### Always use uv
+### Use pyproject.toml (PEP 621) as single source of truth
 
 ```bash
-# Add a new package
+# 1. Add dependency to pyproject.toml [project.dependencies] section
+# 2. Install with uv
+uv pip install -e ".[dev]"  # Install all (production + dev)
+uv pip install -e .         # Install only production
+
+# Or for backwards compatibility, update requirements.txt
 uv pip install package-name
-
-# Update requirements.txt
 uv pip freeze > requirements.txt
-
-# Or manually add to requirements.txt and install
-echo "package-name>=1.0.0" >> requirements.txt
-uv pip install -r requirements.txt
 ```
 
 ### Never use pip directly
@@ -228,6 +240,10 @@ pip install package-name
 
 ✅ Good:
 ```bash
+# Add to pyproject.toml first, then:
+uv pip install -e ".[dev]"
+
+# Or for quick testing:
 uv pip install package-name
 ```
 
@@ -289,14 +305,14 @@ source .venv/bin/activate   # Linux/Mac
 .venv/bin/python lanrage.py          # Linux/Mac
 
 # Code quality (always use venv python)
-.venv\Scripts\python.exe -m isort .              # Sort imports
-.venv\Scripts\python.exe -m black .              # Format
-.venv\Scripts\python.exe -m ruff check --fix .   # Lint
-.venv\Scripts\python.exe -m pytest tests/        # Test
+.venv\Scripts\python.exe -m isort .                     # Sort imports
+.venv\Scripts\python.exe -m black .                     # Format
+.venv\Scripts\python.exe -m ruff check --fix .          # Lint
+.venv\Scripts\python.exe -m pylint core/ api/ servers/  # Static analysis
+.venv\Scripts\python.exe -m pytest tests/               # Test
 
-# Add dependency (activate venv first)
-uv pip install package-name
-uv pip freeze > requirements.txt
+# Add dependency (edit pyproject.toml first, then)
+uv pip install -e ".[dev]"  # Install all
 ```
 
 ## IDE Configuration

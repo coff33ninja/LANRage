@@ -19,7 +19,7 @@ Gamers who want to play LAN games online without dealing with port forwarding, N
 - 🎯 **Game-aware profiles** - Auto-optimization for 27 games
 - 🔒 **WireGuard-based security** - Military-grade encryption
 - 🌐 **Web UI** - Dashboard, settings, server browser, Discord setup
-- 💬 **Discord integration** - Webhooks and Rich Presence
+- 💬 **Discord integration** - Webhooks, Rich Presence, and Bot presence
 - 📊 **Statistics dashboard** - Real-time metrics and performance tracking
 - 🎮 **Server browser** - Discover and host game servers
 - 🚀 **Production ready** - 88% test coverage, 96% specific error handling
@@ -35,9 +35,16 @@ Gamers who want to play LAN games online without dealing with port forwarding, N
 
 ## Current Status
 
-**v1.0 - PRODUCTION READY** (Released January 29, 2026)
+**v1.2.4 - PRODUCTION READY** (Released January 31, 2026)
 
-All core features implemented, tested (88% coverage), and documented (1650+ lines). Ready for public release and real-world use. Features include WireGuard interface management, NAT traversal, control plane with SQLite persistence, broadcast/multicast emulation, game detection (27 games), relay server, multi-peer mesh networking, Discord integration, server browser, QoS implementation, and comprehensive error handling (96% specific exceptions).
+All core features implemented, tested (88% coverage), and documented (1650+ lines). Ready for public release and real-world use. Features include WireGuard interface management, NAT traversal, control plane with SQLite persistence, broadcast/multicast emulation, game detection (27 games), relay server, multi-peer mesh networking, Discord integration (Rich Presence + Bot), server browser, QoS implementation, and comprehensive error handling (96% specific exceptions).
+
+**Recent additions (v1.2.x):**
+- Discord Bot integration for server presence
+- Ruff modernization (100% compliance, 9 rule categories)
+- PEP 621 compliance (pyproject.toml)
+- Pylint integration (10.00/10 score)
+- Enhanced CI/CD with strict quality gates
 
 ## Network Architecture
 

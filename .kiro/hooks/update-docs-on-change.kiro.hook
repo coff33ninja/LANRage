@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Auto-update Documentation",
+  "description": "Listens to Python source files (*.py), configuration files (pyproject.toml, requirements.txt, .env.example), and game profiles (*.json) in the repository. When these files are edited, asks the agent to review the changes and update relevant documentation in the /docs folder or README.md to keep documentation in sync with code changes.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.py",
+      "pyproject.toml",
+      "requirements.txt",
+      ".env.example",
+      "game_profiles/*.json",
+      "game_profiles/custom/*.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the changes made to the source files and update the relevant documentation. Check if any documentation in the /docs folder (such as ARCHITECTURE.md, API.md, USER_GUIDE.md, QUICKSTART.md, etc.) or the README.md needs to be updated to reflect these code changes. Update the documentation to keep it in sync with the current implementation."
+  }
+}

@@ -12,9 +12,14 @@ lanrage/
 ├── docs/             # Documentation (1650+ lines)
 ├── game_profiles/    # Game detection profiles (27 games)
 ├── .kiro/            # Kiro AI assistant configuration
+│   └── steering/     # AI steering rules (tech, structure, product, development, code-quality)
+├── .github/          # GitHub Actions CI/CD workflows
 ├── lanrage.py        # Main entry point
 ├── setup.py          # Setup script
-└── requirements.txt  # Python dependencies
+├── pyproject.toml    # PEP 621 project metadata and dependencies
+├── requirements.txt  # Python dependencies (backwards compatibility)
+├── .pylintrc         # Pylint configuration (legacy)
+└── CHANGELOG.md      # Version history
 ```
 
 ## Core Modules
@@ -33,7 +38,7 @@ Core networking and party management logic.
 - `connection.py` - Connection management and routing
 - `ipam.py` - IP address management for virtual network
 - `metrics.py` - Statistics collection and monitoring
-- `discord_integration.py` - Discord webhooks and Rich Presence
+- `discord_integration.py` - Discord webhooks, Rich Presence, and Bot integration
 - `server_browser.py` - Game server discovery and hosting
 - `settings.py` - Settings database management (SQLite)
 - `task_manager.py` - Background task management
@@ -112,9 +117,12 @@ Project documentation (1650+ lines).
 
 - `lanrage.py` - Main entry point, initializes all components
 - `setup.py` - One-time setup script for dependencies
-- `requirements.txt` - Python package dependencies (includes code quality tools)
+- `pyproject.toml` - **PEP 621 project metadata and dependencies** (single source of truth)
+- `requirements.txt` - Python package dependencies (backwards compatibility)
 - `.env.example` - Example environment configuration
+- `.pylintrc` - Pylint configuration (legacy, migrated to pyproject.toml)
 - `CONTRIBUTING.md` - Contribution guidelines
+- `CHANGELOG.md` - Version history and release notes
 - `README.md` - Project overview and quick start
 - `LICENSE` - MIT License
 
@@ -164,9 +172,11 @@ Game detection and optimization profiles.
 
 - `.env` - Environment variables (not in git)
 - `.env.example` - Template for environment configuration
+- `pyproject.toml` - **PEP 621 project config** (dependencies, tools, metadata)
 - `~/.lanrage/` - User configuration directory
 - `~/.lanrage/keys/` - WireGuard keypair storage
 - `~/.lanrage/network.log` - Network operation logs
+- `~/.lanrage/settings.db` - SQLite settings database
 
 ## Coding Conventions
 

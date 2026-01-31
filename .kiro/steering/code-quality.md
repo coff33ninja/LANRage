@@ -152,11 +152,12 @@ Requirements:
 
 ## Code Quality Tools
 
-LANrage uses three main tools to maintain code quality:
+LANrage uses **four main tools** configured in `pyproject.toml` (PEP 621):
 
 ### 1. isort - Import Organization
 
 Automatically sorts and organizes imports alphabetically and by type (standard library, third-party, local).
+Configured with `profile = "black"` for compatibility.
 
 ```bash
 # Sort imports (use venv Python)
@@ -171,6 +172,7 @@ Automatically sorts and organizes imports alphabetically and by type (standard l
 ### 2. black - Code Formatting
 
 Opinionated code formatter that ensures consistent style across the codebase.
+Line length: 88, Target: Python 3.12+
 
 ```bash
 # Format code (use venv Python)
@@ -184,7 +186,10 @@ Opinionated code formatter that ensures consistent style across the codebase.
 
 ### 3. ruff - Fast Linting
 
-Fast Python linter that catches errors, style issues, and code smells.
+Fast Python linter that replaces flake8, pyupgrade, and more.
+**9 rule categories enabled**: E (pycodestyle errors), F (Pyflakes), I (isort), N (pep8-naming), 
+W (pycodestyle warnings), UP (pyupgrade), B (flake8-bugbear), C4 (flake8-comprehensions), 
+SIM (flake8-simplify), RET (flake8-return)
 
 ```bash
 # Lint code (use venv Python)
@@ -194,6 +199,17 @@ Fast Python linter that catches errors, style issues, and code smells.
 # Fix auto-fixable issues
 .venv\Scripts\python.exe -m ruff check --fix .  # Windows
 .venv/bin/python -m ruff check --fix .          # Linux/Mac
+```
+
+### 4. pylint - Static Analysis
+
+Additional static analysis for catching complex issues.
+Current score: **10.00/10** (perfect)
+
+```bash
+# Run pylint (use venv Python)
+.venv\Scripts\python.exe -m pylint core/ api/ servers/  # Windows
+.venv/bin/python -m pylint core/ api/ servers/          # Linux/Mac
 ```
 
 ## Pre-Commit Workflow
@@ -213,23 +229,39 @@ Always run these commands before committing (in order):
 .venv\Scripts\python.exe -m ruff check --fix .  # Windows
 .venv/bin/python -m ruff check --fix .          # Linux/Mac
 
-# 4. Run tests
+# 4. Static analysis
+.venv\Scripts\python.exe -m pylint core/ api/ servers/  # Windows
+.venv/bin/python -m pylint core/ api/ servers/          # Linux/Mac
+
+# 5. Run tests
 .venv\Scripts\python.exe -m pytest tests/  # Windows
 .venv/bin/python -m pytest tests/          # Linux/Mac
 ```
 
-All commands must pass before committing code.
+All commands must pass before committing code (CI/CD enforced).
 
 ## Installation
 
-All code quality tools are included in `requirements.txt`:
+All code quality tools are in `pyproject.toml` dev dependencies:
 
 ```bash
-# Install all dependencies including code quality tools
+# Install all dependencies including dev tools
+uv pip install -e ".[dev]"
+
+# Or use requirements.txt (backwards compatibility)
 uv pip install -r requirements.txt
 ```
 
 Tools included:
 - `black>=23.3.0` - Code formatter
 - `isort>=5.12.0` - Import sorter
-- `ruff>=0.1.0` - Fast linter
+- `ruff>=0.1.0` - Fast linter (replaces flake8, pyupgrade, etc.)
+- `pylint>=3.0.0` - Static analysis
+
+## Configuration
+
+All tools configured in `pyproject.toml`:
+- `[tool.black]` - Line length 88, target Python 3.12
+- `[tool.isort]` - Black profile, line length 88
+- `[tool.ruff]` - 9 rule categories, Python 3.12 target
+- `[tool.pylint]` - Python 3.12, max line length 88
