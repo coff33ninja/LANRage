@@ -68,6 +68,7 @@ Web UI for user interaction.
 ### `tests/`
 Test suites for various components (62 tests, 88% coverage).
 
+- `conftest.py` - Pytest configuration and shared fixtures (database initialization)
 - `test_all.py` - Comprehensive test suite
 - `test_nat.py` - NAT traversal tests
 - `test_wireguard.py` - WireGuard interface tests

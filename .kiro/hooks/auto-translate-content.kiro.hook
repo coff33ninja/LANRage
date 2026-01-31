@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Auto-Translate Content",
+  "description": "Monitors changes to user-facing text content files (JSON, YAML, localization files) and automatically identifies new or modified text to generate translations for all configured target languages. Also improves or adds missing docstrings in Python files.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.json",
+      "*.yaml",
+      "*.yml",
+      "*.py",
+      "*.md",
+      "game_profiles/**/*.json",
+      "docs/**/*.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the changes in the edited file. For user-facing text content (JSON, YAML, localization files):\n1. Identify new or modified text strings that need translation\n2. Detect the primary language used\n3. Generate translations for common target languages (Spanish, French, German, Chinese, Japanese) while maintaining context and locale-specific conventions\n4. Preserve the file structure and formatting\n\nFor Python files:\n1. Review all functions and classes for missing or inadequate docstrings\n2. Add docstrings where missing with proper Args, Returns, and Raises sections\n3. Improve existing docstrings for clarity and completeness\n4. Ensure type hints are present and accurate\n\nApply changes only if translations or docstring improvements are needed. Maintain code quality standards."
+  }
+}
