@@ -82,7 +82,7 @@ Main metrics collection and storage class.
 from core.config import Config
 from core.metrics import MetricsCollector
 
-config = Config.load()
+config = await Config.load()
 metrics = MetricsCollector(config)
 ```
 
@@ -466,7 +466,7 @@ from core.config import Config
 from core.metrics import MetricsCollector
 
 # Initialize
-config = Config.load()
+config = await Config.load()
 metrics = MetricsCollector(config)
 
 # Start collection

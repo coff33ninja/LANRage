@@ -102,6 +102,18 @@ jobs:
         .venv\Scripts\Activate.ps1
         uv pip install -r requirements.txt
     
+    - name: Initialize test database (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        source .venv/bin/activate
+        python -c "import asyncio; from core.settings import init_default_settings; asyncio.run(init_default_settings())"
+    
+    - name: Initialize test database (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\Activate.ps1
+        python -c "import asyncio; from core.settings import init_default_settings; asyncio.run(init_default_settings())"
+    
     - name: Run tests (Linux)
       if: runner.os == 'Linux' && matrix.python-version != '3.12'
       run: |

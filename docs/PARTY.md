@@ -526,7 +526,7 @@ from core.party import PartyManager
 import asyncio
 
 async def test():
-    config = Config.load()
+    config = await Config.load()
     network = NetworkManager(config)
     await network.initialize()
     

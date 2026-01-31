@@ -95,6 +95,12 @@ python tests/test_wireguard.py
 python tests/test_multi_peer.py
 ```
 
+**Test Infrastructure**:
+- Pytest with custom fixtures (`tests/conftest.py`)
+- Automatic database initialization for all tests
+- Session-scoped fixtures for efficiency
+- Async/await support throughout test suite
+
 ## Code Style
 
 - **Formatting**: Black (line length: 88)

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Test Infrastructure**: Enhanced pytest configuration with automatic database initialization
+  - Added session-scoped fixture for settings database setup in `tests/conftest.py`
+  - Tests now automatically initialize database before running
+  - Ensures `Config.load()` works correctly in all test scenarios
+  - Added async event loop fixture for proper async test support
+  - Eliminates manual database setup in individual test files
+
 ## [1.2.5] - 2026-01-31
 
 ### Added

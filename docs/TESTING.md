@@ -332,6 +332,22 @@ ps aux | grep python
 
 ## Automated Tests (v1.0)
 
+### Test Infrastructure
+
+LANrage uses pytest with custom fixtures for test setup:
+
+**Test Configuration** (`tests/conftest.py`):
+- Session-scoped database initialization fixture
+- Automatic settings database setup before tests run
+- Async event loop fixture for async test support
+- Ensures `Config.load()` works in all tests
+
+**Key Features**:
+- Database initialized once per test session
+- Settings populated with defaults automatically
+- No manual setup required in individual tests
+- Proper async/await support throughout
+
 ### Running Tests
 
 ```bash

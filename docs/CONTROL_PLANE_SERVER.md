@@ -200,7 +200,7 @@ Or in code:
 ```python
 from core.config import Config
 
-config = Config.load()
+config = await Config.load()
 config.control_server = "http://your-server:8667"
 ```
 
@@ -212,7 +212,7 @@ from core.control import PeerInfo
 from core.config import Config
 
 # Create client
-config = Config.load()
+config = await Config.load()
 client = create_control_plane_client(config)
 
 # Initialize

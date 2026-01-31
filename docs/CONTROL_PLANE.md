@@ -585,7 +585,7 @@ from datetime import datetime
 import asyncio
 
 async def test():
-    config = Config.load()
+    config = await Config.load()
     control = LocalControlPlane(config)
     await control.initialize()
     

@@ -914,7 +914,7 @@ from core.party import PartyManager
 from core.network import NetworkManager
 from api.server import start_api_server
 
-config = Config.load()
+config = await Config.load()
 party = PartyManager(config)
 network = NetworkManager(config)
 

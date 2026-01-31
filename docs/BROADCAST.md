@@ -536,7 +536,7 @@ from core.config import Config
 import asyncio
 
 async def test():
-    config = Config.load()
+    config = await Config.load()
     manager = BroadcastManager(config)
     
     await manager.start()

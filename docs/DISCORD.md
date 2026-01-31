@@ -24,7 +24,7 @@ Main Discord integration class.
 from core.config import Config
 from core.discord_integration import DiscordIntegration
 
-config = Config.load()
+config = await Config.load()
 discord = DiscordIntegration(config)
 ```
 
@@ -447,7 +447,7 @@ from core.config import Config
 from core.discord_integration import DiscordIntegration
 
 # Initialize
-config = Config.load()
+config = await Config.load()
 discord = DiscordIntegration(config)
 
 # Start integration

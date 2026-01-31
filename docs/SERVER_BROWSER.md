@@ -94,7 +94,7 @@ Main server browser class.
 from core.config import Config
 from core.server_browser import ServerBrowser
 
-config = Config.load()
+config = await Config.load()
 browser = ServerBrowser(config)
 ```
 
@@ -421,7 +421,7 @@ from core.config import Config
 from core.server_browser import ServerBrowser
 
 # Initialize
-config = Config.load()
+config = await Config.load()
 browser = ServerBrowser(config)
 await browser.start()
 
