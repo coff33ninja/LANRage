@@ -9,9 +9,9 @@ from servers.relay_server import RelayClient, RelayServer
 
 
 @pytest.fixture
-def config():
+async def config():
     """Create test config"""
-    config = Config.load()
+    config = await Config.load()
     config.relay_port = 51821
     config.relay_public_ip = "1.2.3.4"
     return config

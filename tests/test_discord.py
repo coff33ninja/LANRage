@@ -10,7 +10,7 @@ from core.discord_integration import DiscordIntegration, DiscordWebhookHelper
 @pytest_asyncio.fixture
 async def discord():
     """Create a Discord integration instance"""
-    config = Config.load()
+    config = await Config.load()
     discord = DiscordIntegration(config)
     await discord.start()
     yield discord

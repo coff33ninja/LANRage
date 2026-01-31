@@ -28,7 +28,7 @@ class LANrageTestPeer:
     def __init__(self, peer_id: str, name: str):
         self.peer_id = peer_id
         self.name = name
-        self.config = Config.load()
+        self.config = None  # Will be loaded async
         self.network = None
         self.nat = None
         self.control = None
@@ -41,6 +41,9 @@ class LANrageTestPeer:
     async def initialize(self):
         """Initialize peer"""
         print(f"\n[{self.name}] Initializing...")
+
+        # Load config
+        self.config = await Config.load()
 
         # Initialize network (without creating interface for testing)
         self.network = NetworkManager(self.config)

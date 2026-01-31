@@ -35,7 +35,7 @@ async def test_wireguard():
 
     # Load config
     print("\n2. Loading configuration...")
-    config = Config.load()
+    config = await Config.load()
     print("   ✓ Config loaded")
     print(f"   - Mode: {config.mode}")
     print(f"   - Interface: {config.interface_name}")

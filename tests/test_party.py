@@ -151,7 +151,7 @@ class TestPartyCompatibility:
 @pytest_asyncio.fixture
 async def network_manager():
     """Create a network manager for testing"""
-    config = Config.load()
+    config = await Config.load()
     network = NetworkManager(config)
     await network._ensure_keys()
     return network
@@ -160,7 +160,7 @@ async def network_manager():
 @pytest.mark.asyncio
 async def test_party_creation_includes_nat_type(network_manager):
     """Test that party creation populates NAT type in peer"""
-    config = Config.load()
+    config = await Config.load()
 
     try:
         # Create party manager

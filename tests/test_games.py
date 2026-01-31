@@ -14,9 +14,9 @@ from core.games import (
 
 
 @pytest.fixture
-def config():
+async def config():
     """Create test config"""
-    return Config.load()
+    return await Config.load()
 
 
 @pytest.fixture

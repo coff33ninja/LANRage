@@ -12,9 +12,9 @@ from core.metrics import MetricsCollector
 
 
 @pytest.fixture
-def metrics():
+async def metrics():
     """Create a metrics collector instance"""
-    config = Config.load()
+    config = await Config.load()
     collector = MetricsCollector(config)
     # Use platform-specific event loop policy for optimal performance
     if platform.system() == "Windows":

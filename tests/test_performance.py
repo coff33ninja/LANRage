@@ -12,9 +12,9 @@ from core.server_browser import ServerBrowser
 
 
 @pytest.fixture
-def config():
+async def config():
     """Create test config"""
-    return Config.load()
+    return await Config.load()
 
 
 @pytest.mark.asyncio
@@ -100,7 +100,7 @@ async def test_memory_usage():
     baseline = process.memory_info().rss / 1024 / 1024  # MB
 
     # Create some objects
-    config = Config.load()
+    config = await Config.load()
     collector = MetricsCollector(config)
 
     # Add peers and data
@@ -120,7 +120,7 @@ async def test_memory_usage():
 @pytest.mark.asyncio
 async def test_concurrent_operations():
     """Test performance under concurrent load"""
-    config = Config.load()
+    config = await Config.load()
     browser = ServerBrowser(config)
     await browser.start()
 

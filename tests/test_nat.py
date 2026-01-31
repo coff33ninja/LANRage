@@ -24,7 +24,7 @@ async def test_nat_traversal():
     print("=" * 60)
 
     # Load config
-    config = Config.load()
+    config = await Config.load()
 
     # Initialize NAT traversal
     print("\n1. Detecting NAT type...")

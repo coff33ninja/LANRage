@@ -94,7 +94,7 @@ async def test_prerequisites(results):
 
     # Check config
     try:
-        config = Config.load()
+        config = await Config.load()
         results.add_pass("Configuration", f"Loaded config (mode: {config.mode})")
     except Exception as e:
         error_msg = str(e)
@@ -107,7 +107,7 @@ async def test_wireguard(results):
     print("\n2. Testing WireGuard")
     print("-" * 60)
 
-    config = Config.load()
+    config = await Config.load()
     network = NetworkManager(config)
 
     # Test key generation
@@ -175,7 +175,7 @@ async def test_nat_traversal(results):
     print("\n3. Testing NAT Traversal")
     print("-" * 60)
 
-    config = Config.load()
+    config = await Config.load()
     nat = NATTraversal(config)
 
     # Test STUN servers
@@ -235,7 +235,7 @@ async def test_party_manager(results):
     print("\n4. Testing Party Manager")
     print("-" * 60)
 
-    config = Config.load()
+    config = await Config.load()
     network = NetworkManager(config)
 
     try:

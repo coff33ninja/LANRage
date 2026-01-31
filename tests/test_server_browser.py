@@ -13,7 +13,7 @@ from core.server_browser import GameServer, ServerBrowser
 @pytest_asyncio.fixture
 async def server_browser():
     """Create a server browser instance"""
-    config = Config.load()
+    config = await Config.load()
     browser = ServerBrowser(config)
     await browser.start()
     yield browser

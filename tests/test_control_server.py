@@ -7,9 +7,9 @@ from servers.control_server import app, generate_token, init_database
 
 
 @pytest.fixture
-def config():
+async def config():
     """Create test config"""
-    return Config.load()
+    return await Config.load()
 
 
 def test_app_initialization():
