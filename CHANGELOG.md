@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-01-31
+
+### Added
+- **Windows Installation Scripts**: Added three automated installation batch scripts
+  - `install_and_run.bat` - Standard automated installation and startup
+  - `install_and_run_advanced.bat` - Enhanced with error handling and fallback options
+  - `quick_install.bat` - Streamlined installation process
+  - Automates Chocolatey, Python 3.12, and uv package manager installation
+  - Automates virtual environment creation and dependency installation
+  - Enables non-technical users to easily set up LANrage on Windows
+- **Kiro Hook**: Added auto-documentation update hook
+  - Monitors Python files, configs, and game profiles for changes
+  - Automatically triggers documentation updates when relevant files change
+- **Migration Documentation**: Added `WEBUI_MIGRATION_COMPLETE.md`
+  - Documents successful migration from .env to database-first configuration
+  - Includes before/after user experience comparison
+  - Provides validation checklist and migration notes for existing users
+
+### Changed
+- **Database-First Configuration** (Breaking Change): Migrated from environment variables to database-only configuration
+  - Removed `os.getenv()` calls from `Config.load()` method
+  - Made `Config.load()` async and database-only (single source of truth)
+  - Removed fallback to environment variables
+  - `.env.example` marked as **DEPRECATED** with clear migration instructions
+  - All settings now managed exclusively through WebUI at `http://localhost:8666`
+  - Added `is_database_initialized()` helper function in `core/settings.py`
+  - Updated `lanrage.py` with first-run detection and user guidance
+  - Updated `setup.py` to initialize database instead of creating .env file
+  - Removed `DatabaseConfigError` exception (no longer needed)
+  - Enhanced error messages to direct users to WebUI configuration
+- **Code Quality Documentation**: Updated to document all 4 quality tools
+  - Added pylint documentation with perfect 10.00/10 score
+  - Updated `pyproject.toml` as single source of truth for tool configurations
+  - Enhanced pre-commit workflow documentation with all quality checks
+- **Installation Scripts**: Fixed PowerShell execution policy issues
+  - Added `-ExecutionPolicy Bypass` flag to all PowerShell commands
+  - Fixed nested quote escaping in batch files
+  - Improved reliability of automated Windows installation
+
+### Removed
+- **Environment Variable Support**: LANrage no longer reads from .env files
+  - Existing .env files will be ignored on next run
+  - Users must configure settings via WebUI
+  - Old .env files can be safely deleted
+
+## Future Work
+
+See dev/webui-advanced-settings branch for roadmap on making hardcoded values configurable.
+
 ## [1.2.4] - 2026-01-31
 
 ### Added
