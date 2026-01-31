@@ -21,7 +21,7 @@ if %errorLevel% neq 0 (
 REM Step 1: Install Chocolatey
 echo [1/5] Installing Chocolatey...
 where choco >nul 2>&1 || (
-    start "Chocolatey" cmd /k "powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && pause && exit"
+    start "Chocolatey" cmd /k "powershell -ExecutionPolicy Bypass -Command ""Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"" && pause && exit"
     echo Press any key after Chocolatey installation completes...
     pause >nul
     call refreshenv 2>nul
@@ -43,7 +43,7 @@ echo Press any key after pip upgrade completes...
 pause >nul
 
 where uv >nul 2>&1 || (
-    start "uv Package Manager" cmd /k "echo Installing uv via PowerShell... && powershell -Command "try { irm https://astral.sh/uv/install.ps1 | iex; echo uv installed via PowerShell! } catch { echo PowerShell failed, using pip... }" && echo Installing uv via pip... && python -m pip install uv && echo uv installed! && pause && exit"
+    start "uv Package Manager" cmd /k "echo Installing uv via PowerShell... && powershell -ExecutionPolicy Bypass -Command ""try { irm https://astral.sh/uv/install.ps1 | iex; Write-Host 'uv installed via PowerShell!' } catch { Write-Host 'PowerShell failed, using pip...' }"" && echo Installing uv via pip... && python -m pip install uv && echo uv installed! && pause && exit"
     echo Press any key after uv installation completes...
     pause >nul
 )

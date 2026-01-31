@@ -42,7 +42,7 @@ if %errorLevel% neq 0 (
     echo Chocolatey not found. Installing...
     echo.
     echo Opening Chocolatey installation in new window...
-    start "Chocolatey Installation" cmd /c "echo Installing Chocolatey package manager... && echo. && powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; try { iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')); echo Chocolatey installed successfully! } catch { echo Failed to install Chocolatey: $_.Exception.Message }" && echo. && echo Installation window will close in 10 seconds... && timeout /t 10"
+    start "Chocolatey Installation" cmd /c "echo Installing Chocolatey package manager... && echo. && powershell -ExecutionPolicy Bypass -Command ""Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; try { iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')); Write-Host 'Chocolatey installed successfully!' } catch { Write-Host 'Failed to install Chocolatey:' $_.Exception.Message }"" && echo. && echo Installation window will close in 10 seconds... && timeout /t 10"
     
     call :wait_for_user
     
@@ -122,7 +122,7 @@ if %errorLevel% neq 0 (
     echo uv not found. Installing...
     echo.
     echo Opening uv installation in new window...
-    start "uv Installation" cmd /c "echo Installing uv package manager... && echo. && echo Method 1: PowerShell installer... && powershell -Command "try { irm https://astral.sh/uv/install.ps1 | iex; echo uv installed successfully via PowerShell! } catch { echo PowerShell method failed: $_.Exception.Message; echo. }" && echo. && echo Method 2: pip fallback... && python -m pip install uv && echo uv installed via pip! && echo. && echo Installation window will close in 10 seconds... && timeout /t 10"
+    start "uv Installation" cmd /c "echo Installing uv package manager... && echo. && echo Method 1: PowerShell installer... && powershell -ExecutionPolicy Bypass -Command ""try { irm https://astral.sh/uv/install.ps1 | iex; Write-Host 'uv installed successfully via PowerShell!' } catch { Write-Host 'PowerShell method failed:' $_.Exception.Message; Write-Host '' }"" && echo. && echo Method 2: pip fallback... && python -m pip install uv && echo uv installed via pip! && echo. && echo Installation window will close in 10 seconds... && timeout /t 10"
     
     call :wait_for_user
     

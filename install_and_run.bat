@@ -19,7 +19,7 @@ echo Step 1: Installing Chocolatey (if not present)...
 where choco >nul 2>&1
 if %errorLevel% neq 0 (
     echo Chocolatey not found. Installing in new terminal...
-    start "Installing Chocolatey" cmd /k "powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && echo Chocolatey installation complete. Press any key to continue... && pause && exit"
+    start "Installing Chocolatey" cmd /k "powershell -ExecutionPolicy Bypass -Command ""Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"" && echo Chocolatey installation complete. Press any key to continue... && pause && exit"
     echo Waiting for Chocolatey installation to complete...
     echo Please wait for the Chocolatey installation window to finish, then press any key here.
     pause
@@ -58,7 +58,7 @@ pause
 where uv >nul 2>&1
 if %errorLevel% neq 0 (
     echo uv not found. Installing in new terminal...
-    start "Installing uv" cmd /k "echo Installing uv package manager... && echo Method 1: PowerShell installer... && powershell -Command "try { irm https://astral.sh/uv/install.ps1 | iex; echo uv installed via PowerShell! } catch { echo PowerShell failed, trying pip... }" && echo Method 2: pip fallback... && python -m pip install uv && echo uv installation complete. Press any key to continue... && pause && exit"
+    start "Installing uv" cmd /k "echo Installing uv package manager... && echo Method 1: PowerShell installer... && powershell -ExecutionPolicy Bypass -Command ""try { irm https://astral.sh/uv/install.ps1 | iex; Write-Host 'uv installed via PowerShell!' } catch { Write-Host 'PowerShell failed, trying pip...' }"" && echo Method 2: pip fallback... && python -m pip install uv && echo uv installation complete. Press any key to continue... && pause && exit"
     echo Waiting for uv installation to complete...
     echo Please wait for the uv installation window to finish, then press any key here.
     pause
