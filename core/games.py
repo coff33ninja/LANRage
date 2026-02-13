@@ -4,7 +4,6 @@ import asyncio
 import json
 import platform
 import socket
-import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -499,8 +498,6 @@ class GameDetector:
         results = []
 
         try:
-            import socket
-
             loop = asyncio.get_event_loop()
 
             def check_ports():
