@@ -2,9 +2,9 @@
 
 import pytest
 
-from core.control import ControlPlane, PeerInfo, PartyInfo
-from core.logging_config import get_context, set_context, clear_context
 from core.config import Config
+from core.control import ControlPlane
+from core.logging_config import clear_context, get_context, set_context
 
 
 @pytest.fixture
