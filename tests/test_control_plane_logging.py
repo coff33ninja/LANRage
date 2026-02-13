@@ -67,22 +67,26 @@ async def test_join_party_logs_peer_join(control_plane, caplog):
     # Create peer info objects
     peer_info_1 = PeerInfo(
         peer_id=peer_id_1,
+        name="Peer 1",
         public_key="key1",
+        nat_type="symmetric",
         public_ip="127.0.0.1",
         public_port=5000,
         local_ip="127.0.0.1",
         local_port=5001,
-        nat_type="symmetric",
+        last_seen=datetime.now(),
     )
 
     peer_info_2 = PeerInfo(
         peer_id=peer_id_2,
+        name="Peer 2",
         public_key="key2",
+        nat_type="symmetric",
         public_ip="127.0.0.1",
         public_port=5002,
         local_ip="127.0.0.1",
         local_port=5003,
-        nat_type="symmetric",
+        last_seen=datetime.now(),
     )
 
     # Register initial party with peer
