@@ -67,35 +67,46 @@ class BroadcastDeduplicator:
         if not self.enabled:
             return True
 
-        async with self._lock:
-            self.total_packets += 1
+        self.total_packets += 1
 
-            # Don't forward back to the source peer
-            if source_peer and packet.source_ip == source_peer:
-                self.deduplicated_packets += 1
-                return False
+        # Don't forward back to the source peer
+        if source_peer and packet.source_ip == source_peer:
+            self.deduplicated_packets += 1
+            return False
 
-            # Hash the packet contents
-            packet_hash = self._hash_packet(packet)
+        # Hash the packet contents
+        packet_hash = self._hash_packet(packet)
 
-            # Check if we've seen this packet recently
-            if packet_hash in self._packet_hashes:
-                logger.debug(
-                    f"Dropping duplicate broadcast packet {packet_hash[:8]}... "
-                    f"from {packet.source_ip}:{packet.source_port} on port {packet.dest_port}"
-                )
-                self.deduplicated_packets += 1
-                return False
+        # Check if we've seen this packet recently
+        if packet_hash in self._packet_hashes:
+            logger.debug(
+                f"Dropping duplicate broadcast packet {packet_hash[:8]}... "
+                f"from {packet.source_ip}:{packet.source_port} on port {packet.dest_port}"
+            )
+            self.deduplicated_packets += 1
+            return False
 
-            # New packet - record it and schedule cleanup
-            self._packet_hashes[packet_hash] = time.time()
-            self.forwarded_packets += 1
+        # New packet - record it and schedule cleanup
+        now = time.time()
+        self._packet_hashes[packet_hash] = now
+        self.forwarded_packets += 1
 
-            # Start cleanup task if needed
-            if not self._cleanup_task or self._cleanup_task.done():
+        # Schedule cleanup task if needed (fire-and-forget, doesn't block)
+        self._schedule_cleanup_if_needed()
+
+        return True
+
+    def _schedule_cleanup_if_needed(self) -> None:
+        """Schedule async cleanup if not already running"""
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running() and (
+                not self._cleanup_task or self._cleanup_task.done()
+            ):
                 self._cleanup_task = asyncio.create_task(self._cleanup_expired_hashes())
-
-            return True
+        except RuntimeError:
+            # No event loop, cleanup will happen next time
+            pass
 
     def _hash_packet(self, packet: BroadcastPacket) -> str:
         """Generate hash of packet for deduplication
@@ -324,25 +335,28 @@ class BroadcastEmulator:
             protocol="udp",
         )
 
-        # Check for duplicates (async operation, but we can't await in sync context)
-        # Instead, use synchronous check via asyncio.run_coroutine_threadsafe
-        # For now, we'll queue the check asynchronously
-
-        # Should we forward this packet?
-        # We need to run the async check, so we'll do it in the forwarding path
-        async def check_and_forward():
-            if (await self.deduplicator.should_forward(packet)) and (
-                self.forward_callback and len(self.active_peers) > 0
-            ):
-                self.forward_callback(packet)
-
-        # Schedule the async check
+        # Check for duplicates and forward
+        # We use asyncio.run_coroutine_threadsafe since this is called from sync context
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
+                # Running in an async context, we can't block
+                # Schedule the check asynchronously
+                async def check_and_forward():
+                    if (await self.deduplicator.should_forward(packet)) and (
+                        self.forward_callback and len(self.active_peers) > 0
+                    ):
+                        self.forward_callback(packet)
+
                 asyncio.create_task(check_and_forward())
             else:
-                loop.run_until_complete(check_and_forward())
+                # Not in async context, run synchronously
+                import asyncio as aio
+
+                coro = self.deduplicator.should_forward(packet)
+                future = loop.run_until_complete(coro)
+                if future and self.forward_callback and len(self.active_peers) > 0:
+                    self.forward_callback(packet)
         except RuntimeError:
             # No event loop, just forward without dedup (fallback)
             if self.forward_callback and len(self.active_peers) > 0:
