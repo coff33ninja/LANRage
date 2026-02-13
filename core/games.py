@@ -3,6 +3,8 @@
 import asyncio
 import json
 import platform
+import socket
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -64,6 +66,27 @@ class GameProfile:
     low_latency: bool = True
     high_bandwidth: bool = False
     packet_priority: str = "high"  # "low", "medium", "high"
+
+
+@dataclass
+class DetectionResult:
+    """Result of game detection attempt"""
+
+    game_id: str
+    profile: GameProfile
+    confidence: float  # 0.0 to 1.0
+    method: str  # "process", "window_title", "port", "hash", etc.
+    details: dict = None  # Detection-specific details
+
+    def __post_init__(self):
+        """Ensure confidence is in valid range"""
+        if self.details is None:
+            self.details = {}
+        self.confidence = max(0.0, min(1.0, self.confidence))
+
+    def __lt__(self, other):
+        """Allow sorting by confidence (higher is better)"""
+        return self.confidence > other.confidence
 
 
 async def load_game_profiles() -> dict[str, GameProfile]:
@@ -328,10 +351,17 @@ class GameDetector:
             await asyncio.sleep(5)  # Check every 5 seconds
 
     async def _detect_games(self):
-        """Detect currently running games"""
-        current_games = set()
+        """Detect currently running games using multiple detection methods
 
-        # Get all running processes (run in executor to avoid blocking)
+        Detection ranking (by confidence):
+        1. Process name matching (95% confidence when matched)
+        2. Window title detection (80% confidence)
+        3. Open port detection (60% confidence)
+        """
+        current_games = set()
+        detection_results: dict[str, list[DetectionResult]] = {}
+
+        # Get all running processes
         loop = asyncio.get_event_loop()
 
         def _get_processes():
@@ -345,11 +375,42 @@ class GameDetector:
 
         proc_names = await loop.run_in_executor(None, _get_processes)
 
-        # Check against game profiles with fuzzy matching
+        # Method 1: Process name matching (highest priority)
         for proc_name in proc_names:
             for game_id, profile in GAME_PROFILES.items():
                 if _fuzzy_match_executable(proc_name, profile.executable):
-                    current_games.add(game_id)
+                    if game_id not in detection_results:
+                        detection_results[game_id] = []
+                    detection_results[game_id].append(
+                        DetectionResult(
+                            game_id=game_id,
+                            profile=profile,
+                            confidence=0.95,
+                            method="process",
+                            details={"process_name": proc_name},
+                        )
+                    )
+
+        # Method 2: Window title detection (Windows only)
+        if platform.system() == "Windows":
+            window_detections = await self._detect_by_window_title()
+            for result in window_detections:
+                if result.game_id not in detection_results:
+                    detection_results[result.game_id] = []
+                detection_results[result.game_id].append(result)
+
+        # Method 3: Port-based detection
+        port_detections = await self._detect_by_open_ports()
+        for result in port_detections:
+            if result.game_id not in detection_results:
+                detection_results[result.game_id] = []
+            detection_results[result.game_id].append(result)
+
+        # Select best detection per game (highest confidence)
+        for game_id, results in detection_results.items():
+            if results:
+                max(results, key=lambda x: x.confidence)
+                current_games.add(game_id)
 
         # Detect new games
         new_games = current_games - self.detected_games
@@ -367,6 +428,141 @@ class GameDetector:
                 await self._on_game_stopped(game_id)
 
         self.detected_games = current_games
+
+    async def _detect_by_window_title(self) -> list[DetectionResult]:
+        """Detect games by window title (Windows only)
+
+        Returns:
+            List of DetectionResult with confidence scores
+        """
+        results = []
+
+        if platform.system() != "Windows":
+            return results
+
+        try:
+            # pylint: disable=import-outside-toplevel
+            import win32gui  # noqa: F401
+
+            window_titles = []
+
+            def get_window_titles():
+                """Collect open window titles"""
+                titles = []
+
+                def enum_windows(hwnd, _):
+                    try:
+                        if win32gui.IsWindowVisible(hwnd):
+                            title = win32gui.GetWindowText(hwnd)
+                            if title and len(title) > 2:
+                                titles.append(title)
+                    except Exception:
+                        pass
+                    return True
+
+                win32gui.EnumWindows(enum_windows, None)
+                return titles
+
+            loop = asyncio.get_event_loop()
+            window_titles = await loop.run_in_executor(None, get_window_titles)
+
+            # Try to match window titles to game profiles
+            for window_title in window_titles:
+                for game_id, profile in GAME_PROFILES.items():
+                    # Check if game name appears in window title
+                    if profile.name.lower() in window_title.lower():
+                        results.append(
+                            DetectionResult(
+                                game_id=game_id,
+                                profile=profile,
+                                confidence=0.80,
+                                method="window_title",
+                                details={"window_title": window_title},
+                            )
+                        )
+
+        except ImportError:
+            # pywin32 not installed, skip window title detection
+            pass
+        except Exception:
+            # Silently ignore errors in window detection
+            pass
+
+        return results
+
+    async def _detect_by_open_ports(self) -> list[DetectionResult]:
+        """Detect games by checking for open ports
+
+        Returns:
+            List of DetectionResult with confidence scores
+        """
+        results = []
+
+        try:
+            import socket
+
+            loop = asyncio.get_event_loop()
+
+            def check_ports():
+                """Check which ports are open"""
+                open_ports = {}
+
+                for game_id, profile in GAME_PROFILES.items():
+                    matched_ports = []
+                    for port in profile.ports:
+                        # Try UDP
+                        if profile.protocol in ("udp", "both"):
+                            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                            sock.settimeout(0.1)
+                            try:
+                                sock.bind(("127.0.0.1", port))
+                                sock.close()
+                                # Port is available (not in use)
+                            except OSError:
+                                # Port is in use
+                                matched_ports.append(port)
+                        # Try TCP
+                        if profile.protocol in ("tcp", "both"):
+                            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            sock.settimeout(0.1)
+                            try:
+                                result = sock.connect_ex(("127.0.0.1", port))
+                                if result == 0:
+                                    matched_ports.append(port)
+                            except Exception:
+                                pass
+                            sock.close()
+
+                    if matched_ports:
+                        # Calculate confidence based on port match percentage
+                        match_ratio = len(matched_ports) / len(profile.ports)
+                        confidence = min(0.6 + (match_ratio * 0.2), 0.75)
+                        open_ports[game_id] = (profile, matched_ports, confidence)
+
+                return open_ports
+
+            open_ports_dict = await loop.run_in_executor(None, check_ports)
+
+            for game_id, (
+                profile,
+                matched_ports,
+                confidence,
+            ) in open_ports_dict.items():
+                results.append(
+                    DetectionResult(
+                        game_id=game_id,
+                        profile=profile,
+                        confidence=confidence,
+                        method="port",
+                        details={"matched_ports": matched_ports},
+                    )
+                )
+
+        except Exception:
+            # Silently ignore port detection errors
+            pass
+
+        return results
 
     async def _on_game_started(self, game_id: str):
         """Handle game started"""
