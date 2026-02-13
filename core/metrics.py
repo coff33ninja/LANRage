@@ -423,10 +423,15 @@ class MetricsCollector:
 
             # Store session
             self.game_sessions.append(self.active_session)
+            avg_latency_str = (
+                f"{self.active_session.avg_latency:.1f}ms"
+                if self.active_session.avg_latency is not None
+                else "unavailable"
+            )
             logger.info(
                 f"Ended game session: {self.active_session.game_name} "
                 f"(duration: {self.active_session.duration:.1f}s, "
-                f"avg_latency: {self.active_session.avg_latency:.1f}ms if available)"
+                f"avg_latency: {avg_latency_str})"
             )
             self.active_session = None
         else:

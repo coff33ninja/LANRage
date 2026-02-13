@@ -62,13 +62,11 @@ async def test_broadcast_add_peer_logs_activity(broadcast_emulator, caplog):
     await broadcast_emulator.start()
 
     peer_id = "test_broadcast_peer"
-    peer_ip = "192.168.1.100"
-    peer_port = 5000
 
     caplog.clear()
 
-    # Add peer
-    await broadcast_emulator.add_peer(peer_id, peer_ip, peer_port)
+    # Add peer (only takes peer_id)
+    broadcast_emulator.add_peer(peer_id)
 
     # Check logs contain peer info
     log_text = caplog.text.lower()
