@@ -281,16 +281,22 @@ class TestTimingDecorator:
         """Test timing decorator on synchronous function."""
         stream = StringIO()
         handler = logging.StreamHandler(stream)
+        handler.setFormatter(PlainFormatter())
 
-        logger = get_logger("core.logging_config")
-        logger.handlers = [handler]
-        logger.setLevel(logging.DEBUG)
+        # Set handler on root logger to capture all log records
+        root_logger = logging.getLogger()
+        old_handlers = root_logger.handlers[:]
+        root_logger.handlers = [handler]
+        root_logger.setLevel(logging.DEBUG)
 
         @timing_decorator(name="test_operation")
         def test_func():
             return "result"
 
         result = test_func()
+
+        # Restore original handlers
+        root_logger.handlers = old_handlers
 
         assert result == "result"
         # Check that timing was logged
@@ -302,10 +308,13 @@ class TestTimingDecorator:
         """Test timing decorator on async function."""
         stream = StringIO()
         handler = logging.StreamHandler(stream)
+        handler.setFormatter(PlainFormatter())
 
-        logger = get_logger("core.logging_config")
-        logger.handlers = [handler]
-        logger.setLevel(logging.DEBUG)
+        # Set handler on root logger to capture all log records
+        root_logger = logging.getLogger()
+        old_handlers = root_logger.handlers[:]
+        root_logger.handlers = [handler]
+        root_logger.setLevel(logging.DEBUG)
 
         @timing_decorator(name="async_operation")
         async def async_func():
@@ -313,6 +322,9 @@ class TestTimingDecorator:
             return "async_result"
 
         result = await async_func()
+
+        # Restore original handlers
+        root_logger.handlers = old_handlers
 
         assert result == "async_result"
         # Check that timing was logged
