@@ -31,3 +31,4 @@ keys/
 logs/
 coverage.json
 .coverage
+WHATS_MISSING.md
