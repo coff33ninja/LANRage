@@ -123,7 +123,11 @@ class BroadcastDeduplicator:
         hasher.update(packet.data)
         hasher.update(packet.source_ip.encode())
         hasher.update(str(packet.dest_port).encode())
-        return hasher.hexdigest()
+        hash_val = hasher.hexdigest()
+        logger.debug(
+            f"Hashed packet from {packet.source_ip}:{packet.source_port} -> port {packet.dest_port}: {hash_val[:8]}..."
+        )
+        return hash_val
 
     async def _cleanup_expired_hashes(self) -> None:
         """Remove packet hashes older than the window size
@@ -236,11 +240,16 @@ class BroadcastEmulator:
     async def start(self):
         """Start broadcast emulation"""
         self.running = True
+        logger.info(
+            f"Starting broadcast emulation (monitoring {len(self.monitored_ports)} ports)"
+        )
 
         # Start listeners for common ports
+        successful_listeners = 0
         for port in self.monitored_ports:
             try:
                 await self._start_listener(port)
+                successful_listeners += 1
             except SocketError as e:
                 logger.warning(f"Could not start listener on port {port}: {e}")
             except Exception as e:
@@ -248,9 +257,16 @@ class BroadcastEmulator:
                     f"Unexpected error starting listener on port {port}: {type(e).__name__}: {e}"
                 )
 
+        logger.info(
+            f"Broadcast emulation started with {successful_listeners}/{len(self.monitored_ports)} listeners"
+        )
+
     async def stop(self):
         """Stop broadcast emulation"""
         self.running = False
+        logger.info(
+            f"Stopping broadcast emulation ({len(self.listeners)} active listeners)"
+        )
 
         # Flush deduplicator
         await self.deduplicator.flush()
@@ -259,6 +275,7 @@ class BroadcastEmulator:
         for port, transport in list(self.listeners.items()):
             try:
                 transport.close()
+                logger.debug(f"Closed listener on port {port}")
             except Exception as e:
                 logger.warning(
                     f"Error closing transport for port {port}: {type(e).__name__}: {e}"
@@ -307,10 +324,16 @@ class BroadcastEmulator:
     def add_peer(self, peer_id: str):
         """Add a peer to active peers set"""
         self.active_peers.add(peer_id)
+        logger.debug(
+            f"Broadcast peer added: {peer_id} (active peers: {len(self.active_peers)})"
+        )
 
     def remove_peer(self, peer_id: str):
         """Remove a peer from active peers set"""
         self.active_peers.discard(peer_id)
+        logger.debug(
+            f"Broadcast peer removed: {peer_id} (active peers: {len(self.active_peers)})"
+        )
 
     def handle_broadcast(self, data: bytes, addr: tuple, port: int):
         """Handle a received broadcast packet
@@ -324,6 +347,9 @@ class BroadcastEmulator:
             port: Destination port
         """
         source_ip, source_port = addr
+        logger.debug(
+            f"Handling broadcast from {source_ip}:{source_port} on port {port} ({len(data)} bytes)"
+        )
 
         # Create packet
         packet = BroadcastPacket(

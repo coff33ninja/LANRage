@@ -2,7 +2,6 @@
 
 import asyncio
 import json
-import logging
 import platform
 import socket
 import time
@@ -282,11 +281,13 @@ class GameDetector:
     async def start(self):
         """Start game detection"""
         self.running = True
+        logger.info("Game detection starting")
 
         # Load custom profiles if they exist
         await self._load_custom_profiles()
 
         asyncio.create_task(self._detection_loop())
+        logger.debug(f"Loaded {len(GAME_PROFILES)} game profiles")
 
     async def _load_custom_profiles(self):
         """Load custom game profiles from file"""
@@ -303,6 +304,7 @@ class GameDetector:
                     custom_data = json.loads(content)
 
                 # Parse and add custom profiles to GAME_PROFILES
+                loaded_count = 0
                 for game_id, profile_data in custom_data.items():
                     try:
                         # Create GameProfile from profile_data
@@ -325,27 +327,39 @@ class GameDetector:
 
                         # Add to GAME_PROFILES
                         GAME_PROFILES[game_id] = profile
-                        print(f"Loaded custom profile: {game_id} - {profile.name}")
+                        loaded_count += 1
+                        logger.debug(
+                            f"Loaded custom profile: {game_id} - {profile.name}"
+                        )
                     except (KeyError, TypeError) as e:
                         error_msg = str(e)
+                        logger.warning(
+                            f"Invalid profile data for {game_id}: {error_msg}"
+                        )
                         print(
                             f"Warning: Invalid profile data for {game_id}: {error_msg}"
                         )
                         continue
 
+                logger.info(f"Loaded {loaded_count} custom game profiles")
                 print(
                     f"Loaded {len(custom_data)} custom profiles from {self.custom_profiles_path}"
                 )
             except json.JSONDecodeError as e:
                 error_msg = str(e)
+                logger.error(f"Could not parse custom profiles JSON: {error_msg}")
                 print(f"Warning: Could not parse custom profiles JSON: {error_msg}")
             except Exception as e:
                 error_msg = str(e)
+                logger.error(f"Could not load custom profiles: {error_msg}")
                 print(f"Warning: Could not load custom profiles: {error_msg}")
 
     async def stop(self):
         """Stop game detection"""
         self.running = False
+        logger.info(
+            f"Game detection stopped (detected {len(self.detected_games)} games)"
+        )
 
     async def _detection_loop(self):
         """Continuously detect running games"""

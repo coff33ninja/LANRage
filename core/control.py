@@ -208,16 +208,22 @@ class ControlPlane:
 
     async def initialize(self):
         """Initialize control plane"""
+        logger.info("Initializing control plane")
         # Load persisted state
         await self._load_state()
 
         # Start cleanup task
         asyncio.create_task(self._cleanup_task())
+        logger.debug("Control plane initialization complete")
 
     async def shutdown(self):
         """Shutdown control plane and flush pending state writes"""
+        logger.info(
+            f"Shutting down control plane (active parties: {len(self.active_party_ids)})"
+        )
         # Ensure any pending state writes are flushed to disk
         await self.state_persister.flush()
+        logger.debug("Control plane shutdown complete")
 
     async def register_party(
         self, party_id: str, name: str, host_peer_info: PeerInfo
@@ -304,21 +310,39 @@ class ControlPlane:
 
     async def get_party(self, party_id: str) -> PartyInfo | None:
         """Get party information"""
-        return self.parties.get(party_id)
+        set_context(party_id_val=party_id)
+        logger.debug(f"Getting party information for {party_id}")
+        party = self.parties.get(party_id)
+        if not party:
+            logger.warning(f"Party not found: {party_id}")
+        return party
 
     async def get_peers(self, party_id: str) -> dict[str, PeerInfo]:
         """Get all peers in a party"""
+        set_context(party_id_val=party_id)
         if party_id not in self.parties:
+            logger.debug(f"No peers in party {party_id} (party not found)")
             return {}
 
-        return self.parties[party_id].peers
+        peers = self.parties[party_id].peers
+        logger.debug(f"Retrieved {len(peers)} peers from party {party_id}")
+        return peers
 
     async def discover_peer(self, party_id: str, peer_id: str) -> PeerInfo | None:
         """Discover a specific peer"""
+        set_context(party_id_val=party_id, peer_id_val=peer_id)
         if party_id not in self.parties:
+            logger.warning(
+                f"Attempted peer discovery in non-existent party: {party_id}"
+            )
             return None
 
-        return self.parties[party_id].peers.get(peer_id)
+        peer = self.parties[party_id].peers.get(peer_id)
+        if peer:
+            logger.debug(f"Discovered peer {peer_id} in party {party_id}")
+        else:
+            logger.warning(f"Peer not found during discovery: {peer_id} in {party_id}")
+        return peer
 
     async def signal_connection(
         self, party_id: str, from_peer_id: str, to_peer_id: str, signal_data: dict
@@ -337,12 +361,19 @@ class ControlPlane:
 
     async def heartbeat(self, party_id: str, peer_id: str):
         """Send heartbeat to keep peer alive"""
+        set_context(party_id_val=party_id, peer_id_val=peer_id)
         if party_id not in self.parties:
+            logger.debug(f"Heartbeat for non-existent party: {party_id}")
             return
 
         party = self.parties[party_id]
         if peer_id in party.peers:
             party.peers[peer_id].last_seen = datetime.now()
+            logger.debug(f"Heartbeat received from {peer_id} in party {party_id}")
+        else:
+            logger.warning(
+                f"Heartbeat from unknown peer: {peer_id} in party {party_id}"
+            )
 
     async def _cleanup_task(self):
         """Cleanup stale peers and parties"""
