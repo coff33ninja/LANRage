@@ -29,6 +29,13 @@ class GameServer:
     last_heartbeat: float = field(default_factory=time.time)
     latency_ms: float | None = None
 
+    # Advanced latency metrics
+    latency_ema: float | None = None  # Exponential Moving Average
+    latency_trend: str = "stable"  # "improving", "stable", "degrading"
+    latency_samples: list[float] = field(default_factory=list)  # Last 10 samples
+    last_latency_check: float = field(default_factory=time.time)
+    measurement_interval: int = 30  # Adaptive interval in seconds
+
     def to_dict(self) -> dict:
         """Convert to dictionary"""
         return {
@@ -47,6 +54,8 @@ class GameServer:
             "created_at": self.created_at,
             "last_heartbeat": self.last_heartbeat,
             "latency_ms": self.latency_ms,
+            "latency_ema": self.latency_ema,
+            "latency_trend": self.latency_trend,
             "is_full": self.current_players >= self.max_players,
             "age_seconds": time.time() - self.created_at,
         }
@@ -316,6 +325,8 @@ class ServerBrowser:
     async def measure_latency(self, server_id: str) -> float | None:
         """Measure latency to a server using multiple samples for accuracy
 
+        Includes exponential moving average smoothing and trend detection.
+
         Args:
             server_id: Server ID
 
@@ -354,9 +365,20 @@ class ServerBrowser:
                 # Use median for more robust latency estimate (less affected by outliers)
                 median_latency = statistics.median(valid_latencies)
                 server.latency_ms = median_latency
+
+                # Update EMA (Exponential Moving Average) for smoothing
+                self._update_ema(server, median_latency)
+
+                # Track samples and detect trends
+                self._update_latency_samples(server, median_latency)
+
+                # Adapt measurement interval based on latency quality
+                self._adapt_measurement_interval(server)
+
                 return median_latency
             # All measurements failed or timed out
             server.latency_ms = 999
+            server.latency_trend = "degrading"
             return 999.0
 
         except Exception as e:
@@ -364,6 +386,81 @@ class ServerBrowser:
             print(f"⚠ Latency measurement failed for {server.name}: {error_msg}")
 
         return None
+
+    def _update_ema(self, server: GameServer, new_latency: float, alpha: float = 0.3):
+        """Update exponential moving average of latency
+
+        EMA = alpha * current_value + (1 - alpha) * previous_EMA
+        Lower alpha = more smoothing (less responsive)
+        Higher alpha = less smoothing (more responsive)
+
+        Args:
+            server: GameServer instance
+            new_latency: New latency measurement
+            alpha: smoothing factor (0.3 = 30% new, 70% historical)
+        """
+        if server.latency_ema is None:
+            server.latency_ema = new_latency
+        else:
+            server.latency_ema = (alpha * new_latency) + (
+                (1 - alpha) * server.latency_ema
+            )
+
+    def _update_latency_samples(
+        self, server: GameServer, latency: float, max_samples: int = 10
+    ):
+        """Track latency samples for trend analysis
+
+        Args:
+            server: GameServer instance
+            latency: New latency measurement
+            max_samples: Maximum samples to keep
+        """
+        server.latency_samples.append(latency)
+
+        # Keep only recent samples
+        if len(server.latency_samples) > max_samples:
+            server.latency_samples = server.latency_samples[-max_samples:]
+
+        # Detect trend based on samples
+        if len(server.latency_samples) >= 3:
+            recent = server.latency_samples[-3:]
+            avg_old = sum(server.latency_samples[:-1]) / len(
+                server.latency_samples[:-1]
+            )
+            avg_new = recent[-1]
+
+            # Simple trend detection: compare recent measurement to historical average
+            improvement_threshold = avg_old * 0.05  # 5% change
+
+            if avg_new < avg_old - improvement_threshold:
+                server.latency_trend = "improving"
+            elif avg_new > avg_old + improvement_threshold:
+                server.latency_trend = "degrading"
+            else:
+                server.latency_trend = "stable"
+
+    def _adapt_measurement_interval(self, server: GameServer):
+        """Adapt latency measurement interval based on connection quality
+
+        Good connection: measure less frequently (60s)
+        Degrading connection: measure more frequently (10s)
+
+        Args:
+            server: GameServer instance
+        """
+        if server.latency_ema is None:
+            return
+
+        # If latency is good and stable, measure less frequently
+        if server.latency_ema < 50 and server.latency_trend != "degrading":
+            server.measurement_interval = 60  # Check every 60s
+        # If latency is moderate, check regularly
+        elif server.latency_ema < 150:
+            server.measurement_interval = 30  # Check every 30s
+        # If latency is high or degrading, check frequently
+        else:
+            server.measurement_interval = 10  # Check every 10s
 
     async def _single_ping(self, command: list) -> float | None:
         """Execute a single ping and return latency
