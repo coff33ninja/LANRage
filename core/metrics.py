@@ -244,6 +244,7 @@ class MetricsCollector:
             await self._collect_system_metrics()
             await asyncio.sleep(self.collection_interval)
 
+    @timing_decorator(name="metrics_collection")
     async def _collect_system_metrics(self):
         """Collect system-level metrics"""
         current_time = time.time()
@@ -304,6 +305,7 @@ class MetricsCollector:
             self.peer_metrics[peer_id].status = "disconnected"
             logger.debug(f"Marked peer as disconnected: {peer_id}")
 
+    @timing_decorator(name="latency_recording")
     async def record_latency(self, peer_id: str, latency: float | None):
         """Record latency measurement for a peer and update quality prediction"""
         set_context(peer_id_val=peer_id)

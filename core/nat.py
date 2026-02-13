@@ -1,7 +1,6 @@
 """NAT traversal - STUN/TURN and UDP hole punching"""
 
 import asyncio
-import logging
 import secrets
 import socket
 import struct
@@ -12,8 +11,9 @@ from enum import Enum
 
 from .config import Config
 from .exceptions import NATError, STUNError
+from .logging_config import get_logger, set_context, timing_decorator
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class NATType(Enum):
@@ -61,8 +61,10 @@ class NATTraversal:
         self.local_ip: str | None = None
         self.local_port: int | None = None
 
+    @timing_decorator(name="nat_detection")
     async def detect_nat(self) -> STUNResponse:
         """Detect NAT type using STUN"""
+        logger.info("Starting NAT detection")
         # Try multiple STUN servers
         last_error = None
 
@@ -239,10 +241,16 @@ class NATTraversal:
         # (Full detection requires multiple STUN requests)
         return NATType.PORT_RESTRICTED_CONE
 
+    @timing_decorator(name="hole_punch")
     async def attempt_hole_punch(
         self, peer_public_ip: str, peer_public_port: int, local_port: int = 51820
     ) -> bool:
         """Attempt UDP hole punching with peer"""
+        set_context(peer_id_val=f"{peer_public_ip}:{peer_public_port}")
+        logger.info(
+            f"Attempting hole punch to {peer_public_ip}:{peer_public_port} from port {local_port}"
+        )
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(2)
 
@@ -253,27 +261,33 @@ class NATTraversal:
             # Send multiple packets to punch hole
             punch_message = b"LANRAGE_PUNCH"
 
-            for _ in range(5):
+            for i in range(5):
                 sock.sendto(punch_message, (peer_public_ip, peer_public_port))
                 await asyncio.sleep(0.1)
+
+            logger.debug(f"Sent {5} hole punch packets")
 
             # Try to receive response
             try:
                 data, addr = sock.recvfrom(1024)
                 if data == b"LANRAGE_PUNCH_ACK":
+                    logger.info(f"Hole punch successful from {addr}")
                     return True
             except TimeoutError:
-                pass
+                logger.debug("No response to hole punch (timeout)")
 
+            logger.warning(
+                f"Hole punch failed - no ACK received from {peer_public_ip}:{peer_public_port}"
+            )
             return False
 
         except OSError as e:
             # Log socket errors (network unreachable, permission denied, etc.)
-            print(f"Warning: Hole punching failed: {e}", file=sys.stderr)
+            logger.error(f"Hole punching failed (OSError): {type(e).__name__}: {e}")
             return False
         except Exception as e:
             # Catch any other unexpected errors
-            print(f"Warning: Unexpected error in hole punching: {e}", file=sys.stderr)
+            logger.error(f"Unexpected error in hole punching: {type(e).__name__}: {e}")
             return False
         finally:
             sock.close()

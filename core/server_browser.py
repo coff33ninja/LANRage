@@ -7,6 +7,9 @@ import time
 from dataclasses import dataclass, field
 
 from .config import Config
+from .logging_config import get_logger, set_context, timing_decorator
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -79,11 +82,12 @@ class ServerBrowser:
         self.running = False
         self._cleanup_task: asyncio.Task | None = None
 
+    @timing_decorator(name="server_browser_start")
     async def start(self):
         """Start server browser"""
         self.running = True
         self._cleanup_task = asyncio.create_task(self._cleanup_loop())
-        print("✓ Server browser started")
+        logger.info("Server browser started")
 
     async def stop(self):
         """Stop server browser"""
@@ -92,8 +96,9 @@ class ServerBrowser:
             self._cleanup_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-        print("✓ Server browser stopped")
+        logger.info(f"Server browser stopped ({len(self.servers)} servers in memory)")
 
+    @timing_decorator(name="server_registration")
     async def register_server(
         self,
         server_id: str,
@@ -128,6 +133,10 @@ class ServerBrowser:
         Returns:
             Registered GameServer instance
         """
+        set_context(peer_id_val=host_peer_id)
+        logger.info(
+            f"Registering server: {name} ({game}) - {current_players}/{max_players} players"
+        )
         if server_id in self.servers:
             # Update existing server
             server = self.servers[server_id]

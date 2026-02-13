@@ -9,8 +9,11 @@ from pydantic import BaseModel, ConfigDict
 from .config import Config
 from .connection import ConnectionManager
 from .control import ControlPlane, PeerInfo, create_control_plane
+from .logging_config import get_logger, set_context, timing_decorator
 from .nat import ConnectionCoordinator, NATTraversal, NATType
 from .network import NetworkManager
+
+logger = get_logger(__name__)
 
 # NAT compatibility matrix for direct P2P connections
 NAT_COMPATIBILITY = {
@@ -115,8 +118,11 @@ class PartyManager:
         # Connection manager
         self.connections: ConnectionManager | None = None
 
+    @timing_decorator(name="nat_initialization")
     async def initialize_nat(self):
         """Initialize NAT traversal"""
+        logger.info("Initializing NAT traversal")
+
         # Pass control client if available for relay discovery
         control_client = None
         if self.control and hasattr(self.control, "client"):
@@ -129,13 +135,17 @@ class PartyManager:
             # Detect NAT type
             await self.nat.detect_nat()
             self.coordinator = ConnectionCoordinator(self.config, self.nat)
+            logger.info(f"NAT initialized successfully")
         except Exception as e:
             # NAT detection failed, but continue
             # Will fall back to relay-only mode
-            print(f"NAT detection failed: {e}. Using relay-only mode.")
+            logger.warning(f"NAT detection failed: {e}. Using relay-only mode.")
 
+    @timing_decorator(name="control_initialization")
     async def initialize_control(self):
         """Initialize control plane"""
+        logger.info("Initializing control plane")
+
         self.control = create_control_plane(self.config)
         await self.control.initialize()
 
@@ -144,9 +154,14 @@ class PartyManager:
             self.connections = ConnectionManager(
                 self.config, self.network, self.nat, self.control
             )
+            logger.info("Control plane and connection manager initialized")
 
+    @timing_decorator(name="party_creation")
     async def create_party(self, name: str) -> Party:
         """Create a new party"""
+        set_context(party_id_val=secrets.token_hex(6))
+        logger.info(f"Creating party: {name}")
+
         party = Party(id=secrets.token_hex(6), name=name, host_id=self.my_peer_id)
 
         # Add self as first peer
