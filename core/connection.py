@@ -8,11 +8,12 @@ from .config import Config
 from .control import ControlPlane, PeerInfo
 from .exceptions import PeerConnectionError
 from .ipam import IPAddressPool
+from .logging_config import get_logger, set_context, timing_decorator
 from .nat import ConnectionCoordinator, NATTraversal
 from .network import NetworkManager
 from .task_manager import create_background_task
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ConnectionManager:
@@ -35,6 +36,7 @@ class ConnectionManager:
         # Track active connections
         self.connections: dict[str, PeerConnection] = {}
 
+    @timing_decorator(name="peer_connection")
     async def connect_to_peer(self, party_id: str, peer_id: str) -> bool:
         """
         Connect to a peer

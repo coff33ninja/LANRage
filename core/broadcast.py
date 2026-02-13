@@ -2,7 +2,6 @@
 
 import asyncio
 import hashlib
-import logging
 import socket
 import struct
 import time
@@ -11,8 +10,9 @@ from dataclasses import dataclass, field
 
 from .config import Config
 from .exceptions import SocketError
+from .logging_config import get_logger, timing_decorator
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -268,6 +268,7 @@ class BroadcastEmulator:
 
         logger.info("Broadcast emulation stopped")
 
+    @timing_decorator(name="broadcast_listener_start")
     async def _start_listener(self, port: int):
         """Start listening on a port for broadcasts"""
         loop = asyncio.get_event_loop()
@@ -352,6 +353,7 @@ class BroadcastEmulator:
             if self.forward_callback and len(self.active_peers) > 0:
                 self.forward_callback(packet)
 
+    @timing_decorator(name="broadcast_inject")
     async def inject_broadcast(
         self, packet: BroadcastPacket, target_ip: str = "255.255.255.255"
     ):
@@ -363,6 +365,9 @@ class BroadcastEmulator:
         try:
             # Send to broadcast address
             sock.sendto(packet.data, (target_ip, packet.dest_port))
+            logger.debug(
+                f"Broadcast injected to {target_ip}:{packet.dest_port} ({len(packet.data)} bytes)"
+            )
         except OSError as e:
             # Log send failures (network unreachable, permission denied, etc.)
             logger.warning(

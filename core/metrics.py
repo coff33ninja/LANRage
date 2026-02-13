@@ -1,6 +1,7 @@
 """Metrics collection and statistics tracking"""
 
 import asyncio
+import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -8,6 +9,9 @@ from dataclasses import dataclass, field
 import psutil
 
 from .config import Config
+from .logging_config import get_logger, timing_decorator
+
+logger = get_logger(__name__)
 
 
 @dataclass

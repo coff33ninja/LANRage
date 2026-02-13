@@ -10,7 +10,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from .config import Config
+from .logging_config import get_logger, set_context, timing_decorator
 from .nat import NATType
+
+logger = get_logger(__name__)
 
 
 class StatePersister:
@@ -38,11 +41,13 @@ class StatePersister:
         async with self._lock:
             # Update pending state (deduplicates rapid successive writes)
             self.pending_state = state
+            logger.debug(f"Queued state write: {len(json.dumps(state))} bytes")
 
             # Schedule flush if not already scheduled
             if self.flush_task is None or self.flush_task.done():
                 self.flush_task = asyncio.create_task(self._flush_after_delay())
 
+    @timing_decorator(name="state_flush")
     async def _flush_after_delay(self) -> None:
         """Wait for batch interval then flush to disk"""
         try:
@@ -73,18 +78,25 @@ class StatePersister:
 
             # Use async file I/O
             async with aiofiles.open(self.file_path, "w", encoding="utf-8") as f:
-                await f.write(json.dumps(state, indent=2))
+                state_json = json.dumps(state, indent=2)
+                await f.write(state_json)
+                logger.debug(
+                    f"State persisted: {len(state_json)} bytes to {self.file_path}"
+                )
         except OSError as e:
             # Log but don't fail if we can't save (disk full, permissions, etc.)
+            logger.error(f"Failed to save state to {self.file_path}: {e}")
             print(
                 f"Warning: Failed to save state to {self.file_path}: {e}",
                 file=sys.stderr,
             )
         except json.JSONEncodeError as e:
             # Log serialization errors
+            logger.error(f"Failed to serialize state: {e}")
             print(f"Warning: Failed to serialize state: {e}", file=sys.stderr)
         except Exception as e:
             # Catch any other unexpected errors
+            logger.error(f"Unexpected error saving state: {e}")
             print(f"Warning: Unexpected error saving state: {e}", file=sys.stderr)
 
     async def flush(self) -> None:
@@ -224,12 +236,16 @@ class ControlPlane:
         self.my_party_id = party_id
         self.my_peer_id = host_peer_info.peer_id
 
+        set_context(party_id_val=party_id, peer_id_val=host_peer_info.peer_id)
+        logger.info(f"Party registered: {name} (party_id={party_id})")
+
         await self._save_state()
         return party
 
     async def join_party(self, party_id: str, peer_info: PeerInfo) -> PartyInfo:
         """Join an existing party"""
         if party_id not in self.parties:
+            logger.warning(f"Attempted to join non-existent party: {party_id}")
             raise ControlPlaneError(f"Party {party_id} not found")
 
         party = self.parties[party_id]
@@ -238,23 +254,31 @@ class ControlPlane:
         self.my_party_id = party_id
         self.my_peer_id = peer_info.peer_id
 
+        set_context(party_id_val=party_id, peer_id_val=peer_info.peer_id)
+        logger.info(f"Peer joined party: {peer_info.peer_id} -> {party_id}")
+
         await self._save_state()
         return party
 
     async def leave_party(self, party_id: str, peer_id: str):
         """Leave a party"""
         if party_id not in self.parties:
+            logger.debug(
+                f"Leave party: party {party_id} not found (already cleaned up)"
+            )
             return
 
         party = self.parties[party_id]
 
         if peer_id in party.peers:
             del party.peers[peer_id]
+            logger.debug(f"Peer removed from party: {peer_id} from {party_id}")
 
         # If host left or no peers remain, delete party
         if peer_id == party.host_id or len(party.peers) == 0:
             del self.parties[party_id]
             self.active_party_ids.discard(party_id)  # Remove from active set
+            logger.info(f"Party disbanded: {party_id}")
 
         if self.my_party_id == party_id:
             self.my_party_id = None
@@ -265,11 +289,16 @@ class ControlPlane:
     async def update_peer(self, party_id: str, peer_info: PeerInfo):
         """Update peer information"""
         if party_id not in self.parties:
+            logger.warning(f"Update peer: party {party_id} not found")
             return
 
         party = self.parties[party_id]
         peer_info.last_seen = datetime.now()
         party.peers[peer_info.peer_id] = peer_info
+
+        logger.debug(
+            f"Peer updated: {peer_info.peer_id} ({peer_info.public_ip}:{peer_info.public_port})"
+        )
 
         await self._save_state()
 

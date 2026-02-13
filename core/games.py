@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 import platform
 import socket
 import time
@@ -11,7 +12,10 @@ from pathlib import Path
 import psutil
 
 from .config import Config
+from .logging_config import get_logger, set_context, timing_decorator
 from .nat import NATType
+
+logger = get_logger(__name__)
 
 
 def calculate_adaptive_keepalive(
@@ -349,6 +353,7 @@ class GameDetector:
             await self._detect_games()
             await asyncio.sleep(5)  # Check every 5 seconds
 
+    @timing_decorator(name="game_detection")
     async def _detect_games(self):
         """Detect currently running games using multiple detection methods
 
@@ -567,6 +572,12 @@ class GameDetector:
         print(f"🎮 Detected: {profile.name}")
         print(f"   Optimizing for {profile.name}...")
 
+        # Set context for detection event
+        set_context(correlation_id_val=f"game_{game_id}_{int(time.time()*1000)}")
+        logger.info(
+            f"Game detected: {profile.name} (game_id={game_id}, ports={profile.ports})"
+        )
+
         # Record in detection history with timestamp
         self.detection_history.append((time.time(), game_id, "started"))
 
@@ -586,6 +597,8 @@ class GameDetector:
         profile = GAME_PROFILES[game_id]
         print(f"🎮 Stopped: {profile.name}")
 
+        logger.info(f"Game stopped: {profile.name} (game_id={game_id})")
+
         # Record in detection history with timestamp
         self.detection_history.append((time.time(), game_id, "stopped"))
 
@@ -599,6 +612,7 @@ class GameDetector:
             and self.optimizer.active_profile
             and self.optimizer.active_profile.name == profile.name
         ):
+            logger.debug(f"Resetting network configuration for {profile.name}")
             print("   Resetting network configuration to defaults...")
             await self.optimizer.clear_profile()
             print("   ✓ Configuration reset complete")
