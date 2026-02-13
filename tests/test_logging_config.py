@@ -10,17 +10,18 @@ Tests cover:
 import asyncio
 import json
 import logging
-import pytest
 from io import StringIO
 
+import pytest
+
 from core.logging_config import (
-    StructuredFormatter,
     PlainFormatter,
-    get_logger,
-    timing_decorator,
-    set_context,
+    StructuredFormatter,
     clear_context,
     get_context,
+    get_logger,
+    set_context,
+    timing_decorator,
 )
 
 

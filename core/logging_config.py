@@ -12,8 +12,9 @@ import json
 import logging
 import sys
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any
 
 # Context variables for request/operation tracking
 peer_id = contextvars.ContextVar("peer_id", default=None)
@@ -100,7 +101,7 @@ class PlainFormatter(logging.Formatter):
         )
 
         # Add location info if debug level
-        if logging.DEBUG >= record.levelno:
+        if record.levelno >= logging.DEBUG:
             base_msg += f" ({record.filename}:{record.lineno})"
 
         # Add timing info if present
@@ -115,7 +116,7 @@ class PlainFormatter(logging.Formatter):
 
 
 def configure_logging(
-    json_format: bool = False, level: int = logging.INFO, log_file: Optional[str] = None
+    json_format: bool = False, level: int = logging.INFO, log_file: str | None = None
 ) -> logging.Logger:
     """Configure structured logging for the application.
 
@@ -165,7 +166,7 @@ def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
 
 
-def timing_decorator(name: Optional[str] = None) -> Callable:
+def timing_decorator(name: str | None = None) -> Callable:
     """Decorator to measure and log function execution time.
 
     Args:
@@ -183,8 +184,7 @@ def timing_decorator(name: Optional[str] = None) -> Callable:
             start_time = time.perf_counter()
 
             try:
-                result = func(*args, **kwargs)
-                return result
+                return func(*args, **kwargs)
             finally:
                 duration_ms = (time.perf_counter() - start_time) * 1000
                 log_record = logging.LogRecord(
@@ -205,8 +205,7 @@ def timing_decorator(name: Optional[str] = None) -> Callable:
             start_time = time.perf_counter()
 
             try:
-                result = await func(*args, **kwargs)
-                return result
+                return await func(*args, **kwargs)
             finally:
                 duration_ms = (time.perf_counter() - start_time) * 1000
                 log_record = logging.LogRecord(
@@ -232,10 +231,10 @@ def timing_decorator(name: Optional[str] = None) -> Callable:
 
 
 def set_context(
-    peer_id_val: Optional[str] = None,
-    party_id_val: Optional[str] = None,
-    session_id_val: Optional[str] = None,
-    correlation_id_val: Optional[str] = None,
+    peer_id_val: str | None = None,
+    party_id_val: str | None = None,
+    session_id_val: str | None = None,
+    correlation_id_val: str | None = None,
 ) -> None:
     """Set context variables for the current task/thread.
 
@@ -263,7 +262,7 @@ def clear_context() -> None:
     correlation_id.set(None)
 
 
-def get_context() -> dict[str, Optional[str]]:
+def get_context() -> dict[str, str | None]:
     """Get current context variables.
 
     Returns:
