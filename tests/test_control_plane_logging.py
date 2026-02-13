@@ -1,6 +1,7 @@
 """Tests for control plane logging integration"""
 
 import pytest
+from datetime import datetime
 
 from core.config import Config
 from core.control import ControlPlane
@@ -26,12 +27,14 @@ async def test_register_party_logging_sets_context(control_plane, caplog):
     # Create peer info
     peer_info = PeerInfo(
         peer_id=peer_id,
+        name="Test Peer 1",
         public_key="test_key",
+        nat_type="symmetric",
         public_ip="127.0.0.1",
         public_port=5000,
         local_ip="127.0.0.1",
         local_port=5001,
-        nat_type="symmetric",
+        last_seen=datetime.now(),
     )
 
     # Register a party with proper arguments
@@ -111,12 +114,14 @@ async def test_heartbeat_establishes_context(control_plane, caplog):
     # Create peer info
     peer_info = PeerInfo(
         peer_id=peer_id,
+        name="Heartbeat Test Peer",
         public_key="test_key",
+        nat_type="symmetric",
         public_ip="127.0.0.1",
         public_port=5000,
         local_ip="127.0.0.1",
         local_port=5001,
-        nat_type="symmetric",
+        last_seen=datetime.now(),
     )
 
     # Register party and peer
