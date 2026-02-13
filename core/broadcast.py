@@ -1,11 +1,13 @@
 """Broadcast emulation - Make LAN games work over the internet"""
 
 import asyncio
+import hashlib
 import logging
 import socket
 import struct
+import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .config import Config
 from .exceptions import SocketError
@@ -24,6 +26,165 @@ class BroadcastPacket:
     protocol: str  # "udp" or "tcp"
 
 
+@dataclass
+class BroadcastDeduplicator:
+    """Prevents duplicate broadcast forwarding using hash tracking
+
+    Maintains a time-windowed set of packet hashes to prevent:
+    - Same packet forwarded multiple times (deduplication)
+    - Network loops from exponential packet duplication
+    - Wasteful bandwidth usage
+
+    Uses SHA256 hash of packet contents with 5-second expiry window.
+    """
+
+    window_seconds: float = 5.0
+    cleanup_interval: float = 2.0
+    enabled: bool = True
+
+    # Tracking
+    _packet_hashes: dict[str, float] = field(default_factory=dict)
+    _cleanup_task: asyncio.Task | None = None
+    _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+
+    # Metrics
+    total_packets: int = 0
+    forwarded_packets: int = 0
+    deduplicated_packets: int = 0
+
+    async def should_forward(
+        self, packet: BroadcastPacket, source_peer: str | None = None
+    ) -> bool:
+        """Check if packet should be forwarded (not a duplicate)
+
+        Args:
+            packet: The broadcast packet to check
+            source_peer: Optional peer ID that sourced this packet (to prevent back-forwarding)
+
+        Returns:
+            True if packet should be forwarded, False if duplicate
+        """
+        if not self.enabled:
+            return True
+
+        async with self._lock:
+            self.total_packets += 1
+
+            # Don't forward back to the source peer
+            if source_peer and packet.source_ip == source_peer:
+                self.deduplicated_packets += 1
+                return False
+
+            # Hash the packet contents
+            packet_hash = self._hash_packet(packet)
+
+            # Check if we've seen this packet recently
+            if packet_hash in self._packet_hashes:
+                logger.debug(
+                    f"Dropping duplicate broadcast packet {packet_hash[:8]}... "
+                    f"from {packet.source_ip}:{packet.source_port} on port {packet.dest_port}"
+                )
+                self.deduplicated_packets += 1
+                return False
+
+            # New packet - record it and schedule cleanup
+            self._packet_hashes[packet_hash] = time.time()
+            self.forwarded_packets += 1
+
+            # Start cleanup task if needed
+            if not self._cleanup_task or self._cleanup_task.done():
+                self._cleanup_task = asyncio.create_task(self._cleanup_expired_hashes())
+
+            return True
+
+    def _hash_packet(self, packet: BroadcastPacket) -> str:
+        """Generate hash of packet for deduplication
+
+        Uses SHA256 of packet data, source, and destination port.
+        This uniquely identifies a specific broadcast packet.
+
+        Args:
+            packet: Broadcast packet to hash
+
+        Returns:
+            Hexadecimal hash string
+        """
+        hasher = hashlib.sha256()
+        hasher.update(packet.data)
+        hasher.update(packet.source_ip.encode())
+        hasher.update(str(packet.dest_port).encode())
+        return hasher.hexdigest()
+
+    async def _cleanup_expired_hashes(self) -> None:
+        """Remove packet hashes older than the window size
+
+        Runs periodically to clean up old hashes and maintain bounded memory.
+        """
+        while True:
+            try:
+                await asyncio.sleep(self.cleanup_interval)
+
+                async with self._lock:
+                    now = time.time()
+                    expired_hashes = [
+                        h
+                        for h, ts in self._packet_hashes.items()
+                        if now - ts > self.window_seconds
+                    ]
+
+                    for h in expired_hashes:
+                        del self._packet_hashes[h]
+
+                    if expired_hashes:
+                        logger.debug(
+                            f"Cleaned up {len(expired_hashes)} expired packet hashes"
+                        )
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in broadcast deduplication cleanup: {e}")
+
+    async def flush(self) -> None:
+        """Flush pending cleanup tasks"""
+        import contextlib
+
+        if self._cleanup_task and not self._cleanup_task.done():
+            self._cleanup_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._cleanup_task
+
+    def get_metrics(self) -> dict:
+        """Get deduplication metrics
+
+        Returns:
+            Dictionary with deduplication statistics
+        """
+        if self.total_packets == 0:
+            return {
+                "total_packets": 0,
+                "forwarded_packets": 0,
+                "deduplicated_packets": 0,
+                "deduplicate_rate": 0.0,
+                "tracked_hashes": len(self._packet_hashes),
+            }
+
+        return {
+            "total_packets": self.total_packets,
+            "forwarded_packets": self.forwarded_packets,
+            "deduplicated_packets": self.deduplicated_packets,
+            "deduplicate_rate": (self.deduplicated_packets / self.total_packets * 100),
+            "tracked_hashes": len(self._packet_hashes),
+        }
+
+    def disable(self) -> None:
+        """Disable deduplication (for testing/debugging)"""
+        self.enabled = False
+
+    def enable(self) -> None:
+        """Enable deduplication"""
+        self.enabled = True
+
+
 class BroadcastEmulator:
     """
     Emulates LAN broadcast for games
@@ -33,7 +194,8 @@ class BroadcastEmulator:
     - Terraria: UDP broadcast on port 7777
     - Age of Empires: IPX broadcast
 
-    This captures broadcasts and re-emits them to party members.
+    This captures broadcasts and re-emits them to party members,
+    with automatic deduplication to prevent network loops.
     """
 
     def __init__(self, config: Config):
@@ -48,6 +210,9 @@ class BroadcastEmulator:
 
         # Callback for forwarding packets to peers
         self.forward_callback: Callable[[BroadcastPacket], None] | None = None
+
+        # Deduplication
+        self.deduplicator = BroadcastDeduplicator()
 
         # Common game ports to monitor
         self.monitored_ports = [
@@ -77,6 +242,9 @@ class BroadcastEmulator:
     async def stop(self):
         """Stop broadcast emulation"""
         self.running = False
+
+        # Flush deduplicator
+        await self.deduplicator.flush()
 
         # Stop all listeners
         for port, transport in list(self.listeners.items()):
@@ -135,7 +303,16 @@ class BroadcastEmulator:
         self.active_peers.discard(peer_id)
 
     def handle_broadcast(self, data: bytes, addr: tuple, port: int):
-        """Handle a received broadcast packet"""
+        """Handle a received broadcast packet
+
+        Deduplicates packets before forwarding to prevent network loops
+        and wasted bandwidth.
+
+        Args:
+            data: Packet data bytes
+            addr: (source_ip, source_port) tuple
+            port: Destination port
+        """
         source_ip, source_port = addr
 
         # Create packet
@@ -147,9 +324,29 @@ class BroadcastEmulator:
             protocol="udp",
         )
 
-        # Forward to active peers only
-        if self.forward_callback and len(self.active_peers) > 0:
-            self.forward_callback(packet)
+        # Check for duplicates (async operation, but we can't await in sync context)
+        # Instead, use synchronous check via asyncio.run_coroutine_threadsafe
+        # For now, we'll queue the check asynchronously
+
+        # Should we forward this packet?
+        # We need to run the async check, so we'll do it in the forwarding path
+        async def check_and_forward():
+            if (await self.deduplicator.should_forward(packet)) and (
+                self.forward_callback and len(self.active_peers) > 0
+            ):
+                self.forward_callback(packet)
+
+        # Schedule the async check
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.create_task(check_and_forward())
+            else:
+                loop.run_until_complete(check_and_forward())
+        except RuntimeError:
+            # No event loop, just forward without dedup (fallback)
+            if self.forward_callback and len(self.active_peers) > 0:
+                self.forward_callback(packet)
 
     async def inject_broadcast(
         self, packet: BroadcastPacket, target_ip: str = "255.255.255.255"
