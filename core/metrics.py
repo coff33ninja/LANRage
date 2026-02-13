@@ -1,7 +1,6 @@
 """Metrics collection and statistics tracking"""
 
 import asyncio
-import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -9,7 +8,7 @@ from dataclasses import dataclass, field
 import psutil
 
 from .config import Config
-from .logging_config import get_logger, timing_decorator
+from .logging_config import get_logger, set_context, timing_decorator
 
 logger = get_logger(__name__)
 
@@ -217,6 +216,7 @@ class MetricsCollector:
     async def start(self):
         """Start metrics collection"""
         self.running = True
+        logger.info("Starting metrics collection")
 
         # Get network baseline
         net_io = psutil.net_io_counters()
@@ -225,13 +225,18 @@ class MetricsCollector:
             "bytes_recv": net_io.bytes_recv,
             "timestamp": time.time(),
         }
+        logger.debug(
+            f"Network baseline established: {self.network_baseline['timestamp']}"
+        )
 
         # Start collection loop
         asyncio.create_task(self._collection_loop())
+        logger.info("Metrics collection loop started")
 
     async def stop(self):
         """Stop metrics collection"""
         self.running = False
+        logger.info("Stopping metrics collection")
 
     async def _collection_loop(self):
         """Main collection loop"""
@@ -291,15 +296,20 @@ class MetricsCollector:
             self.peer_metrics[peer_id] = PeerMetrics(
                 peer_id=peer_id, peer_name=peer_name
             )
+            logger.debug(f"Added peer to metrics tracking: {peer_name} ({peer_id})")
 
     def remove_peer(self, peer_id: str):
         """Remove a peer from tracking"""
         if peer_id in self.peer_metrics:
             self.peer_metrics[peer_id].status = "disconnected"
+            logger.debug(f"Marked peer as disconnected: {peer_id}")
 
     async def record_latency(self, peer_id: str, latency: float | None):
         """Record latency measurement for a peer and update quality prediction"""
+        set_context(peer_id_val=peer_id)
+
         if peer_id not in self.peer_metrics:
+            logger.warning(f"Latency recorded for unknown peer: {peer_id}")
             return
 
         current_time = time.time()
@@ -308,6 +318,7 @@ class MetricsCollector:
         if latency is not None:
             peer.latency.append(MetricPoint(timestamp=current_time, value=latency))
             peer.last_seen = current_time
+            logger.debug(f"Recorded latency: {latency}ms")
 
             # Calculate jitter (standard deviation of recent latencies)
             if len(peer.latency) >= 2:
@@ -317,6 +328,7 @@ class MetricsCollector:
                     latencies
                 )
                 peer.jitter_ms = variance**0.5
+                logger.debug(f"Jitter calculated: {peer.jitter_ms:.2f}ms")
 
             # Update connection quality prediction
             quality_score, quality_status = predict_connection_quality(
@@ -336,16 +348,24 @@ class MetricsCollector:
             else:
                 peer.quality_trend = "stable"
 
+            logger.debug(
+                f"Quality: {quality_status} ({quality_score:.1f}), Trend: {peer.quality_trend}"
+            )
+
             # Update status based on quality score
             if quality_score >= 60:
                 peer.status = "connected"
             else:
                 peer.status = "degraded"
+                logger.warning(
+                    f"Connection degraded: quality score {quality_score:.1f}"
+                )
         else:
             # No latency = connection issue
             peer.status = "degraded"
             peer.quality_score = 0.0
             peer.quality_trend = "degrading"
+            logger.warning("No latency recorded - connection issue detected")
 
     async def record_bandwidth(
         self, peer_id: str, bytes_sent: int = 0, bytes_received: int = 0
@@ -369,6 +389,11 @@ class MetricsCollector:
 
     async def start_game_session(self, game_id: str, game_name: str, peers: list[str]):
         """Start tracking a game session"""
+        set_context(correlation_id_val=game_id)
+        logger.info(
+            f"Starting game session: {game_name} ({game_id}) with {len(peers)} peers"
+        )
+
         self.active_session = GameSession(
             game_id=game_id,
             game_name=game_name,
@@ -398,7 +423,14 @@ class MetricsCollector:
 
             # Store session
             self.game_sessions.append(self.active_session)
+            logger.info(
+                f"Ended game session: {self.active_session.game_name} "
+                f"(duration: {self.active_session.duration:.1f}s, "
+                f"avg_latency: {self.active_session.avg_latency:.1f}ms if available)"
+            )
             self.active_session = None
+        else:
+            logger.warning("End game session called but no active session")
 
     async def get_peer_summary(self, peer_id: str) -> dict | None:
         """Get summary statistics for a peer"""
