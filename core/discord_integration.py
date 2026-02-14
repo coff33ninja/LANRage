@@ -10,6 +10,9 @@ from dataclasses import dataclass
 import aiohttp
 
 from .config import Config
+from .logging_config import get_logger, set_context, timing_decorator
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -98,8 +101,10 @@ class DiscordIntegration:
         self.bot_connected = False
         self.bot_task: asyncio.Task | None = None
 
+    @timing_decorator(name="discord_start")
     async def start(self):
         """Start Discord integration"""
+        logger.info("Starting Discord integration")
         self.running = True
         self.session = aiohttp.ClientSession()
 
@@ -124,9 +129,12 @@ class DiscordIntegration:
 
         # Start batch flush task for notifications (every 500ms)
         self.batch_flush_task = asyncio.create_task(self._batch_flush_loop())
+        logger.info("Discord integration started")
 
+    @timing_decorator(name="discord_stop")
     async def stop(self):
         """Stop Discord integration"""
+        logger.info("Stopping Discord integration")
         self.running = False
 
         # Cancel batch flush task

@@ -12,6 +12,10 @@ from typing import Any
 
 import aiosqlite
 
+from .logging_config import get_logger, timing_decorator
+
+logger = get_logger(__name__)
+
 
 class SettingsDatabase:
     """
@@ -29,21 +33,26 @@ class SettingsDatabase:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = asyncio.Lock()  # Use asyncio for thread-safe operations
 
+    @timing_decorator(name="settings_init")
     async def initialize(self):
         """Initialize database schema"""
+        logger.info(f"Initializing settings database: {self.db_path}")
         async with self._lock, aiosqlite.connect(self.db_path) as db:
             # Settings table
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS settings (
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL,
                     type TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Server configurations table
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS server_configs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -53,10 +62,12 @@ class SettingsDatabase:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Favorite servers table
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS favorite_servers (
                     server_id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -64,10 +75,12 @@ class SettingsDatabase:
                     address TEXT NOT NULL,
                     added_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Game profiles table
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS game_profiles (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL UNIQUE,
@@ -76,10 +89,12 @@ class SettingsDatabase:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             await db.commit()
 
+    @timing_decorator(name="settings_get")
     async def get_setting(self, key: str, default: Any = None) -> Any:
         """Get a setting value"""
         async with (
@@ -94,6 +109,7 @@ class SettingsDatabase:
                 return self._deserialize(value, value_type)
             return default
 
+    @timing_decorator(name="settings_set")
     async def set_setting(self, key: str, value: Any):
         """Set a setting value"""
         value_str, value_type = self._serialize(value)
