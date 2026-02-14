@@ -507,6 +507,337 @@ All 16 core modules now have full structured logging integration with NO breakin
 
 ---
 
+## Phase 6: Web Server Connection Agent System (Week 6+)
+
+**Status**: 🟢 PLANNED  
+**Estimated Duration**: 16+ hours  
+**Priority**: 🔵 MEDIUM-HIGH - Autonomous peer management  
+**Target Tests**: 25+ new tests
+
+### Overview
+Intelligent multi-agent system that autonomously manages machine connections to the LANrage web server. Agents handle peer discovery, health monitoring, auto-configuration, and task delegation with minimal human intervention.
+
+### 6.1 Connection Agent ✅ PLANNED
+**Purpose**: Manages peer lifecycle (registration → active → disconnection)
+
+**Features**:
+- Auto-reconnection with exponential backoff (1s → 60s)
+- Heartbeat monitoring (configurable interval)
+- Graceful degradation on connection loss
+- State machine: DISCONNECTED → REGISTERING → ACTIVE → DEGRADED → RECONNECTING
+- Peer identification via public key or UUID
+
+**Implementation**:
+```python
+class ConnectionAgent:
+    """Manages peer connections to LANrage web server"""
+    
+    def __init__(self, peer_id: str, web_server_url: str):
+        self.peer_id = peer_id
+        self.web_server_url = web_server_url
+        self.state = ConnectionState.DISCONNECTED
+        self.heartbeat_task: asyncio.Task | None = None
+        self.retry_backoff = ExponentialBackoff(initial=1, max=60)
+    
+    async def connect(self) -> bool:
+        """Connect and register with web server"""
+        
+    async def heartbeat(self) -> bool:
+        """Send heartbeat, detect connection loss"""
+        
+    async def disconnect(self) -> bool:
+        """Gracefully disconnect"""
+```
+
+**Logging & Monitoring**:
+- @timing_decorator("connection_agent_connect")
+- Log state transitions
+- Track connection duration, reconnect count
+- Metrics: success_rate, uptime, latency
+
+---
+
+### 6.2 Discovery Agent ✅ PLANNED
+**Purpose**: Auto-discovers peers and registers them with web server
+
+**Features**:
+- Network scanning (mDNS, broadcast, DNS-SD)
+- Peer fingerprinting (MAC, hostname, capabilities)
+- Deduplication (avoid re-registering same peer)
+- Batching of discoveries (10-second windows)
+- TTL tracking (peers expire after inactivity)
+
+**Implementation**:
+```python
+class DiscoveryAgent:
+    """Auto-discovers and registers peers"""
+    
+    async def scan_network(self) -> list[PeerInfo]:
+        """Scan for peers using multiple methods"""
+        peers = []
+        peers.extend(await self._mdns_discovery())
+        peers.extend(await self._broadcast_discovery())
+        return self._deduplicate(peers)
+    
+    async def register_peers(self, peers: list[PeerInfo]) -> dict:
+        """Batch register discovered peers"""
+        
+    async def cleanup_stale(self, ttl_seconds: int = 3600):
+        """Remove peers that haven't been seen"""
+```
+
+**Methods**:
+- mDNS discovery (zeroconf)
+- UDP broadcast scanning
+- DNS-SD (Service Discovery)
+- ARP scanning (optional, requires elevated privileges)
+
+---
+
+### 6.3 Health Monitoring Agent ✅ PLANNED
+**Purpose**: Monitors peer health and triggers auto-remediation
+
+**Features**:
+- Latency tracking (ping, TCP, HTTP)
+- Bandwidth monitoring
+- CPU/Memory health checks
+- Connection quality scoring
+- Automatic remediation triggers
+
+**Implementation**:
+```python
+class HealthAgent:
+    """Monitors peer health metrics"""
+    
+    async def check_health(self, peer_id: str) -> HealthStatus:
+        """Comprehensive health check"""
+        return HealthStatus(
+            latency=await self._measure_latency(peer_id),
+            bandwidth=await self._measure_bandwidth(peer_id),
+            cpu_percent=await self._check_cpu(peer_id),
+            memory_percent=await self._check_memory(peer_id),
+            connection_quality=await self._score_quality(peer_id),
+        )
+    
+    async def auto_remediate(self, peer_id: str, issue: str):
+        """Automatic remediation based on issue type"""
+        # Examples:
+        # - High latency → suggest relay
+        # - Low bandwidth → reduce sync frequency
+        # - High CPU → reduce task load
+```
+
+**Health Scoring**:
+- Latency: < 50ms (excellent) → > 200ms (poor)
+- Bandwidth: > 10 MB/s (excellent) → < 1 MB/s (poor)
+- CPU: < 50% (good) → > 90% (critical)
+- Memory: < 60% (good) → > 90% (critical)
+- Overall: weighted average
+
+---
+
+### 6.4 Configuration Agent ✅ PLANNED
+**Purpose**: Auto-configures connected machines with optimal settings
+
+**Features**:
+- Detection of machine capabilities
+- Recommendation engine for settings
+- Push configuration to connected peers
+- Rollback on configuration failure
+- A/B testing configurations
+
+**Implementation**:
+```python
+class ConfigurationAgent:
+    """Auto-configures connected machines"""
+    
+    async def detect_capabilities(self, peer_id: str) -> Capabilities:
+        """Detect peer capabilities"""
+        return Capabilities(
+            cpu_cores=await self._get_cpu_cores(peer_id),
+            total_memory=await self._get_memory(peer_id),
+            network_speed=await self._detect_network_speed(peer_id),
+            os_type=await self._get_os(peer_id),
+            has_gpu=await self._detect_gpu(peer_id),
+        )
+    
+    async def recommend_config(self, peer_id: str) -> Configuration:
+        """Recommend optimal configuration"""
+        caps = await self.detect_capabilities(peer_id)
+        
+        if caps.cpu_cores >= 8 and caps.total_memory >= 16:
+            return CONFIG_HIGH_PERFORMANCE
+        elif caps.cpu_cores >= 4 and caps.total_memory >= 8:
+            return CONFIG_BALANCED
+        else:
+            return CONFIG_MINIMAL
+    
+    async def push_config(self, peer_id: str, config: Configuration) -> bool:
+        """Push configuration to peer"""
+```
+
+**Recommendation Engine**:
+- Performance profile detection
+- Network quality tailoring
+- Task allocation sizing
+- Broadcast frequency tuning
+
+---
+
+### 6.5 Task Delegation Agent ✅ PLANNED
+**Purpose**: Distributes tasks to capable peers
+
+**Features**:
+- Task capability matching (required resources)
+- Load balancing across peers
+- Priority queue management
+- Task result aggregation
+- Automatic retry on failure
+
+**Implementation**:
+```python
+class TaskDelegationAgent:
+    """Intelligently delegates tasks to peers"""
+    
+    async def find_capable_peers(self, task: Task) -> list[PeerInfo]:
+        """Find peers capable of executing task"""
+        candidates = []
+        for peer in self.connected_peers:
+            if self._can_execute(peer, task):
+                candidates.append(peer)
+        return self._rank_by_load(candidates)
+    
+    async def delegate_task(self, task: Task) -> TaskResult:
+        """Delegate task to best peer"""
+        peers = await self.find_capable_peers(task)
+        
+        for peer in peers:
+            try:
+                result = await self._send_task(peer, task)
+                return result
+            except TaskExecutionError:
+                logger.warning(f"Task failed on {peer.name}, retrying...")
+                continue
+        
+        raise TaskExecutionError("No capable peers available")
+    
+    async def aggregate_results(self, results: list[TaskResult]) -> AggregatedResult:
+        """Aggregate results from multiple peers"""
+```
+
+**Task Types**:
+- Game hosting
+- Network relay
+- Broadcast emulation
+- NAT hole punching
+- Metrics collection
+- Custom user tasks
+
+---
+
+### 6.6 Agent Orchestration ✅ PLANNED
+**Purpose**: Coordinates multi-agent interactions
+
+**Features**:
+- Agent lifecycle management
+- Inter-agent communication
+- Conflict resolution
+- Event broadcasting
+- Centralized decision making
+
+**Implementation**:
+```python
+class AgentOrchestrator:
+    """Coordinates all agents"""
+    
+    def __init__(self):
+        self.connection_agent = ConnectionAgent(...)
+        self.discovery_agent = DiscoveryAgent(...)
+        self.health_agent = HealthAgent(...)
+        self.config_agent = ConfigurationAgent(...)
+        self.task_agent = TaskDelegationAgent(...)
+    
+    async def start(self):
+        """Start all agents"""
+        await asyncio.gather(
+            self.connection_agent.start(),
+            self.discovery_agent.start(),
+            self.health_agent.start(),
+            self.config_agent.start(),
+            self.task_agent.start(),
+        )
+    
+    async def on_peer_connected(self, peer_id: str):
+        """Handle peer connection event"""
+        # Automatically:
+        # 1. Get peer capabilities
+        # 2. Recommend configuration
+        # 3. Assign to task queue
+        # 4. Monitor health
+        
+    async def on_health_degraded(self, peer_id: str):
+        """Handle health degradation"""
+        # Automatically:
+        # 1. Log issue
+        # 2. Trigger remediation
+        # 3. Notify user
+        # 4. Adjust task allocation
+```
+
+---
+
+### 6.7 Web Server Integration ✅ PLANNED
+**Purpose**: Agent API endpoints for web dashboard
+
+**REST Endpoints**:
+```
+GET    /api/agents/status              - Overall agent system status
+GET    /api/agents/{agent_type}/stats  - Statistics for specific agent
+GET    /api/peers/connected            - List connected peers (via agents)
+GET    /api/peers/{peer_id}/health     - Health status from health agent
+POST   /api/tasks/delegate             - Delegate task via task agent
+GET    /api/tasks/{task_id}/status     - Task execution status
+POST   /api/config/{peer_id}/recommend - Get recommended config
+POST   /api/config/{peer_id}/push      - Push config to peer
+```
+
+**WebSocket Events**:
+```
+peer:connected    - New peer connected (discovery agent)
+peer:disconnected - Peer disconnected (connection agent)
+peer:health       - Health update (health agent)
+task:created      - New task (task agent)
+task:completed    - Task finished (task agent)
+agent:error       - Agent error (orchestrator)
+```
+
+---
+
+### Implementation Strategy
+1. **Week 1**: Connection Agent + Discovery Agent
+2. **Week 2**: Health Monitoring Agent + Auto-Remediation
+3. **Week 3**: Configuration Agent + Task Delegation
+4. **Week 4**: Orchestration + Web Server Integration
+5. **Week 5**: Testing + Documentation + Performance Optimization
+
+### Testing Strategy
+- Unit tests: 5+ per agent (25+ total)
+- Integration tests: Agent interactions
+- Simulation tests: Multiple concurrent peers
+- Load tests: Stress test with 100+ peers
+- Chaos tests: Network failures, peer crashes
+
+### Success Criteria
+- ✅ Agents startup within 5 seconds
+- ✅ Discovery finds 100% of peers on network
+- ✅ Auto-remediation resolves 80%+ of issues
+- ✅ Task delegation completes with 95%+ success
+- ✅ System handles 100+ concurrent peer connections
+- ✅ Configuration push succeeds for 95%+ of peers
+- ✅ All tests passing (25+)
+
+---
+
 ## Branch Strategy
 
 **Main Branch**: `main` (production, stable)  
@@ -623,6 +954,7 @@ All 16 core modules now have full structured logging integration with NO breakin
 | Phase 3 | ✅ COMPLETE | Feb 14 | 18/18 ✅ |
 | Phase 4 | ✅ COMPLETE | Feb 14 | 438/440 ✅ |
 | Phase 5 | 🟢 READY | Feb 15 | - |
+| Phase 6 | 🔵 PLANNED | Feb 16+ | 25+ expected |
 
 ### Tests Passing
 - Phase 1: 34 tests (state batching + broadcast dedup + metrics)
@@ -630,6 +962,7 @@ All 16 core modules now have full structured logging integration with NO breakin
 - Phase 2.2: 17 tests (game detection with confidence ranking)
 - Phase 3: 18 tests (structured logging config)
 - Phase 4: 369+ tests integrated (comprehensive logging across 16 modules)
+- Phase 6: 25+ tests expected (agent system)
 - **Overall: 438/440 tests passing (99.5%)**
 
 ### Phase 4 Extended Coverage
@@ -637,6 +970,16 @@ All 16 core modules now have full structured logging integration with NO breakin
 - Primary 5: control, broadcast, games, connection, metrics
 - Extended 4: config, control_client, profiler, utils
 - Bonus 7: party, ipam, network, nat, discord_integration, server_browser, settings, task_manager
+
+### Phase 6 Multi-Agent System
+**6 Autonomous Agents for Web Server Connections**:
+- Connection Agent: Lifecycle management with auto-reconnect
+- Discovery Agent: Network scanning and peer registration
+- Health Monitoring Agent: Performance tracking and auto-remediation
+- Configuration Agent: Capability detection and optimization
+- Task Delegation Agent: Intelligent task distribution
+- Agent Orchestrator: Central coordination and event management
+- Web Server Integration: REST API + WebSocket events
 
 **Timing Decorators**: 25+ methods with performance tracking
 **Context Tracking**: peer_id, party_id, game_id, correlation_id at operation boundaries
@@ -665,4 +1008,18 @@ All 16 core modules now have full structured logging integration with NO breakin
 *Last Updated: 2026-02-14*  
 *Branch: dev/improvements-2026-phase1*
 *Total Improvements Completed: 9/43 (21%) - 4 Phases Complete + Extended Phase 4*
-*Current Status: Phase 4 Extended Complete (16 modules), Phase 5 Ready*
+*Current Status: Phase 4 Extended Complete (16 modules), Phase 5 Ready, Phase 6 Planned*
+
+---
+
+## Phase 6 Planning Summary
+
+**Web Server Connection Agent System**:
+- ✨ Smart autonomous agent system for peer management
+- 🤖 6 specialized agents (Connection, Discovery, Health, Config, Task, Orchestrator)
+- 🌐 Web server integration with REST API + WebSocket
+- 📊 Auto-remediation and performance optimization
+- 🔄 Multi-peer coordination and load balancing
+- 📈 Expected: 25+ tests, 95%+ success rates
+
+**Ready for Implementation**: Week 6+
