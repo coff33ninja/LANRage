@@ -3,9 +3,13 @@
 import asyncio
 import platform
 import subprocess
-import sys
+
+from .logging_config import get_logger, timing_decorator
+
+logger = get_logger(__name__)
 
 
+@timing_decorator(name="check_admin_rights")
 async def check_admin_rights() -> bool:
     """Check if running with admin/root privileges"""
     system = platform.system()
@@ -14,38 +18,37 @@ async def check_admin_rights() -> bool:
         try:
             import ctypes
 
-            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+            is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+            logger.debug(f"Admin rights check (Windows): {is_admin}")
+            return is_admin
         except OSError as e:
-            # Log Windows API errors
-            print(
-                f"Warning: Failed to check admin rights on Windows: {e}",
-                file=sys.stderr,
-            )
+            logger.warning(f"Failed to check admin rights on Windows: {e}")
             return False
         except AttributeError as e:
-            # Log if windll or shell32 not available
-            print(f"Warning: Windows admin check not available: {e}", file=sys.stderr)
+            logger.warning(f"Windows admin check not available: {e}")
             return False
         except Exception as e:
-            # Catch any other unexpected errors
-            print(
-                f"Warning: Unexpected error checking admin rights: {e}", file=sys.stderr
-            )
+            logger.error(f"Unexpected error checking admin rights: {e}")
             return False
     else:
         # Unix-like systems
         import os
 
-        return os.geteuid() == 0
+        is_admin = os.geteuid() == 0
+        logger.debug(f"Admin rights check (Unix): {is_admin} (UID: {os.geteuid()})")
+        return is_admin
 
 
+@timing_decorator(name="run_elevated")
 async def run_elevated(command: list[str]) -> subprocess.CompletedProcess:
     """Run a command with elevated privileges"""
     system = platform.system()
+    logger.info(f"Running command with elevated privileges: {' '.join(command[:2])}...")
 
     if system == "Windows":
         # On Windows, we need to use PowerShell with Start-Process -Verb RunAs
         # This is complex, so for now we'll just fail with a helpful message
+        logger.error("Admin rights required on Windows")
         raise PermissionError(
             "Admin rights required. Please run LANrage as Administrator."
         )
@@ -53,11 +56,17 @@ async def run_elevated(command: list[str]) -> subprocess.CompletedProcess:
     if command[0] != "sudo":
         command = ["sudo"] + command
 
+    logger.debug(f"Executing: {' '.join(command)}")
     proc = await asyncio.create_subprocess_exec(
         *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
     )
 
     stdout, stderr = await proc.communicate()
+
+    if proc.returncode == 0:
+        logger.debug("Command executed successfully")
+    else:
+        logger.warning(f"Command failed with return code {proc.returncode}")
 
     return subprocess.CompletedProcess(
         args=command,

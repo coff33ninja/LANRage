@@ -1,18 +1,18 @@
 """Connection management - Orchestrates peer connections"""
 
 import asyncio
-import logging
 from datetime import datetime
 
 from .config import Config
 from .control import ControlPlane, PeerInfo
 from .exceptions import PeerConnectionError
 from .ipam import IPAddressPool
+from .logging_config import get_logger, set_context, timing_decorator
 from .nat import ConnectionCoordinator, NATTraversal
 from .network import NetworkManager
 from .task_manager import create_background_task
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ConnectionManager:
@@ -35,6 +35,7 @@ class ConnectionManager:
         # Track active connections
         self.connections: dict[str, PeerConnection] = {}
 
+    @timing_decorator(name="peer_connection")
     async def connect_to_peer(self, party_id: str, peer_id: str) -> bool:
         """
         Connect to a peer
@@ -46,6 +47,9 @@ class ConnectionManager:
         4. Configure WireGuard peer
         5. Verify connection
         """
+        set_context(party_id_val=party_id, peer_id_val=peer_id)
+        logger.info(f"Starting connection to peer {peer_id} in party {party_id}")
+
         # Get peer info from control plane
         peer_info = await self.control.discover_peer(party_id, peer_id)
         if not peer_info:
@@ -125,7 +129,11 @@ class ConnectionManager:
         Args:
             peer_id: Peer ID to disconnect from
         """
+        set_context(peer_id_val=peer_id)
+        logger.debug(f"Initiating disconnection from peer {peer_id}")
+
         if peer_id not in self.connections:
+            logger.warning(f"Disconnect requested for unknown peer: {peer_id}")
             return
 
         connection = self.connections[peer_id]
@@ -143,13 +151,22 @@ class ConnectionManager:
 
     async def get_connection_status(self, peer_id: str) -> dict | None:
         """Get connection status for a peer"""
+        set_context(peer_id_val=peer_id)
+
         if peer_id not in self.connections:
+            logger.debug(f"Status requested for unknown peer: {peer_id}")
             return None
 
         connection = self.connections[peer_id]
 
         # Measure current latency
         latency = await self.network.measure_latency(connection.virtual_ip)
+
+        logger.debug(
+            f"Connection status for {peer_id}: {connection.status}, latency: {latency}ms"
+            if latency
+            else f"Connection status for {peer_id}: {connection.status}, latency: unavailable"
+        )
 
         return {
             "peer_id": peer_id,
@@ -195,6 +212,9 @@ class ConnectionManager:
 
     async def _monitor_connection(self, peer_id: str):
         """Monitor connection health"""
+        set_context(peer_id_val=peer_id)
+        logger.debug(f"Starting connection monitoring for peer {peer_id}")
+
         reconnect_attempts = 0
         max_reconnect_attempts = 3
 
@@ -289,6 +309,9 @@ class ConnectionManager:
         Args:
             peer_id: Peer ID to monitor for cleanup
         """
+        set_context(peer_id_val=peer_id)
+        logger.debug(f"Starting cleanup monitoring for peer {peer_id}")
+
         while peer_id in self.connections:
             await asyncio.sleep(30)  # Check every 30 seconds
 
@@ -315,13 +338,16 @@ class ConnectionManager:
             peer_id: Peer ID to switch relay for
             connection: Current connection object
         """
+        set_context(peer_id_val=peer_id)
+        logger.info(f"Attempting relay switch for peer {peer_id}")
+
         # Get current latency for comparison
         current_latency = await self.network.measure_latency(connection.virtual_ip)
         if current_latency is None:
-            print("   ⚠️  Cannot measure current latency, aborting relay switch")
+            logger.warning("Cannot measure current latency, aborting relay switch")
             return
 
-        print(f"   Current latency: {current_latency}ms")
+        logger.debug(f"Current latency: {current_latency}ms")
 
         # Discover available relays
         from .nat import ConnectionCoordinator
@@ -334,10 +360,10 @@ class ConnectionManager:
 
             # Check if it's different from current endpoint
             if new_relay_endpoint == connection.endpoint:
-                print("   Already using the best available relay")
+                logger.debug("Already using the best available relay")
                 return
 
-            print(f"   Found alternative relay: {new_relay_endpoint}")
+            logger.info(f"Found alternative relay: {new_relay_endpoint}")
 
             # Remove old peer configuration
             await self.network.remove_peer(connection.peer_info.public_key)
@@ -356,7 +382,7 @@ class ConnectionManager:
             new_latency = await self.network.measure_latency(connection.virtual_ip)
 
             if new_latency is None:
-                print("   ❌ New relay failed to connect, reverting...")
+                logger.warning("New relay failed to connect, reverting to old endpoint")
                 # Revert to old endpoint
                 await self.network.remove_peer(connection.peer_info.public_key)
                 await self.network.add_peer(
@@ -371,15 +397,15 @@ class ConnectionManager:
             improvement_pct = (improvement / current_latency) * 100
 
             if new_latency < current_latency:
-                print(
-                    f"   ✓ Switched to better relay: {new_latency}ms (improved by {improvement_pct:.1f}%)"
+                logger.info(
+                    f"Switched to better relay: {new_latency}ms (improved by {improvement_pct:.1f}%)"
                 )
                 # Update connection with new endpoint
                 connection.endpoint = new_relay_endpoint
                 connection.status = "connected" if new_latency < 200 else "degraded"
             else:
-                print(
-                    f"   ⚠️  New relay is slower ({new_latency}ms), reverting to original"
+                logger.warning(
+                    f"New relay is slower ({new_latency}ms), reverting to original"
                 )
                 # Revert to old endpoint
                 await self.network.remove_peer(connection.peer_info.public_key)

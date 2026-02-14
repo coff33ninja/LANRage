@@ -1,10 +1,11 @@
 """Background task management for LANrage"""
 
 import asyncio
-import logging
 from collections.abc import Callable, Coroutine
 
-logger = logging.getLogger(__name__)
+from .logging_config import get_logger, timing_decorator
+
+logger = get_logger(__name__)
 
 
 class TaskManager:

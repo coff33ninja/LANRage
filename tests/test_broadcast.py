@@ -1,5 +1,7 @@
 """Tests for broadcast emulation"""
 
+import asyncio
+
 import pytest
 
 from core.broadcast import BroadcastEmulator
@@ -93,6 +95,9 @@ async def test_handle_broadcast(emulator):
     test_port = 7777
 
     emulator.handle_broadcast(test_data, test_addr, test_port)
+
+    # Let the async task process
+    await asyncio.sleep(0.01)
 
     # Should have forwarded the packet
     assert len(forwarded_packets) == 1

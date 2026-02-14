@@ -13,6 +13,10 @@ from typing import Any
 
 import psutil
 
+from .logging_config import get_logger, timing_decorator
+
+logger = get_logger(__name__)
+
 
 class PerformanceProfiler:
     """Runtime performance profiler."""
@@ -31,17 +35,24 @@ class PerformanceProfiler:
         self.enabled = False
         self.process = psutil.Process()
 
+    @timing_decorator(name="profiler_enable")
     def enable(self):
         """Enable profiling."""
         self.enabled = True
+        logger.info("Profiling enabled")
 
+    @timing_decorator(name="profiler_disable")
     def disable(self):
         """Disable profiling."""
         self.enabled = False
+        logger.info("Profiling disabled")
 
+    @timing_decorator(name="profiler_reset")
     def reset(self):
         """Reset all statistics."""
+        count = len(self.function_stats)
         self.function_stats.clear()
+        logger.info(f"Profiling statistics reset ({count} functions cleared)")
 
     def profile(self, func: Callable) -> Callable:
         """Decorator to profile a function."""
@@ -58,10 +69,12 @@ class PerformanceProfiler:
                 return func(*args, **kwargs)
             except Exception:
                 self.function_stats[func_name]["errors"] += 1
+                logger.warning(f"Error in profiled function {func_name}")
                 raise
             finally:
                 elapsed = time.perf_counter() - start
                 self._record_timing(func_name, elapsed)
+                logger.debug(f"Profiled {func_name}: {elapsed*1000:.2f}ms")
 
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -75,10 +88,12 @@ class PerformanceProfiler:
                 return await func(*args, **kwargs)
             except Exception:
                 self.function_stats[func_name]["errors"] += 1
+                logger.warning(f"Error in profiled async function {func_name}")
                 raise
             finally:
                 elapsed = time.perf_counter() - start
                 self._record_timing(func_name, elapsed)
+                logger.debug(f"Profiled async {func_name}: {elapsed*1000:.2f}ms")
 
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
@@ -92,6 +107,7 @@ class PerformanceProfiler:
         stats["min_time"] = min(stats["min_time"], elapsed)
         stats["max_time"] = max(stats["max_time"], elapsed)
 
+    @timing_decorator(name="profiler_get_stats")
     def get_stats(self) -> dict[str, dict[str, Any]]:
         """Get all profiling statistics."""
         results = {}
@@ -109,16 +125,21 @@ class PerformanceProfiler:
                 "errors": stats["errors"],
             }
 
+        logger.debug(f"Generated stats report for {len(results)} functions")
         return results
 
+    @timing_decorator(name="profiler_get_hotspots")
     def get_hotspots(self, top_n: int = 10) -> list[tuple[str, dict]]:
         """Get top N hotspots by total time."""
         stats = self.get_stats()
         sorted_stats = sorted(
             stats.items(), key=lambda x: x[1]["total_time"], reverse=True
         )
-        return sorted_stats[:top_n]
+        hotspots = sorted_stats[:top_n]
+        logger.debug(f"Identified {len(hotspots)} hotspots")
+        return hotspots
 
+    @timing_decorator(name="profiler_get_slow_functions")
     def get_slow_functions(self, threshold_ms: float = 10.0) -> list[tuple[str, dict]]:
         """Get functions with average time above threshold."""
         stats = self.get_stats()
@@ -130,11 +151,16 @@ class PerformanceProfiler:
             if stat["avg_time"] > threshold_sec
         ]
 
-        return sorted(slow_funcs, key=lambda x: x[1]["avg_time"], reverse=True)
+        result = sorted(slow_funcs, key=lambda x: x[1]["avg_time"], reverse=True)
+        logger.debug(
+            f"Found {len(result)} functions exceeding {threshold_ms}ms threshold"
+        )
+        return result
 
+    @timing_decorator(name="profiler_get_system_stats")
     def get_system_stats(self) -> dict[str, Any]:
         """Get current system resource usage."""
-        return {
+        stats = {
             "cpu_percent": self.process.cpu_percent(interval=0.1),
             "memory_mb": self.process.memory_info().rss / 1024 / 1024,
             "memory_percent": self.process.memory_percent(),
@@ -143,57 +169,61 @@ class PerformanceProfiler:
                 self.process.num_fds() if hasattr(self.process, "num_fds") else None
             ),
         }
+        logger.debug(
+            f"System stats: CPU={stats['cpu_percent']:.1f}%, Memory={stats['memory_mb']:.1f}MB"
+        )
+        return stats
 
     def print_report(self, top_n: int = 20):
-        """Print performance report."""
-        print("\n" + "=" * 80)
-        print("LANrage Performance Report")
-        print("=" * 80)
+        """Print performance report via logging."""
+        logger.info("=" * 80)
+        logger.info("LANrage Performance Report")
+        logger.info("=" * 80)
 
         # System stats
         sys_stats = self.get_system_stats()
-        print("\n📊 System Resources:")
-        print(f"  CPU: {sys_stats['cpu_percent']:.1f}%")
-        print(
+        logger.info("System Resources:")
+        logger.info(f"  CPU: {sys_stats['cpu_percent']:.1f}%")
+        logger.info(
             f"  Memory: {sys_stats['memory_mb']:.1f} MB ({sys_stats['memory_percent']:.1f}%)"
         )
-        print(f"  Threads: {sys_stats['num_threads']}")
+        logger.info(f"  Threads: {sys_stats['num_threads']}")
         if sys_stats["num_fds"]:
-            print(f"  File Descriptors: {sys_stats['num_fds']}")
+            logger.info(f"  File Descriptors: {sys_stats['num_fds']}")
 
         # Hotspots
         hotspots = self.get_hotspots(top_n)
         if hotspots:
-            print(f"\n🔥 Top {len(hotspots)} Hotspots (by total time):")
+            logger.info(f"Top {len(hotspots)} Hotspots (by total time):")
             for i, (func_name, stats) in enumerate(hotspots, 1):
-                print(f"\n  {i}. {func_name}")
-                print(f"     Calls: {stats['calls']}")
-                print(f"     Total: {stats['total_time']*1000:.2f}ms")
-                print(f"     Avg: {stats['avg_time']*1000:.2f}ms")
-                print(f"     Min: {stats['min_time']*1000:.2f}ms")
-                print(f"     Max: {stats['max_time']*1000:.2f}ms")
+                logger.info(f"  {i}. {func_name}")
+                logger.info(f"     Calls: {stats['calls']}")
+                logger.info(f"     Total: {stats['total_time']*1000:.2f}ms")
+                logger.info(f"     Avg: {stats['avg_time']*1000:.2f}ms")
+                logger.info(f"     Min: {stats['min_time']*1000:.2f}ms")
+                logger.info(f"     Max: {stats['max_time']*1000:.2f}ms")
                 if stats["errors"] > 0:
-                    print(f"     ⚠️  Errors: {stats['errors']}")
+                    logger.warning(f"     Errors: {stats['errors']}")
 
         # Slow functions
         slow_funcs = self.get_slow_functions(threshold_ms=10.0)
         if slow_funcs:
-            print("\n🐌 Slow Functions (avg > 10ms):")
+            logger.warning("Slow Functions (avg > 10ms):")
             for func_name, stats in slow_funcs:
-                print(f"  {func_name}: {stats['avg_time']*1000:.2f}ms avg")
+                logger.warning(f"  {func_name}: {stats['avg_time']*1000:.2f}ms avg")
 
         # Summary
         total_calls = sum(s["calls"] for s in self.function_stats.values())
         total_time = sum(s["total_time"] for s in self.function_stats.values())
         total_errors = sum(s["errors"] for s in self.function_stats.values())
 
-        print("\n📈 Summary:")
-        print(f"  Total function calls: {total_calls}")
-        print(f"  Total profiled time: {total_time*1000:.2f}ms")
-        print(f"  Total errors: {total_errors}")
-        print(f"  Unique functions: {len(self.function_stats)}")
+        logger.info("Summary:")
+        logger.info(f"  Total function calls: {total_calls}")
+        logger.info(f"  Total profiled time: {total_time*1000:.2f}ms")
+        logger.info(f"  Total errors: {total_errors}")
+        logger.info(f"  Unique functions: {len(self.function_stats)}")
 
-        print("\n" + "=" * 80)
+        logger.info("=" * 80)
 
 
 # Global profiler instance

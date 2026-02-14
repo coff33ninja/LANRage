@@ -15,6 +15,9 @@ import httpx
 
 from .config import Config
 from .control import ControlPlaneError, PartyInfo, PeerInfo
+from .logging_config import get_logger, set_context, timing_decorator
+
+logger = get_logger(__name__)
 
 
 class RemoteControlPlaneClient:
@@ -41,8 +44,10 @@ class RemoteControlPlaneClient:
         self.heartbeat_task: asyncio.Task | None = None
         self.heartbeat_interval = 30  # seconds
 
+    @timing_decorator(name="control_client_init")
     async def initialize(self):
         """Initialize the client"""
+        logger.info(f"Initializing control plane client: {self.server_url}")
         # Create httpx client with connection pooling and timeouts
         self.client = httpx.AsyncClient(
             base_url=self.server_url,
@@ -50,11 +55,12 @@ class RemoteControlPlaneClient:
             limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
             follow_redirects=True,
         )
+        logger.info(f"Control plane client initialized successfully: {self.server_url}")
 
-        print(f"🌐 Connecting to control plane: {self.server_url}")
-
+    @timing_decorator(name="control_client_close")
     async def close(self):
         """Close the client and cleanup"""
+        logger.info("Closing control plane client")
         if self.heartbeat_task and not self.heartbeat_task.done():
             self.heartbeat_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -64,7 +70,9 @@ class RemoteControlPlaneClient:
         if self.client:
             await self.client.aclose()
             self.client = None
+        logger.debug("Control plane client closed")
 
+    @timing_decorator(name="control_client_request")
     async def _request(
         self,
         method: str,
@@ -72,8 +80,7 @@ class RemoteControlPlaneClient:
         json_data: dict | None = None,
         retry_count: int = 3,
     ) -> dict:
-        """
-        Make HTTP request with retry logic
+        """Make HTTP request with retry logic
 
         Args:
             method: HTTP method (GET, POST, DELETE, etc.)
@@ -88,6 +95,7 @@ class RemoteControlPlaneClient:
             ControlPlaneError: On request failure
         """
         if not self.client:
+            logger.error("Control plane client not initialized")
             raise ControlPlaneError("Client not initialized")
 
         headers = {}
@@ -96,6 +104,9 @@ class RemoteControlPlaneClient:
 
         for attempt in range(retry_count):
             try:
+                logger.debug(
+                    f"Making {method} request to {endpoint} (attempt {attempt + 1})"
+                )
                 response = await self.client.request(
                     method=method,
                     url=endpoint,
@@ -106,35 +117,48 @@ class RemoteControlPlaneClient:
                 # Check for HTTP errors
                 if response.status_code >= 400:
                     error_detail = response.json().get("detail", "Unknown error")
+                    logger.warning(f"HTTP {response.status_code}: {error_detail}")
                     raise ControlPlaneError(
                         f"HTTP {response.status_code}: {error_detail}"
                     )
 
+                logger.debug(f"Request successful: {method} {endpoint}")
                 return response.json()
 
             except httpx.TimeoutException:
                 if attempt < retry_count - 1:
+                    logger.warning(f"Request timeout, retrying (attempt {attempt + 1})")
                     await asyncio.sleep(1 * (attempt + 1))  # Exponential backoff
                     continue
+                logger.error("Request timeout - max retries exceeded")
                 raise ControlPlaneError("Request timeout") from None
 
             except httpx.ConnectError as e:
                 if attempt < retry_count - 1:
+                    logger.warning(
+                        f"Connection failed: {e}, retrying (attempt {attempt + 1})"
+                    )
                     await asyncio.sleep(1 * (attempt + 1))
                     continue
+                logger.error(f"Connection failed - max retries exceeded: {e}")
                 raise ControlPlaneError(f"Connection failed: {e}") from None
 
             except httpx.HTTPError as e:
                 if attempt < retry_count - 1:
+                    logger.warning(f"HTTP error: {e}, retrying (attempt {attempt + 1})")
                     await asyncio.sleep(1 * (attempt + 1))
                     continue
+                logger.error(f"HTTP error - max retries exceeded: {e}")
                 raise ControlPlaneError(f"HTTP error: {e}") from None
 
             except Exception as e:
+                logger.error(f"Request failed: {e}")
                 raise ControlPlaneError(f"Request failed: {e}") from e
 
+        logger.error("Max retries exceeded")
         raise ControlPlaneError("Max retries exceeded")
 
+    @timing_decorator(name="control_register_peer")
     async def register_peer(self, peer_id: str) -> str:
         """
         Register peer and get authentication token
@@ -146,6 +170,8 @@ class RemoteControlPlaneClient:
             Authentication token
         """
         try:
+            set_context(peer_id_val=peer_id)
+            logger.info(f"Registering peer with control plane: {peer_id}")
             response = await self._request(
                 "POST",
                 f"/auth/register?peer_id={peer_id}",
@@ -155,12 +181,14 @@ class RemoteControlPlaneClient:
             self.auth_token = response["token"]
             self.my_peer_id = peer_id
 
-            print(f"✓ Registered with control plane (peer: {peer_id})")
+            logger.info(f"Peer registered successfully: {peer_id}")
             return self.auth_token
 
         except Exception as e:
+            logger.error(f"Failed to register peer: {e}")
             raise ControlPlaneError(f"Failed to register peer: {e}") from e
 
+    @timing_decorator(name="control_register_party")
     async def register_party(
         self, party_id: str, name: str, host_peer_info: PeerInfo
     ) -> PartyInfo:
@@ -176,6 +204,10 @@ class RemoteControlPlaneClient:
             Created party information
         """
         try:
+            set_context(party_id_val=party_id)
+            logger.info(
+                f"Registering party with control plane: {name} (ID: {party_id})"
+            )
             response = await self._request(
                 "POST",
                 "/parties",
@@ -191,12 +223,14 @@ class RemoteControlPlaneClient:
             # Start heartbeat
             await self._start_heartbeat()
 
-            print(f"✓ Party created: {name} (ID: {party.party_id})")
+            logger.info(f"Party registered successfully: {name} (ID: {party.party_id})")
             return party
 
         except Exception as e:
+            logger.error(f"Failed to register party: {e}")
             raise ControlPlaneError(f"Failed to register party: {e}") from e
 
+    @timing_decorator(name="control_join_party")
     async def join_party(self, party_id: str, peer_info: PeerInfo) -> PartyInfo:
         """
         Join an existing party
@@ -209,6 +243,8 @@ class RemoteControlPlaneClient:
             Party information
         """
         try:
+            set_context(party_id_val=party_id)
+            logger.info(f"Joining party with control plane: {party_id}")
             response = await self._request(
                 "POST",
                 f"/parties/{party_id}/join",
@@ -224,10 +260,11 @@ class RemoteControlPlaneClient:
             # Start heartbeat
             await self._start_heartbeat()
 
-            print(f"✓ Joined party: {party.name}")
+            logger.info(f"Joined party successfully: {party.name} (ID: {party_id})")
             return party
 
         except Exception as e:
+            logger.error(f"Failed to join party: {e}")
             raise ControlPlaneError(f"Failed to join party: {e}") from e
 
     async def leave_party(self, party_id: str, peer_id: str):

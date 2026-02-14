@@ -1,9 +1,10 @@
 """IP Address Management for LANrage virtual network"""
 
 import ipaddress
-import logging
 
-logger = logging.getLogger(__name__)
+from .logging_config import get_logger, timing_decorator
+
+logger = get_logger(__name__)
 
 
 class IPAddressPool:
@@ -51,6 +52,7 @@ class IPAddressPool:
 
         return subnet
 
+    @timing_decorator(name="ip_allocation")
     def allocate(self, peer_id: str) -> ipaddress.IPv4Address:
         """Allocate an IP address for a peer
 

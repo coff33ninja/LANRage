@@ -11,6 +11,9 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 
 from .config import Config
+from .logging_config import get_logger, set_context, timing_decorator
+
+logger = get_logger(__name__)
 
 
 class WireGuardError(Exception):
@@ -64,9 +67,10 @@ class NetworkManager:
 
             print(f"Warning: Unexpected error in logging: {e}", file=sys.stderr)
 
+    @timing_decorator(name="network_init")
     async def initialize(self):
         """Initialize network interface"""
-        await self._log("Initializing network interface")
+        logger.info(f"Initializing network interface: {self.interface_name}")
 
         # Check if WireGuard is installed
         if not await self._check_wireguard():
@@ -385,10 +389,14 @@ ListenPort = 51820
             )
             return None
 
+    @timing_decorator(name="add_wg_peer")
     async def add_peer(
         self, peer_public_key: str, peer_endpoint: str | None, allowed_ips: list[str]
     ):
         """Add a WireGuard peer"""
+        set_context(peer_id_val=peer_public_key[:16])
+        logger.info(f"Adding WireGuard peer: {peer_endpoint} ({','.join(allowed_ips)})")
+
         if not self.interface_created:
             raise WireGuardError("Interface not created")
 
@@ -404,12 +412,18 @@ ListenPort = 51820
             cmd.extend(["persistent-keepalive", "25"])
 
             await self._run_command(cmd)
+            logger.debug(f"WireGuard peer added successfully")
 
         except Exception as e:
+            logger.error(f"Failed to add peer: {e}")
             raise WireGuardError(f"Failed to add peer: {e}") from e
 
+    @timing_decorator(name="remove_wg_peer")
     async def remove_peer(self, peer_public_key: str):
         """Remove a WireGuard peer"""
+        set_context(peer_id_val=peer_public_key[:16])
+        logger.info(f"Removing WireGuard peer")
+
         if not self.interface_created:
             raise WireGuardError("Interface not created") from None
 
