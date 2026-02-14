@@ -1246,7 +1246,10 @@ class GameOptimizer:
             # Check if any other active game needs each port
             for port in profile.ports:
                 ports_in_use = set()
-                for _, ports in self.game_ports.items():
+                games_using_port: set[str] = set()
+                for other_game_id, ports in self.game_ports.items():
+                    if port in ports:
+                        games_using_port.add(other_game_id)
                     ports_in_use.update(ports)
 
                 # Only stop listener if no other game uses this port
@@ -1267,11 +1270,16 @@ class GameOptimizer:
                                 f"Dynamic: Stopped TCP broadcast listener on port {port}"
                             )
                 else:
+                    games_list = (
+                        ", ".join(sorted(games_using_port))
+                        if games_using_port
+                        else "custom whitelist"
+                    )
                     logger.debug(
-                        f"Port {port} still in use by other game(s), keeping listener active"
+                        f"Port {port} still in use by: {games_list}, keeping listener active"
                     )
                     print(
-                        f"   ℹ Port {port} still in use, keeping broadcast listener active"
+                        f"   ℹ Port {port} still in use ({games_list}), keeping broadcast listener active"
                     )
         except Exception as e:
             error_msg = str(e)
