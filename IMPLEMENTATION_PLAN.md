@@ -495,15 +495,339 @@ All 16 core modules now have full structured logging integration with NO breakin
 
 ## Phase 5: Advanced Features (Week 5+)
 
-**Estimated**: 12+ hours  
-**Priority**: 🔵 MEDIUM - Nice-to-have features
+**Status**: 🟢 READY (Phase 4 & profiler complete)  
+**Estimated Duration**: 12+ hours  
+**Priority**: 🔵 MEDIUM-HIGH - Critical for peer quality and task management  
+**Target Tests**: 18+ new tests
 
-### 5.1 Connection Quality Scoring
-### 5.2 Intelligent Relay Selection
+### Overview
+Advanced network optimization and task management features that enable intelligent peer selection, connection quality monitoring, and sophisticated task execution with dependency awareness. These features improve network efficiency and operational reliability.
+
+### 5.1 Connection Quality Scoring System
+
+**Purpose**: Measure and track peer connection quality to enable smart peer selection and relay routing.
+
+**Components**:
+1. **Quality Metrics Collector** (new class: `ConnectionQualityMonitor`)
+   - Real-time latency measurement (milliseconds)
+   - Jitter calculation (latency variance)
+   - Packet loss tracking (percentage)
+   - Bandwidth estimation (Mbps)
+   - Stability score (uptime percentage)
+
+2. **Quality Scoring Algorithm**:
+   ```python
+   quality_score = (
+       (latency_weight * (100 - normalized_latency)) +
+       (jitter_weight * (100 - normalized_jitter)) +
+       (packet_loss_weight * (100 - packet_loss)) +
+       (bandwidth_weight * normalized_bandwidth) +
+       (stability_weight * uptime_percentage)
+   ) / total_weight
+   
+   # Score ranges: 0-100 (0=unusable, 100=perfect)
+   # Grades: A (90+), B (70-89), C (50-69), D (30-49), F (<30)
+   ```
+
+3. **Metrics Storage**:
+   - In-memory window (last 100 pings per peer)
+   - Persistent storage for historical trending
+   - 5-minute rolling averages
+   - Hourly aggregation for statistics
+
+4. **Logging & Context**:
+   ```python
+   # Add to metrics.py
+   quality_monitor = ConnectionQualityMonitor()
+   
+   @timing_decorator("measure_connection_quality")
+   def measure_connection_quality(peer_id):
+       """Measure and score connection to peer."""
+       set_context(peer_id=peer_id)
+       logger.info(f"Starting quality measurement for {peer_id}")
+       # ... measurement logic
+       logger.debug(f"Quality score: {score}/100 ({grade}), latency: {latency}ms")
+   ```
+
+**Files to Create/Modify**:
+- `core/metrics.py`: Add `ConnectionQualityMonitor` class (300+ lines)
+- `core/connection.py`: Integrate quality measurements into ping/heartbeat loop
+- `tests/test_metrics.py`: Quality scoring unit tests
+
+**Test Cases** (5+ tests):
+- ✅ Quality score calculation with perfect conditions (score = 100)
+- ✅ Quality degradation with latency spikes
+- ✅ Packet loss impact on score
+- ✅ Stability score integration (uptime tracking)
+- ✅ Rolling average calculations
+
+---
+
+### 5.2 Intelligent Relay Selection Engine
+
+**Purpose**: Automatically select optimal relay server based on peer quality scores and network topology.
+
+**Components**:
+1. **Relay Scoring System**:
+   - Combine quality scores of both peers to relay server
+   - Factor in relay server health (CPU, memory, current load)
+   - Calculate expected RTT through relay (P1→Relay + Relay→P2)
+   - Prefer direct connections when viable (score > 80)
+
+2. **Selection Algorithm**:
+   ```python
+   relay_score = (
+       (p1_quality_to_relay * p2_quality_to_relay) ** 0.5 +  # geometric mean
+       (relay_health_score * 0.3)  # server condition
+   ) / 2
+   
+   # Direct connection preferred if:
+   p1_direct_quality * p2_direct_quality >= preferred_threshold
+   ```
+
+3. **Fallback Strategy**:
+   - Primary relay: Highest score
+   - Secondary relay: 2nd highest (if primary fails)
+   - Tertiary relay: Geographic backup
+   - Automatic failover with <2s detection
+
+4. **Logging**:
+   ```python
+   # Add to server_browser.py or new relay_selector.py
+   @timing_decorator("select_relay")
+   def select_relay(peer_ids):
+       """Select optimal relay for peer pair."""
+       set_context(peer_ids=peer_ids)
+       logger.info(f"Selecting relay for {len(peer_ids)} peers")
+       # ... selection logic
+       logger.info(f"Selected relay: {relay_id} (score: {score})")
+   ```
+
+**Files to Create/Modify**:
+- `core/relay_selector.py`: New file - Relay selection logic (250+ lines)
+- `core/connection.py`: Integrate relay selection into peer connection setup
+- `tests/test_relay_selector.py`: Relay selection strategy tests
+
+**Test Cases** (6+ tests):
+- ✅ Direct connection preferred when quality high
+- ✅ Relay selection with multiple relays available
+- ✅ Relay failover when primary relay goes down
+- ✅ Geographic fallback selection
+- ✅ Load balancing across relays
+- ✅ Quality degradation handling
+
+---
+
 ### 5.3 Task Priority & Dependency System
-### 5.4 Conflict Resolution for Concurrent Ops
 
-**Not Started Yet** - Future planning
+**Purpose**: Enable sophisticated task execution with priority levels and automatic dependency resolution.
+
+**Components**:
+1. **Task Priority Levels**:
+   ```python
+   class TaskPriority(Enum):
+       CRITICAL = 4      # Must run immediately (peer join/leave)
+       HIGH = 3          # Important (game start, config change)
+       NORMAL = 2        # Standard (data sync, health check)
+       LOW = 1           # Background (statistics, cleanup)
+       DEFERRED = 0      # Run when system idle
+   ```
+
+2. **Dependency Graph**:
+   ```python
+   # Define task dependencies
+   task_graph = {
+       "validate_peer": [],  # No deps
+       "allocate_ip": ["validate_peer"],  # Depends on peer validation
+       "configure_network": ["allocate_ip"],  # Depends on IP allocation
+       "start_game": ["configure_network", "sync_game_state"],
+   }
+   ```
+
+3. **Task Execution Engine**:
+   ```python
+   class TaskExecutor:
+       async def execute_with_deps(self, task_name):
+           """Execute task after all dependencies complete."""
+           # Resolve dependency graph
+           # Check if dependencies succeeded
+           # Execute task if deps ok, skip if deps failed
+           # Retry with exponential backoff on failure
+           # Log execution flow
+   ```
+
+4. **Logging & Metrics**:
+   ```python
+   # Add to task_manager.py
+   @timing_decorator("execute_task")
+   async def execute_task(task_name, priority):
+       """Execute task with priority and dependency handling."""
+       set_context(task_name=task_name, task_priority=priority)
+       logger.info(f"Executing {task_name} (priority: {priority})")
+       # ... execution logic
+       logger.info(f"Task {task_name} completed in {duration}ms")
+   ```
+
+5. **Task Queue Management**:
+   - Priority queue (sorted by priority level)
+   - Dependency resolution before execution
+   - Parallel execution of independent tasks
+   - Result aggregation and error handling
+
+**Files to Create/Modify**:
+- `core/task_manager.py`: Enhance with task priority and dependencies (350+ lines)
+- `core/task_queue.py`: New file - Priority queue implementation (150+ lines)
+- `tests/test_task_manager.py`: Task execution order and dependency tests
+
+**Test Cases** (5+ tests):
+- ✅ Task execution respects priority order
+- ✅ Dependency resolution and sequencing
+- ✅ Parallel execution of independent tasks
+- ✅ Failure propagation (dependent task skipped if dep fails)
+- ✅ Retry logic on transient failures
+
+---
+
+### 5.4 Conflict Resolution for Concurrent Operations
+
+**Purpose**: Handle simultaneous operations on same resources with automatic conflict detection and resolution.
+
+**Components**:
+1. **Conflict Detection**:
+   ```python
+   # Track operation types that conflict
+   CONFLICTING_OPS = {
+       "configure_network": ["configure_network", "restart_network"],
+       "restart_network": ["configure_network", "configure_network"],
+       "allocate_ip": ["allocate_ip"],  # Only one allocation at a time
+       "join_party": ["leave_party"],    # Can't join and leave simultaneously
+   }
+   ```
+
+2. **Resolution Strategies**:
+   - **Queue**: Second operation waits for first to complete
+   - **Abort**: Second operation fails immediately (high priority only)
+   - **Merge**: Combine both operations into single atomic operation
+   - **Prioritize**: High priority operation proceeds, low priority aborted
+
+3. **Operation Lock Manager**:
+   ```python
+   class OperationLockManager:
+       async def acquire_lock(self, resource_id, operation_type, priority):
+           """Acquire exclusive lock on resource."""
+           # Check for conflicts
+           # Wait for lock if conflict with higher priority Op
+           # Proceed if no conflict or higher priority
+           # Release lock when done
+       
+       async def execute_atomic(self, operations):
+           """Execute group of operations atomically."""
+           # Acquire locks for all resources
+           # Execute all operations
+           # Release locks
+           # Rollback on any failure
+   ```
+
+4. **Logging & Observability**:
+   ```python
+   # Add to control.py
+   @timing_decorator("resolve_conflicts")
+   async def resolve_operation_conflict(op1_type, op2_type, resource_id):
+       """Resolve conflict between two operations."""
+       set_context(resource_id=resource_id, conflict_type=f"{op1_type}_vs_{op2_type}")
+       logger.warning(f"Conflict detected: {op1_type} vs {op2_type} on {resource_id}")
+       # ... resolution logic
+       logger.info(f"Conflict resolved using {strategy} strategy")
+   ```
+
+5. **Transaction Support**:
+   - ACID compliance for critical operations
+   - Rollback capability on errors
+   - Write-ahead logging for recovery
+   - Deadlock detection and prevention
+
+**Files to Create/Modify**:
+- `core/conflict_resolver.py`: New file - Conflict detection/resolution (300+ lines)
+- `core/operation_lock.py`: New file - Resource locking (200+ lines)
+- `core/control.py`: Integrate conflict resolution into operation handling
+- `tests/test_conflict_resolver.py`: Concurrent operation handling tests
+
+**Test Cases** (5+ tests):
+- ✅ Conflict detection between incompatible operations
+- ✅ Queue strategy: Second operation waits
+- ✅ Prioritization: High priority operation succeeds
+- ✅ Merging: Combined atomic operations
+- ✅ Rollback on failure in multi-operation transactions
+
+---
+
+### Phase 5 Implementation Strategy
+
+**Week 5 Timeline**:
+- **Days 1-2**: Connection Quality Scoring (metrics collection + scoring algorithm)
+- **Days 3-4**: Relay Selection Engine (selection algorithm + failover strategy)
+- **Days 5-6**: Task Priority System (executor + dependency resolution)
+- **Day 7**: Conflict Resolution (lock manager + transaction support)
+
+**Architecture Notes**:
+- All modules integrate with logging_config.py for observability
+- Use contextvars for async-safe context propagation
+- Implement comprehensive metric collection
+- Design for future Phase 6 agent integration
+
+**Integration with Phase 6 Agents**:
+- Quality scores used by ConnectionAgent for peer assessment
+- Relay selection used by DiscoveryAgent for network routing
+- Task priority system feeds into TaskDelegationAgent
+- Conflict resolver ensures OperationOrchestrator safety
+
+---
+
+### Phase 5 Testing Strategy
+
+**Total Tests Expected**: 18+ new tests
+
+**Unit Tests** (12+ tests):
+- Quality score calculation (5 tests)
+- Relay selection algorithm (3 tests)
+- Task dependency resolution (2 tests)
+- Conflict detection (2 tests)
+
+**Integration Tests** (4+ tests):
+- Quality scoring with real network measurements
+- Relay selection with actual relay servers
+- End-to-end task execution with dependencies
+- Concurrent operations with conflict resolution
+
+**Performance Tests**:
+- Quality calculation throughput (100+ peers)
+- Relay selection latency (<100ms)
+- Task queue performance (1000+ tasks)
+- Lock contention under high concurrency
+
+---
+
+### Phase 5 Success Criteria
+
+✅ **Connection Quality**: 
+- Accuracy >= 95% when measured against reference tools
+- Scoring responsive within 100ms of measurement
+
+✅ **Relay Selection**: 
+- Success rate >= 98% (correct relay chosen)
+- Failover detection < 2 seconds
+
+✅ **Task Management**: 
+- Dependency resolution 100% accurate
+- Task execution in priority order verified
+
+✅ **Conflict Resolution**: 
+- Deadlock detection 100% successful
+- Transaction rollback on error verified
+
+✅ **Test Coverage**: 
+- 18+ new tests all passing
+- No regressions in existing 438 tests
 
 ---
 
@@ -953,7 +1277,7 @@ agent:error       - Agent error (orchestrator)
 | Phase 2.2 | ✅ COMPLETE | Feb 14 | 17/17 ✅ |
 | Phase 3 | ✅ COMPLETE | Feb 14 | 18/18 ✅ |
 | Phase 4 | ✅ COMPLETE | Feb 14 | 438/440 ✅ |
-| Phase 5 | 🟢 READY | Feb 15 | - |
+| Phase 5 | 🟢 READY | Feb 15+ | 18+ expected |
 | Phase 6 | 🔵 PLANNED | Feb 16+ | 25+ expected |
 
 ### Tests Passing
@@ -1008,7 +1332,7 @@ agent:error       - Agent error (orchestrator)
 *Last Updated: 2026-02-14*  
 *Branch: dev/improvements-2026-phase1*
 *Total Improvements Completed: 9/43 (21%) - 4 Phases Complete + Extended Phase 4*
-*Current Status: Phase 4 Extended Complete (16 modules), Phase 5 Ready, Phase 6 Planned*
+*Current Status: Phase 4 Complete (16 modules fully logged), Phase 5 Ready to Start, Phase 6 Fully Designed*
 
 ---
 
