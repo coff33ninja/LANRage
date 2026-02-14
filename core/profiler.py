@@ -35,17 +35,24 @@ class PerformanceProfiler:
         self.enabled = False
         self.process = psutil.Process()
 
+    @timing_decorator(name="profiler_enable")
     def enable(self):
         """Enable profiling."""
         self.enabled = True
+        logger.info("Profiling enabled")
 
+    @timing_decorator(name="profiler_disable")
     def disable(self):
         """Disable profiling."""
         self.enabled = False
+        logger.info("Profiling disabled")
 
+    @timing_decorator(name="profiler_reset")
     def reset(self):
         """Reset all statistics."""
+        count = len(self.function_stats)
         self.function_stats.clear()
+        logger.info(f"Profiling statistics reset ({count} functions cleared)")
 
     def profile(self, func: Callable) -> Callable:
         """Decorator to profile a function."""
@@ -100,6 +107,7 @@ class PerformanceProfiler:
         stats["min_time"] = min(stats["min_time"], elapsed)
         stats["max_time"] = max(stats["max_time"], elapsed)
 
+    @timing_decorator(name="profiler_get_stats")
     def get_stats(self) -> dict[str, dict[str, Any]]:
         """Get all profiling statistics."""
         results = {}
@@ -117,16 +125,21 @@ class PerformanceProfiler:
                 "errors": stats["errors"],
             }
 
+        logger.debug(f"Generated stats report for {len(results)} functions")
         return results
 
+    @timing_decorator(name="profiler_get_hotspots")
     def get_hotspots(self, top_n: int = 10) -> list[tuple[str, dict]]:
         """Get top N hotspots by total time."""
         stats = self.get_stats()
         sorted_stats = sorted(
             stats.items(), key=lambda x: x[1]["total_time"], reverse=True
         )
-        return sorted_stats[:top_n]
+        hotspots = sorted_stats[:top_n]
+        logger.debug(f"Identified {len(hotspots)} hotspots")
+        return hotspots
 
+    @timing_decorator(name="profiler_get_slow_functions")
     def get_slow_functions(self, threshold_ms: float = 10.0) -> list[tuple[str, dict]]:
         """Get functions with average time above threshold."""
         stats = self.get_stats()
@@ -138,11 +151,16 @@ class PerformanceProfiler:
             if stat["avg_time"] > threshold_sec
         ]
 
-        return sorted(slow_funcs, key=lambda x: x[1]["avg_time"], reverse=True)
+        result = sorted(slow_funcs, key=lambda x: x[1]["avg_time"], reverse=True)
+        logger.debug(
+            f"Found {len(result)} functions exceeding {threshold_ms}ms threshold"
+        )
+        return result
 
+    @timing_decorator(name="profiler_get_system_stats")
     def get_system_stats(self) -> dict[str, Any]:
         """Get current system resource usage."""
-        return {
+        stats = {
             "cpu_percent": self.process.cpu_percent(interval=0.1),
             "memory_mb": self.process.memory_info().rss / 1024 / 1024,
             "memory_percent": self.process.memory_percent(),
@@ -151,6 +169,10 @@ class PerformanceProfiler:
                 self.process.num_fds() if hasattr(self.process, "num_fds") else None
             ),
         }
+        logger.debug(
+            f"System stats: CPU={stats['cpu_percent']:.1f}%, Memory={stats['memory_mb']:.1f}MB"
+        )
+        return stats
 
     def print_report(self, top_n: int = 20):
         """Print performance report via logging."""
