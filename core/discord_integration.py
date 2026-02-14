@@ -332,6 +332,9 @@ class DiscordIntegration:
         if not self.webhook_url:
             return
 
+        set_context(correlation_id_val=f"discord_notification_{title[:30]}")
+        logger.debug(f"Queueing Discord notification: {title}")
+
         # Queue notification for batching
         should_send_immediate = not await self.notification_batcher.queue_notification(
             title, message, color
@@ -350,13 +353,17 @@ class DiscordIntegration:
         if not self.bot or not self.bot_connected or not self.bot_channel_id:
             return
 
+        set_context(correlation_id_val=f"discord_bot_{self.bot_channel_id}")
+        logger.debug(f"Sending Discord bot message: {message[:50]}")
+
         try:
             channel = self.bot.get_channel(self.bot_channel_id)
             if channel:
                 await channel.send(message)
+                logger.debug("Discord bot message sent successfully")
         except Exception as e:
             error_msg = str(e)
-            print(f"⚠ Failed to send bot message: {error_msg}")
+            logger.error(f"Failed to send bot message: {error_msg}")
 
     async def _send_webhook(self, title: str, message: str, color: int = 0x667EEA):
         """Send notification directly to Discord webhook
@@ -368,6 +375,8 @@ class DiscordIntegration:
         """
         if not self.webhook_url:
             return
+
+        set_context(correlation_id_val=f"discord_webhook_{title[:30]}")
 
         try:
             embed = {
@@ -383,14 +392,19 @@ class DiscordIntegration:
             async with self.session.post(self.webhook_url, json=payload) as response:
                 if response.status != 204:
                     error_text = await response.text()
-                    print(f"⚠ Discord webhook failed: {error_text}")
+                    logger.warning(f"Discord webhook failed: {error_text}")
+                else:
+                    logger.debug(f"Discord webhook sent: {title}")
 
         except Exception as e:
             error_msg = str(e)
-            print(f"⚠ Discord notification failed: {error_msg}")
+            logger.error(f"Discord notification failed: {error_msg}")
 
     async def notify_party_created(self, party_id: str, party_name: str, host: str):
         """Notify that a party was created"""
+        set_context(party_id_val=party_id)
+        logger.info(f"Notifying party created: {party_name} (ID: {party_id})")
+
         message = f"**Host**: {host}\n**Party ID**: `{party_id}`"
 
         if self.party_invite_url:
@@ -402,6 +416,9 @@ class DiscordIntegration:
 
     async def notify_peer_joined(self, peer_name: str, party_name: str):
         """Notify that a peer joined the party"""
+        set_context(correlation_id_val=f"discord_peer_join_{peer_name}")
+        logger.info(f"Notifying peer joined: {peer_name} to {party_name}")
+
         await self.send_notification(
             f"👋 {peer_name} joined",
             f"Welcome to **{party_name}**!",
@@ -410,12 +427,18 @@ class DiscordIntegration:
 
     async def notify_peer_left(self, peer_name: str, party_name: str):
         """Notify that a peer left the party"""
+        set_context(correlation_id_val=f"discord_peer_leave_{peer_name}")
+        logger.info(f"Notifying peer left: {peer_name} from {party_name}")
+
         await self.send_notification(
             f"👋 {peer_name} left", f"Left **{party_name}**", color=0xFF9800
         )
 
     async def notify_game_started(self, game_name: str, players: list):
         """Notify that a game session started"""
+        set_context(game_id_val=game_name)
+        logger.info(f"Notifying game started: {game_name} with {len(players)} players")
+
         player_list = ", ".join(players)
         await self.send_notification(
             f"🎮 Game Started: {game_name}",
@@ -427,6 +450,11 @@ class DiscordIntegration:
         self, game_name: str, duration: float, avg_latency: float | None
     ):
         """Notify that a game session ended"""
+        set_context(game_id_val=game_name)
+        logger.info(
+            f"Notifying game ended: {game_name} (duration: {duration:.1f}s, latency: {avg_latency or 'N/A'}ms)"
+        )
+
         duration_str = self._format_duration(duration)
         latency_str = f"{avg_latency:.0f}ms" if avg_latency else "N/A"
 
@@ -454,6 +482,12 @@ class DiscordIntegration:
         if not self.rpc or not self.rpc_connected:
             return
 
+        set_context(correlation_id_val=f"discord_presence_{state}")
+        logger.debug(
+            f"Updating Discord presence: {state}",
+            extra={"details": details, "party_size": party_size},
+        )
+
         try:
             kwargs = {
                 "state": state,
@@ -476,27 +510,29 @@ class DiscordIntegration:
             # Run RPC update in executor to avoid blocking
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, lambda: self.rpc.update(**kwargs))
+            logger.debug("Discord presence updated successfully")
 
         except Exception as e:
             error_msg = str(e)
-            print(f"⚠ Discord presence update failed: {error_msg}")
+            logger.error(f"Discord presence update failed: {error_msg}")
 
     async def clear_presence(self):
         """Clear Discord Rich Presence"""
         if self.rpc and self.rpc_connected:
+            set_context(correlation_id_val="discord_presence_clear")
+            logger.debug("Clearing Discord presence")
+
             try:
                 # Run RPC clear in executor to avoid blocking
                 loop = asyncio.get_event_loop()
                 await loop.run_in_executor(None, self.rpc.clear)
+                logger.debug("Discord presence cleared successfully")
             except OSError as e:
                 # Discord RPC clear is optional, log but don't fail
-                print(f"Debug: Discord RPC clear failed: {e}", file=sys.stderr)
+                logger.warning(f"Discord RPC clear failed: {e}")
             except Exception as e:
                 # Catch any other unexpected errors
-                print(
-                    f"Debug: Unexpected error clearing Discord RPC: {e}",
-                    file=sys.stderr,
-                )
+                logger.warning(f"Unexpected error clearing Discord RPC: {e}")
 
     def get_party_invite_link(self) -> str | None:
         """Get Discord party invite link"""
