@@ -701,27 +701,134 @@ class GameOptimizer:
         self.nat_type = nat_type or NATType.UNKNOWN
         self.active_profile: GameProfile | None = None
 
+        # Dynamic broadcast port monitoring
+        self.game_ports: dict[str, set[int]] = {}  # game_id -> set of ports
+        self.monitored_ports: set[int] = set()  # Currently monitored ports
+        self.custom_ports_whitelist: set[int] = set()  # User-added ports
+        self._load_custom_ports_whitelist()
+
     def set_nat_type(self, nat_type: NATType):
         """Update NAT type for adaptive keepalive calculation"""
         self.nat_type = nat_type
 
+    def _load_custom_ports_whitelist(self):
+        """Load user-defined custom ports for broadcast monitoring
+
+        Reads from config file: custom_broadcast_ports.json
+        Format: {"ports": [23456, 45678], "description": "Custom game server"}
+        """
+        try:
+            custom_ports_file = (
+                Path(self.config.config_dir) / "custom_broadcast_ports.json"
+            )
+            if custom_ports_file.exists():
+                import json
+
+                with open(custom_ports_file, "r") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict) and "ports" in data:
+                        self.custom_ports_whitelist = set(data["ports"])
+                        logger.info(
+                            f"Loaded custom broadcast ports: {sorted(self.custom_ports_whitelist)}"
+                        )
+                    elif isinstance(data, list):
+                        self.custom_ports_whitelist = set(data)
+                        logger.info(
+                            f"Loaded custom broadcast ports: {sorted(self.custom_ports_whitelist)}"
+                        )
+        except Exception as e:
+            logger.debug(f"No custom broadcast ports file or error loading: {e}")
+
+        # Also check for hardcoded custom ports in config
+        if hasattr(self.config, "custom_broadcast_ports"):
+            self.custom_ports_whitelist.update(self.config.custom_broadcast_ports)
+
+    def add_custom_broadcast_port(self, port: int, description: str = ""):
+        """Add a port to custom broadcast monitoring whitelist
+
+        Args:
+            port: Port number to add
+            description: Optional description for the port
+        """
+        self.custom_ports_whitelist.add(port)
+        logger.info(
+            f"Added custom broadcast port {port}{f' ({description})' if description else ''}"
+        )
+
+        # Persist to file
+        try:
+            import json
+
+            custom_ports_file = (
+                Path(self.config.config_dir) / "custom_broadcast_ports.json"
+            )
+            with open(custom_ports_file, "w") as f:
+                json.dump(
+                    {
+                        "ports": sorted(self.custom_ports_whitelist),
+                        "description": "Custom ports for LANrage broadcast monitoring",
+                    },
+                    f,
+                    indent=2,
+                )
+        except Exception as e:
+            logger.warning(f"Failed to persist custom broadcast port {port}: {e}")
+
+    def remove_custom_broadcast_port(self, port: int):
+        """Remove a port from custom broadcast monitoring
+
+        Args:
+            port: Port number to remove
+        """
+        self.custom_ports_whitelist.discard(port)
+        logger.info(f"Removed custom broadcast port {port}")
+
+        # Persist to file
+        try:
+            import json
+
+            custom_ports_file = (
+                Path(self.config.config_dir) / "custom_broadcast_ports.json"
+            )
+            with open(custom_ports_file, "w") as f:
+                json.dump(
+                    {
+                        "ports": sorted(self.custom_ports_whitelist),
+                        "description": "Custom ports for LANrage broadcast monitoring",
+                    },
+                    f,
+                    indent=2,
+                )
+        except Exception as e:
+            logger.warning(
+                f"Failed to persist custom broadcast port removal {port}: {e}"
+            )
+
+    @timing_decorator(name="apply_game_profile")
     async def apply_profile(
-        self, profile: GameProfile, network_manager=None, broadcast_manager=None
+        self,
+        profile: GameProfile,
+        network_manager=None,
+        broadcast_manager=None,
+        game_id: str = "",
     ):
-        """Apply game profile optimizations with NAT-aware keepalive
+        """Apply game profile optimizations with NAT-aware keepalive and dynamic broadcast
 
         Args:
             profile: Game profile to apply
             network_manager: NetworkManager instance for WireGuard config
             broadcast_manager: BroadcastManager instance for broadcast emulation
+            game_id: Game identifier for tracking dynamic ports
         """
         self.active_profile = profile
 
         # Store manager references for later reset
         self._network_manager_ref = network_manager
         self._broadcast_manager_ref = broadcast_manager
+        self._active_game_id = game_id
 
         print(f"⚙️  Applying optimizations for {profile.name}")
+        logger.info(f"Applying game profile: {profile.name} (game_id={game_id})")
 
         # Calculate adaptive keepalive based on NAT type
         adaptive_keepalive = calculate_adaptive_keepalive(
@@ -738,10 +845,13 @@ class GameOptimizer:
             print(f"   - Keepalive: {adaptive_keepalive}s (NAT: {self.nat_type.value})")
             await self._update_keepalive(network_manager, adaptive_keepalive)
 
-        # Enable broadcast emulation if needed
+        # Enable broadcast emulation if needed (with dynamic tracking)
         if profile.broadcast and broadcast_manager:
-            print("   - Broadcast emulation: ON")
-            await self._enable_broadcast(broadcast_manager, profile)
+            print("   - Broadcast emulation: ON (dynamic port monitoring enabled)")
+            await self._enable_broadcast(broadcast_manager, profile, game_id)
+            logger.info(
+                f"Dynamic broadcast monitoring enabled for {len(profile.ports)} ports: {profile.ports}"
+            )
 
         # Set packet priority
         if profile.packet_priority == "high":
@@ -754,6 +864,9 @@ class GameOptimizer:
             await self._update_mtu(network_manager, profile.mtu)
 
         print(f"✓ Optimizations applied for {profile.name}")
+        logger.info(
+            f"Game profile applied: {profile.name}, Active ports: {sorted(self.monitored_ports)}"
+        )
 
     async def _update_keepalive(self, network_manager, keepalive: int):
         """Update WireGuard keepalive for all peers"""
@@ -767,20 +880,51 @@ class GameOptimizer:
             error_msg = str(e)
             print(f"   ⚠ Failed to update keepalive: {error_msg}")
 
-    async def _enable_broadcast(self, broadcast_manager, profile: GameProfile):
-        """Enable broadcast emulation for game ports"""
+    async def _enable_broadcast(
+        self, broadcast_manager, profile: GameProfile, game_id: str = ""
+    ):
+        """Enable broadcast emulation for game ports with dynamic port tracking
+
+        Tracks which ports are used by which games to enable/disable listeners dynamically.
+
+        Args:
+            broadcast_manager: BroadcastManager instance
+            profile: GameProfile with port information
+            game_id: Game identifier for tracking purposes
+        """
         try:
+            # Track ports for this game
+            if game_id:
+                self.game_ports[game_id] = set(profile.ports)
+                logger.debug(f"Registered game {game_id} with ports: {profile.ports}")
+
             # Start broadcast listeners for each game port
             for port in profile.ports:
-                if profile.protocol in ("udp", "both"):
-                    await broadcast_manager.start_listener(port, "udp")
-                    print(f"   ✓ Broadcast listener started on UDP port {port}")
-                if profile.protocol in ("tcp", "both"):
-                    await broadcast_manager.start_listener(port, "tcp")
-                    print(f"   ✓ Broadcast listener started on TCP port {port}")
+                if port not in self.monitored_ports:
+                    if profile.protocol in ("udp", "both"):
+                        await broadcast_manager.start_listener(port, "udp")
+                        self.monitored_ports.add(port)
+                        print(f"   ✓ Broadcast listener started on UDP port {port}")
+                        logger.info(
+                            f"Dynamic: Started UDP broadcast listener on port {port}"
+                        )
+                    if profile.protocol in ("tcp", "both"):
+                        await broadcast_manager.start_listener(port, "tcp")
+                        self.monitored_ports.add(port)
+                        print(f"   ✓ Broadcast listener started on TCP port {port}")
+                        logger.info(
+                            f"Dynamic: Started TCP broadcast listener on port {port}"
+                        )
+                else:
+                    # Port already being monitored
+                    logger.debug(
+                        f"Port {port} already being monitored, skipping duplicate"
+                    )
+                    print(f"   ℹ Broadcast listener already active on port {port}")
         except Exception as e:
             error_msg = str(e)
             print(f"   ⚠ Failed to enable broadcast: {error_msg}")
+            logger.warning(f"Failed to enable broadcast: {error_msg}")
 
     async def _set_packet_priority(self, priority: str):
         """Set packet priority (QoS/TOS bits) using platform-specific methods"""
@@ -1081,20 +1225,58 @@ class GameOptimizer:
 
             print(f"✓ Reset complete for {profile_name}")
 
-    async def _disable_broadcast(self, broadcast_manager, profile: GameProfile):
-        """Disable broadcast emulation for game ports"""
+    async def _disable_broadcast(
+        self, broadcast_manager, profile: GameProfile, game_id: str = ""
+    ):
+        """Disable broadcast emulation for game ports with dynamic untracking
+
+        Only stop listening on ports if no other running game needs them.
+
+        Args:
+            broadcast_manager: BroadcastManager instance
+            profile: GameProfile with port information
+            game_id: Game identifier for untracking purposes
+        """
         try:
-            # Stop broadcast listeners for each game port
+            # Untrack ports for this game
+            if game_id and game_id in self.game_ports:
+                del self.game_ports[game_id]
+                logger.debug(f"Unregistered game {game_id}")
+
+            # Check if any other active game needs each port
             for port in profile.ports:
-                if profile.protocol in ("udp", "both"):
-                    await broadcast_manager.stop_listener(port)
-                    print(f"   ✓ Broadcast listener stopped on UDP port {port}")
-                if profile.protocol in ("tcp", "both"):
-                    await broadcast_manager.stop_listener(port)
-                    print(f"   ✓ Broadcast listener stopped on TCP port {port}")
+                ports_in_use = set()
+                for other_game_id, ports in self.game_ports.items():
+                    ports_in_use.update(ports)
+
+                # Only stop listener if no other game uses this port
+                if port not in ports_in_use and port not in self.custom_ports_whitelist:
+                    if port in self.monitored_ports:
+                        if profile.protocol in ("udp", "both"):
+                            await broadcast_manager.stop_listener(port)
+                            self.monitored_ports.discard(port)
+                            print(f"   ✓ Broadcast listener stopped on UDP port {port}")
+                            logger.info(
+                                f"Dynamic: Stopped UDP broadcast listener on port {port}"
+                            )
+                        if profile.protocol in ("tcp", "both"):
+                            await broadcast_manager.stop_listener(port)
+                            self.monitored_ports.discard(port)
+                            print(f"   ✓ Broadcast listener stopped on TCP port {port}")
+                            logger.info(
+                                f"Dynamic: Stopped TCP broadcast listener on port {port}"
+                            )
+                else:
+                    logger.debug(
+                        f"Port {port} still in use by other game(s), keeping listener active"
+                    )
+                    print(
+                        f"   ℹ Port {port} still in use, keeping broadcast listener active"
+                    )
         except Exception as e:
             error_msg = str(e)
             print(f"   ⚠ Failed to disable broadcast: {error_msg}")
+            logger.warning(f"Failed to disable broadcast: {error_msg}")
 
 
 class GameManager:
