@@ -232,12 +232,12 @@ class DiscordIntegration:
             # Run blocking RPC connection in executor
             self.rpc = await loop.run_in_executor(None, connect_rpc)
             self.rpc_connected = True
-            print("✓ Discord Rich Presence connected")
+            logger.info("Discord Rich Presence connected")
         except ImportError:
-            print("ℹ Discord Rich Presence not available (install pypresence)")
+            logger.info("Discord Rich Presence not available (install pypresence)")
         except Exception as e:
             error_msg = str(e)
-            print(f"⚠ Discord Rich Presence failed: {error_msg}")
+            logger.warning(f"Discord Rich Presence failed: {error_msg}")
 
     async def _connect_bot(self):
         """Connect Discord bot for online presence"""
@@ -252,7 +252,7 @@ class DiscordIntegration:
             channel_id = await db.get_setting("discord_channel_id", "")
 
             if not bot_token:
-                print("ℹ Discord bot not configured (set bot token in settings)")
+                logger.info("Discord bot not configured (set bot token in settings)")
                 return
 
             # Create bot with minimal intents
@@ -268,31 +268,31 @@ class DiscordIntegration:
             async def on_ready():
                 """Bot connected successfully"""
                 self.bot_connected = True
-                print(f"✓ Discord bot connected as {self.bot.user}")
+                logger.info(f"Discord bot connected as {self.bot.user}")
 
                 # Send startup message if channel configured
                 if self.bot_channel_id:
                     try:
                         channel = self.bot.get_channel(self.bot_channel_id)
                         if channel:
-                            await channel.send("🎮 LANrage bot is now online!")
+                            await channel.send("LANrage bot is now online!")
                     except Exception as e:
-                        print(f"⚠ Failed to send bot startup message: {e}")
+                        logger.warning(f"Failed to send bot startup message: {e}")
 
             @self.bot.event
             async def on_disconnect():
                 """Bot disconnected"""
                 self.bot_connected = False
-                print("⚠ Discord bot disconnected")
+                logger.warning("Discord bot disconnected")
 
             # Start bot in background task
             self.bot_task = asyncio.create_task(self._run_bot(bot_token))
 
         except ImportError:
-            print("ℹ Discord bot not available (install discord.py)")
+            logger.info("Discord bot not available (install discord.py)")
         except Exception as e:
             error_msg = str(e)
-            print(f"⚠ Discord bot connection failed: {error_msg}")
+            logger.warning(f"Discord bot connection failed: {error_msg}")
 
     async def _run_bot(self, token: str):
         """Run Discord bot in background"""
@@ -300,7 +300,7 @@ class DiscordIntegration:
             await self.bot.start(token)
         except Exception as e:
             error_msg = str(e)
-            print(f"⚠ Discord bot error: {error_msg}")
+            logger.error(f"Discord bot error: {error_msg}")
             self.bot_connected = False
 
     def set_webhook(self, webhook_url: str):
@@ -310,7 +310,7 @@ class DiscordIntegration:
             webhook_url: Discord webhook URL from channel settings
         """
         self.webhook_url = webhook_url
-        print("✓ Discord webhook configured")
+        logger.info("Discord webhook configured")
 
     def set_party_invite(self, invite_url: str):
         """Set Discord server/channel invite URL
@@ -319,7 +319,7 @@ class DiscordIntegration:
             invite_url: Discord invite link (e.g., https://discord.gg/abc123)
         """
         self.party_invite_url = invite_url
-        print(f"✓ Discord party invite set: {invite_url}")
+        logger.info(f"Discord party invite set: {invite_url}")
 
     async def send_notification(self, title: str, message: str, color: int = 0x667EEA):
         """Queue notification for batched sending to Discord webhook

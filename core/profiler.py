@@ -182,7 +182,7 @@ class PerformanceProfiler:
 
         # System stats
         sys_stats = self.get_system_stats()
-        logger.info("📊 System Resources:")
+        logger.info("System Resources:")
         logger.info(f"  CPU: {sys_stats['cpu_percent']:.1f}%")
         logger.info(
             f"  Memory: {sys_stats['memory_mb']:.1f} MB ({sys_stats['memory_percent']:.1f}%)"
@@ -194,7 +194,7 @@ class PerformanceProfiler:
         # Hotspots
         hotspots = self.get_hotspots(top_n)
         if hotspots:
-            logger.info(f"🔥 Top {len(hotspots)} Hotspots (by total time):")
+            logger.info(f"Top {len(hotspots)} Hotspots (by total time):")
             for i, (func_name, stats) in enumerate(hotspots, 1):
                 logger.info(f"  {i}. {func_name}")
                 logger.info(f"     Calls: {stats['calls']}")
@@ -203,12 +203,12 @@ class PerformanceProfiler:
                 logger.info(f"     Min: {stats['min_time']*1000:.2f}ms")
                 logger.info(f"     Max: {stats['max_time']*1000:.2f}ms")
                 if stats["errors"] > 0:
-                    logger.warning(f"     ⚠️  Errors: {stats['errors']}")
+                    logger.warning(f"     Errors: {stats['errors']}")
 
         # Slow functions
         slow_funcs = self.get_slow_functions(threshold_ms=10.0)
         if slow_funcs:
-            logger.warning("🐌 Slow Functions (avg > 10ms):")
+            logger.warning("Slow Functions (avg > 10ms):")
             for func_name, stats in slow_funcs:
                 logger.warning(f"  {func_name}: {stats['avg_time']*1000:.2f}ms avg")
 
@@ -217,7 +217,7 @@ class PerformanceProfiler:
         total_time = sum(s["total_time"] for s in self.function_stats.values())
         total_errors = sum(s["errors"] for s in self.function_stats.values())
 
-        logger.info("📈 Summary:")
+        logger.info("Summary:")
         logger.info(f"  Total function calls: {total_calls}")
         logger.info(f"  Total profiled time: {total_time*1000:.2f}ms")
         logger.info(f"  Total errors: {total_errors}")
