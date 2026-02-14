@@ -1,7 +1,5 @@
 """Configuration management - Database-first approach"""
 
-import logging
-
 # import os  # Removed: Environment variable loading replaced by database-first approach
 from pathlib import Path
 from typing import Literal
@@ -9,10 +7,11 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from .exceptions import ConfigError
+from .logging_config import get_logger, timing_decorator
 
 # from .exceptions import DatabaseConfigError  # Removed: No longer raised after database-first refactoring
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class Config(BaseModel):
@@ -48,6 +47,7 @@ class Config(BaseModel):
     keys_dir: Path = Field(default_factory=lambda: Path.home() / ".lanrage" / "keys")
 
     @classmethod
+    @timing_decorator(name="config_load")
     async def load(cls) -> "Config":
         """
         Load config from settings database (primary and only source)
@@ -59,6 +59,7 @@ class Config(BaseModel):
             ConfigError: If database cannot be loaded or is not initialized
         """
         try:
+            logger.info("Loading configuration from settings database")
             from core.settings import get_settings_db
 
             db = await get_settings_db()
@@ -66,9 +67,12 @@ class Config(BaseModel):
 
             # Check if database is initialized (has required settings)
             if not settings:
+                logger.error("Settings database is empty - not initialized")
                 raise ConfigError(
                     "Settings database is empty. Please configure LANrage through the WebUI at http://localhost:8666/settings.html"
                 )
+
+            logger.debug(f"Loaded {len(settings)} settings from database")
 
             config = cls(
                 mode=settings.get("mode", "client"),
@@ -90,15 +94,19 @@ class Config(BaseModel):
             config.config_dir.mkdir(parents=True, exist_ok=True)
             config.keys_dir.mkdir(parents=True, exist_ok=True)
 
-            logger.info("Configuration loaded from database")
+            logger.info(
+                f"Configuration loaded successfully (mode: {config.mode}, peer: {config.peer_name})"
+            )
             return config
 
         except ImportError as e:
+            logger.error(f"Settings database module not available: {e}")
             raise ConfigError(
                 f"Settings database module not available: {e}. "
                 "This is a critical error - please reinstall LANrage."
             ) from e
         except Exception as e:
+            logger.error(f"Failed to load configuration: {type(e).__name__}: {e}")
             raise ConfigError(
                 f"Failed to load configuration from database: {type(e).__name__}: {e}. "
                 "Please ensure the database is initialized by running setup.py or accessing the WebUI."
