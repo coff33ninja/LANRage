@@ -18,6 +18,7 @@ FastAPI-based HTTP server with SQLite persistence:
 - **Tables**: parties, peers, relay_servers, auth_tokens
 - **Indexes**: Optimized for party/peer lookups
 - **Cleanup**: Automatic removal of stale data every 60s
+- **Lifecycle**: Modern lifespan context manager for startup/shutdown
 
 ### Client (`core/control_client.py`)
 HTTP client using `httpx` for robust async communication with:

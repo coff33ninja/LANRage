@@ -13,6 +13,7 @@ Uses SQLite database for persistent storage via aiosqlite.
 import asyncio
 import secrets
 import sys
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -26,17 +27,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import Config
 from core.control import PartyInfo, PeerInfo
 from core.settings import get_settings_db
-
-app = FastAPI(title="LANrage Control Plane", version="1.0.0")
-
-# Enable CORS for web clients
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Database path
 DB_PATH = Path.home() / ".lanrage" / "control_plane.db"
@@ -185,6 +175,70 @@ async def verify_token(authorization: str | None = Header(None)) -> str:
             raise HTTPException(401, "Token expired")
 
         return peer_id
+
+
+# Cleanup task
+async def cleanup_task():
+    """Cleanup stale peers, parties, and expired tokens"""
+    while True:
+        await asyncio.sleep(60)  # Run every minute
+
+        now = datetime.now()
+        peer_timeout = timedelta(minutes=5)
+        relay_timeout = timedelta(minutes=10)
+
+        async with aiosqlite.connect(DB_PATH) as db:
+            # Delete stale peers
+            cutoff_time = (now - peer_timeout).isoformat()
+            await db.execute("DELETE FROM peers WHERE last_seen < ?", (cutoff_time,))
+
+            # Delete empty parties
+            await db.execute("""
+                DELETE FROM parties
+                WHERE party_id NOT IN (SELECT DISTINCT party_id FROM peers)
+            """)
+
+            # Delete expired tokens
+            await db.execute(
+                "DELETE FROM auth_tokens WHERE expires_at < ?", (now.isoformat(),)
+            )
+
+            # Delete stale relay servers
+            relay_cutoff = (now - relay_timeout).isoformat()
+            await db.execute(
+                "DELETE FROM relay_servers WHERE last_seen < ?", (relay_cutoff,)
+            )
+
+            await db.commit()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown"""
+    # Startup
+    await init_database()
+    cleanup = asyncio.create_task(cleanup_task())
+    print("✓ Control plane server initialized")
+
+    yield
+
+    # Shutdown
+    cleanup.cancel()
+    with suppress(asyncio.CancelledError):
+        await cleanup
+
+
+# Initialize FastAPI app with lifespan
+app = FastAPI(title="LANrage Control Plane", version="1.0.0", lifespan=lifespan)
+
+# Enable CORS for web clients
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Health check
@@ -626,49 +680,6 @@ async def get_relays_by_region(region: str):
             )
 
     return {"relays": relays}
-
-
-# Cleanup task
-async def cleanup_task():
-    """Cleanup stale peers, parties, and expired tokens"""
-    while True:
-        await asyncio.sleep(60)  # Run every minute
-
-        now = datetime.now()
-        peer_timeout = timedelta(minutes=5)
-        relay_timeout = timedelta(minutes=10)
-
-        async with aiosqlite.connect(DB_PATH) as db:
-            # Delete stale peers
-            cutoff_time = (now - peer_timeout).isoformat()
-            await db.execute("DELETE FROM peers WHERE last_seen < ?", (cutoff_time,))
-
-            # Delete empty parties
-            await db.execute("""
-                DELETE FROM parties
-                WHERE party_id NOT IN (SELECT DISTINCT party_id FROM peers)
-            """)
-
-            # Delete expired tokens
-            await db.execute(
-                "DELETE FROM auth_tokens WHERE expires_at < ?", (now.isoformat(),)
-            )
-
-            # Delete stale relay servers
-            relay_cutoff = (now - relay_timeout).isoformat()
-            await db.execute(
-                "DELETE FROM relay_servers WHERE last_seen < ?", (relay_cutoff,)
-            )
-
-            await db.commit()
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database and start background tasks"""
-    await init_database()
-    asyncio.create_task(cleanup_task())
-    print("✓ Control plane server initialized")
 
 
 async def main():

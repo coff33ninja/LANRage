@@ -55,7 +55,7 @@ class RegisterServerRequest(BaseModel):
     map_name: str | None = Field(None, max_length=100)
     game_mode: str | None = Field(None, max_length=50)
     password_protected: bool = False
-    tags: list[str] | None = Field(None, max_items=10, description="Server tags")
+    tags: list[str] | None = Field(None, max_length=10, description="Server tags")
 
     @field_validator("current_players")
     @classmethod

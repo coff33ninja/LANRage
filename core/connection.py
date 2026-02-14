@@ -142,7 +142,7 @@ class ConnectionManager:
         await self.network.remove_peer(connection.peer_info.public_key)
 
         # Release virtual IP back to pool
-        self._release_virtual_ip(peer_id)
+        await self._release_virtual_ip(peer_id)
 
         # Remove connection record
         del self.connections[peer_id]
