@@ -724,7 +724,7 @@ class GameOptimizer:
             if custom_ports_file.exists():
                 import json
 
-                with open(custom_ports_file, "r") as f:
+                with open(custom_ports_file) as f:
                     data = json.load(f)
                     if isinstance(data, dict) and "ports" in data:
                         self.custom_ports_whitelist = set(data["ports"])
@@ -1246,7 +1246,7 @@ class GameOptimizer:
             # Check if any other active game needs each port
             for port in profile.ports:
                 ports_in_use = set()
-                for other_game_id, ports in self.game_ports.items():
+                for _, ports in self.game_ports.items():
                     ports_in_use.update(ports)
 
                 # Only stop listener if no other game uses this port
