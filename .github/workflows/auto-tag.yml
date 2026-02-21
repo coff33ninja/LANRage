@@ -1,0 +1,87 @@
+name: Auto Tag On Version Bump
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - pyproject.toml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag-on-version-bump:
+    name: Create Tag From pyproject Version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect version change
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_version="$(grep -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')"
+          current_tag="v${current_version}"
+
+          before_sha="${{ github.event.before }}"
+          previous_version=""
+          if [[ -n "${before_sha}" ]] && [[ "${before_sha}" != "0000000000000000000000000000000000000000" ]]; then
+            if git cat-file -e "${before_sha}" 2>/dev/null; then
+              previous_version="$(git show "${before_sha}:pyproject.toml" 2>/dev/null | grep -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' | sed -E 's/version = "([^"]+)"/\1/' || true)"
+            fi
+          fi
+
+          echo "current_version=${current_version}" >> "$GITHUB_OUTPUT"
+          echo "previous_version=${previous_version}" >> "$GITHUB_OUTPUT"
+          echo "current_tag=${current_tag}" >> "$GITHUB_OUTPUT"
+
+          if [[ -n "${previous_version}" ]] && [[ "${previous_version}" == "${current_version}" ]]; then
+            echo "version_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No version bump detected (${current_version})."
+          else
+            echo "version_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version bump detected: ${previous_version:-<none>} -> ${current_version}"
+          fi
+
+      - name: Check if tag already exists
+        id: tag_exists
+        if: steps.detect.outputs.version_changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ steps.detect.outputs.current_tag }}"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${tag} already exists locally."
+            exit 0
+          fi
+          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q "${tag}$"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${tag} already exists on origin."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.detect.outputs.version_changed == 'true' && steps.tag_exists.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ steps.detect.outputs.current_tag }}"
+          version="${{ steps.detect.outputs.current_version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "${tag}" -m "Release ${version}"
+          git push origin "${tag}"
+
+          echo "Created and pushed tag: ${tag}"
