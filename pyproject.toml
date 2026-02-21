@@ -176,3 +176,4 @@ disable = [
 
 [tool.pylint.format]
 max-line-length = 88
+max-module-lines = 2000
