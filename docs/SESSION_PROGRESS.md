@@ -276,7 +276,7 @@ LANrage has progressed from prototype through full production-ready release. All
 
 ### Remaining TODOs
 
-These TODOs still exist in the current codebase and are tracked as **post-phase backlog** items (not contradictions of the completed Phase 0-2 scope above):
+These TODOs still exist in the current codebase and are tracked as **post-phase backlog** items (not in contradiction with the completed Phase 0-2 scope above):
 
 - `core/config.py` near `control_server` default/comment (`# TODO: implement`) — **post-phase backlog**.
 - `core/control.py` near control-plane authentication and WebRTC-style signaling comments (`# TODO: Implement authentication`, `# TODO: Implement signaling for WebRTC-style connection setup`) — **post-phase backlog**.
