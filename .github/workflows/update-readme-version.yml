@@ -32,16 +32,11 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             ver="${GITHUB_REF#refs/tags/v}"
           else
-            ver="$(python - <<'PY'
-import re
-from pathlib import Path
-text = Path("pyproject.toml").read_text(encoding="utf-8")
-match = re.search(r'^version\s*=\s*"([^"]+)"', text, flags=re.MULTILINE)
-if not match:
-    raise SystemExit("version not found in pyproject.toml")
-print(match.group(1))
-PY
-)"
+            ver="$(grep -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')"
+            if [[ -z "${ver}" ]]; then
+              echo "version not found in pyproject.toml"
+              exit 1
+            fi
           fi
           echo "version=${ver}" >> "$GITHUB_OUTPUT"
 
