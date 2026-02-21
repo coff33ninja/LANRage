@@ -235,84 +235,69 @@ All core features implemented, tested, and documented:
 - ✅ Performance optimization (all targets met)
 - ✅ One-click setup (90 seconds)
 
-### Supported Games (Examples)
+<!-- SUPPORTED_GAMES:START -->
+### Supported Games
 
-**Strategy/RTS (4)**:
-- Minecraft Java Edition
-- Terraria
-- Age of Empires II
-- Warcraft III
+- Total profiles detected from `game_profiles/`: **137**
+- Many entries in `game_profiles/custom/` are **community-seeded and untested**.
+- Custom/community entries may be based on publicly available documentation and **Google search results**; validate ports/process names in your environment.
 
-**Survival/Crafting (7)**:
-- Rust
-- ARK: Survival Evolved
+Current profile sources:
+- `custom\additional_games.json`: 25
+- `fps.json`: 10
+- `rpg.json`: 8
+- `coop.json`: 7
+- `custom\call_of_duty.json`: 6
+- `custom\need_for_speed.json`: 6
+- `horror.json`: 6
+- `custom\far_cry.json`: 5
+- `party.json`: 5
+- `racing.json`: 5
+- `sandbox.json`: 5
+- `survival.json`: 5
+- `card_board.json`: 4
+- `fighting.json`: 4
+- `platformer.json`: 4
+- `roguelike.json`: 4
+- `simulation.json`: 4
+- `battle_royale.json`: 3
+- `competitive.json`: 3
+- `extraction.json`: 3
+- `mmo.json`: 3
+- `moba.json`: 3
+- `sports.json`: 3
+- `tower_defense.json`: 3
+- `strategy.json`: 2
+- `custom\example.json`: 1
+
+Sample supported games:
 - 7 Days to Die
-- Satisfactory
-- The Forest
-- Valheim
-- Factorio
-
-**Co-op/Action (6)**:
-- Deep Rock Galactic
-- Risk of Rain 2
-- Payday 2
-- Killing Floor 2
-- Vermintide 2
-- Left 4 Dead 2
-
-**Party/Casual (7)**:
-- Phasmophobia
+- A Way Out
+- ARK: Survival Evolved
+- ASTRONEER
+- Age of Empires II
+- Age of Empires IV
+- American Truck Simulator
 - Among Us
-- Fall Guys
-- Gang Beasts
-- Pummel Party
-- Stardew Valley
-- Don't Starve Together
-
-**Competitive (3)**:
-- Counter-Strike: Global Offensive
-- Rocket League
-- Brawlhalla
-
-**FPS (6)**:
-- Valorant
 - Apex Legends
-- Call of Duty: Warzone
-- Battlefield Series
-- Halo Infinite
-- Overwatch 2
-
-**Racing (5)**:
-- Forza Horizon Series
-- Gran Turismo 7
+- Arma 3
 - Assetto Corsa
-- iRacing
-- Trackmania
-
-**RPG (5)**:
-- Diablo IV
-- Path of Exile
-- Divinity: Original Sin 2
 - Baldur's Gate 3
-- Monster Hunter World
+- BattleBit Remastered
+- Battlefield Series
+- BeamNG.drive
+- Bloons TD 6
+- Brawlhalla
+- Call of Duty 4: Modern Warfare
+- Call of Duty: Black Ops
+- Call of Duty: Black Ops II
+- Call of Duty: Modern Warfare 2
+- Call of Duty: Modern Warfare 3
+- Call of Duty: Warzone
+- Call of Duty: World at War
 
-**MOBA (3)**:
-- League of Legends
-- Dota 2
-- Smite
-
-**Sports (3)**:
-- EA Sports FC (FIFA)
-- NBA 2K Series
-- Madden NFL
-
-**Horror (4)**:
-- Dead by Daylight
-- The Forest
-- Lethal Company
-- Content Warning
-
-Plus support for custom game profiles via JSON!
+If a game fails detection, create or adjust a custom profile in `game_profiles/custom/`.
+<!-- SUPPORTED_GAMES:END -->
 
 See [docs/TESTING.md](docs/TESTING.md) for test results.
 
