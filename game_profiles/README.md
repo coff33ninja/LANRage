@@ -44,7 +44,14 @@ Each JSON file contains game profiles with the following structure:
     "description": "Game description",
     "low_latency": true,
     "high_bandwidth": false,
-    "packet_priority": "high"
+    "packet_priority": "high",
+    "mod_support": {
+      "mode": "managed",
+      "native_provider": null,
+      "verify_method": "id_list",
+      "required_artifacts": [],
+      "notes": ""
+    }
   }
 }
 ```
@@ -63,6 +70,11 @@ Each JSON file contains game profiles with the following structure:
 - **low_latency**: Whether game requires low latency (FPS, racing, etc.)
 - **high_bandwidth**: Whether game uses high bandwidth (streaming, large worlds)
 - **packet_priority**: "low", "medium", or "high" for QoS
+- **mod_support.mode**: "native", "managed", or "hybrid"
+- **mod_support.native_provider**: Optional source (e.g., "steam_workshop", "fastdl", "server_redirect")
+- **mod_support.verify_method**: "id_list", "hash_list", or "none"
+- **mod_support.required_artifacts**: Required IDs/hashes that should exist before launch
+- **mod_support.notes**: Human-readable guidance for preflight checks
 
 ## Adding Custom Games
 

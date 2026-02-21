@@ -25,7 +25,14 @@
     "description": "Far Cry 2 - LAN multiplayer",
     "low_latency": true,
     "high_bandwidth": true,
-    "packet_priority": "high"
+    "packet_priority": "high",
+    "mod_support": {
+      "mode": "native",
+      "native_provider": "server_redirect",
+      "verify_method": "id_list",
+      "required_artifacts": [],
+      "notes": "Use game-native content delivery where available."
+    }
   },
   "farcry3": {
     "name": "Far Cry 3",

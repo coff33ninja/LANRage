@@ -39,7 +39,14 @@
     "description": "Call of Duty: Modern Warfare 2 - LAN multiplayer",
     "low_latency": true,
     "high_bandwidth": true,
-    "packet_priority": "high"
+    "packet_priority": "high",
+    "mod_support": {
+      "mode": "native",
+      "native_provider": "fastdl",
+      "verify_method": "id_list",
+      "required_artifacts": [],
+      "notes": "Prefer the game's built-in redirect/fast download flow for maps/mods."
+    }
   },
   "codbo": {
     "name": "Call of Duty: Black Ops",

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-02-21
+
+### Added
+- **Game Mod Sync Strategy Support** (`core/games.py`)
+  - Added per-game `mod_support` strategy with `native`, `managed`, and `hybrid` modes.
+  - Added `GameManager.evaluate_mod_compatibility()` preflight to report missing artifacts and recommended sync path.
+  - Added `ModSupport` model with provider metadata (`steam_workshop`, `fastdl`, `server_redirect`, etc.) and verification mode.
+- **Profile Mod Strategy Examples**
+  - Added native mod support metadata to `codmw2` in `game_profiles/custom/call_of_duty.json`.
+  - Added native mod support metadata to `farcry2` in `game_profiles/custom/far_cry.json`.
+- **Test Coverage**
+  - Added game tests validating native/hybrid mod strategy behavior and compatibility evaluation.
+
+### Changed
+- **Game Profile Serialization**
+  - `mod_support` now loads from JSON profiles and persists when saving custom profiles.
+- **Game Profiles Documentation**
+  - Updated `game_profiles/README.md` with `mod_support` schema and field descriptions.
+
 ### Added
 
 #### Phase 1: Critical Performance Fixes (COMPLETE)

@@ -5,7 +5,7 @@ import json
 import platform
 import socket
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import psutil
@@ -15,6 +15,32 @@ from .logging_config import get_logger, set_context, timing_decorator
 from .nat import NATType
 
 logger = get_logger(__name__)
+
+SUPPORTED_MOD_SYNC_MODES = {"native", "managed", "hybrid"}
+SUPPORTED_MOD_VERIFY_METHODS = {"id_list", "hash_list", "none"}
+
+
+@dataclass
+class ModSupport:
+    """Mod sync strategy for a game profile."""
+
+    mode: str = "managed"  # native | managed | hybrid
+    native_provider: str | None = None
+    verify_method: str = "id_list"  # id_list | hash_list | none
+    required_artifacts: list[str] = field(default_factory=list)
+    notes: str = ""
+
+    def normalized_required_artifacts(self) -> set[str]:
+        """Normalize required artifact identifiers for comparison."""
+        return {
+            artifact.strip().lower()
+            for artifact in self.required_artifacts
+            if artifact and artifact.strip()
+        }
+
+    def allows_lanrage_sync(self) -> bool:
+        """Whether LANrage-managed sync is allowed for this game."""
+        return self.mode in {"managed", "hybrid"}
 
 
 def calculate_adaptive_keepalive(
@@ -68,6 +94,7 @@ class GameProfile:
     low_latency: bool = True
     high_bandwidth: bool = False
     packet_priority: str = "high"  # "low", "medium", "high"
+    mod_support: ModSupport = field(default_factory=ModSupport)
 
 
 @dataclass
@@ -89,6 +116,61 @@ class DetectionResult:
     def __lt__(self, other):
         """Allow sorting by confidence (higher is better)"""
         return self.confidence > other.confidence
+
+
+def _parse_mod_support(profile_data: dict) -> ModSupport:
+    """Parse and validate optional mod support settings from profile JSON."""
+    raw = profile_data.get("mod_support")
+    if raw is None:
+        return ModSupport()
+    if not isinstance(raw, dict):
+        raise TypeError("mod_support must be a dictionary")
+
+    mode = raw.get("mode", "managed")
+    if mode not in SUPPORTED_MOD_SYNC_MODES:
+        raise ValueError(
+            f"mod_support.mode must be one of {sorted(SUPPORTED_MOD_SYNC_MODES)}"
+        )
+
+    verify_method = raw.get("verify_method", "id_list")
+    if verify_method not in SUPPORTED_MOD_VERIFY_METHODS:
+        raise ValueError(
+            "mod_support.verify_method must be one of "
+            f"{sorted(SUPPORTED_MOD_VERIFY_METHODS)}"
+        )
+
+    native_provider = raw.get("native_provider")
+    if native_provider is not None and not isinstance(native_provider, str):
+        raise TypeError("mod_support.native_provider must be a string or null")
+
+    required_artifacts = raw.get("required_artifacts", [])
+    if not isinstance(required_artifacts, list) or not all(
+        isinstance(item, str) for item in required_artifacts
+    ):
+        raise TypeError("mod_support.required_artifacts must be a list of strings")
+
+    notes = raw.get("notes", "")
+    if not isinstance(notes, str):
+        raise TypeError("mod_support.notes must be a string")
+
+    return ModSupport(
+        mode=mode,
+        native_provider=native_provider,
+        verify_method=verify_method,
+        required_artifacts=required_artifacts,
+        notes=notes,
+    )
+
+
+def _serialize_mod_support(mod_support: ModSupport) -> dict:
+    """Convert ModSupport dataclass to JSON-serializable dictionary."""
+    return {
+        "mode": mod_support.mode,
+        "native_provider": mod_support.native_provider,
+        "verify_method": mod_support.verify_method,
+        "required_artifacts": mod_support.required_artifacts,
+        "notes": mod_support.notes,
+    }
 
 
 async def load_game_profiles() -> dict[str, GameProfile]:
@@ -143,9 +225,10 @@ async def load_game_profiles() -> dict[str, GameProfile]:
                         low_latency=profile_data.get("low_latency", False),
                         high_bandwidth=profile_data.get("high_bandwidth", False),
                         packet_priority=profile_data.get("packet_priority", "medium"),
+                        mod_support=_parse_mod_support(profile_data),
                     )
                     profiles[game_id] = profile
-                except (KeyError, TypeError) as e:
+                except (KeyError, TypeError, ValueError) as e:
                     print(
                         f"Warning: Invalid profile '{game_id}' in {json_file.name}: {e}"
                     )
@@ -323,6 +406,7 @@ class GameDetector:
                             packet_priority=profile_data.get(
                                 "packet_priority", "medium"
                             ),
+                            mod_support=_parse_mod_support(profile_data),
                         )
 
                         # Add to GAME_PROFILES
@@ -331,7 +415,7 @@ class GameDetector:
                         logger.debug(
                             f"Loaded custom profile: {game_id} - {profile.name}"
                         )
-                    except (KeyError, TypeError) as e:
+                    except (KeyError, TypeError, ValueError) as e:
                         error_msg = str(e)
                         logger.warning(
                             f"Invalid profile data for {game_id}: {error_msg}"
@@ -679,6 +763,7 @@ class GameDetector:
                 "low_latency": profile.low_latency,
                 "high_bandwidth": profile.high_bandwidth,
                 "packet_priority": profile.packet_priority,
+                "mod_support": _serialize_mod_support(profile.mod_support),
             }
 
             # Save to file
@@ -1342,6 +1427,91 @@ class GameManager:
             await self.optimizer.apply_profile(
                 profile, self.network_manager, self.broadcast_manager
             )
+
+    def evaluate_mod_compatibility(
+        self, game_id: str, local_artifacts: list[str] | set[str] | None = None
+    ) -> dict:
+        """
+        Evaluate mod readiness for a game based on profile strategy.
+
+        For native-support games, LANrage does not transfer mods and instead
+        surfaces missing artifacts so users can rely on in-game downloading.
+        """
+        profile = self.detector.get_profile(game_id)
+        if not profile:
+            return {
+                "game_id": game_id,
+                "status": "unknown_game",
+                "ready": False,
+                "recommended_action": "Game profile not found.",
+            }
+
+        mod_support = profile.mod_support
+        required = mod_support.normalized_required_artifacts()
+        available = {
+            artifact.strip().lower()
+            for artifact in (local_artifacts or [])
+            if artifact and artifact.strip()
+        }
+        missing = sorted(required - available)
+
+        if mod_support.mode == "native":
+            ready = not missing
+            return {
+                "game_id": game_id,
+                "game_name": profile.name,
+                "mode": mod_support.mode,
+                "native_provider": mod_support.native_provider,
+                "verify_method": mod_support.verify_method,
+                "required_artifacts": sorted(required),
+                "missing_artifacts": missing,
+                "native_sync_required": not ready,
+                "lanrage_sync_enabled": False,
+                "ready": ready,
+                "recommended_action": (
+                    "Use the game's built-in mod downloader/server redirect."
+                    if not ready
+                    else "Mods verified. Launch game."
+                ),
+            }
+
+        if mod_support.mode == "hybrid":
+            return {
+                "game_id": game_id,
+                "game_name": profile.name,
+                "mode": mod_support.mode,
+                "native_provider": mod_support.native_provider,
+                "verify_method": mod_support.verify_method,
+                "required_artifacts": sorted(required),
+                "missing_artifacts": missing,
+                "native_sync_required": bool(missing),
+                "lanrage_sync_enabled": True,
+                "ready": not missing,
+                "recommended_action": (
+                    "Resolve missing native artifacts first, then use LANrage sync for extras."
+                    if missing
+                    else "Native artifacts verified. LANrage-managed extras are allowed."
+                ),
+            }
+
+        # Default managed mode
+        return {
+            "game_id": game_id,
+            "game_name": profile.name,
+            "mode": mod_support.mode,
+            "native_provider": mod_support.native_provider,
+            "verify_method": mod_support.verify_method,
+            "required_artifacts": sorted(required),
+            "missing_artifacts": missing,
+            "native_sync_required": False,
+            "lanrage_sync_enabled": True,
+            "ready": not missing,
+            "recommended_action": (
+                "Use LANrage managed mod sync."
+                if missing
+                else "Mods verified. Launch game."
+            ),
+        }
 
     def list_supported_games(self) -> list[GameProfile]:
         """List all supported games"""

@@ -136,6 +136,40 @@ class TestGameProfiles:
             ), f"{game_id}: keepalive must be integer"
             assert isinstance(game_data["mtu"], int), f"{game_id}: mtu must be integer"
 
+            # Optional mod support fields
+            if "mod_support" in game_data:
+                mod_support = game_data["mod_support"]
+                assert isinstance(
+                    mod_support, dict
+                ), f"{game_id}: mod_support must be object"
+                if "mode" in mod_support:
+                    assert isinstance(
+                        mod_support["mode"], str
+                    ), f"{game_id}: mod_support.mode must be string"
+                if (
+                    "native_provider" in mod_support
+                    and mod_support["native_provider"] is not None
+                ):
+                    assert isinstance(
+                        mod_support["native_provider"], str
+                    ), f"{game_id}: mod_support.native_provider must be string or null"
+                if "verify_method" in mod_support:
+                    assert isinstance(
+                        mod_support["verify_method"], str
+                    ), f"{game_id}: mod_support.verify_method must be string"
+                if "required_artifacts" in mod_support:
+                    assert isinstance(
+                        mod_support["required_artifacts"], list
+                    ), f"{game_id}: mod_support.required_artifacts must be list"
+                    assert all(
+                        isinstance(item, str)
+                        for item in mod_support["required_artifacts"]
+                    ), f"{game_id}: mod_support.required_artifacts entries must be strings"
+                if "notes" in mod_support:
+                    assert isinstance(
+                        mod_support["notes"], str
+                    ), f"{game_id}: mod_support.notes must be string"
+
     @pytest.mark.parametrize("profile_path", get_all_game_profiles())
     def test_profile_field_values(self, profile_path):
         """Test that fields have valid values."""
@@ -175,6 +209,26 @@ class TestGameProfiles:
             assert (
                 1280 <= game_data["mtu"] <= 1500
             ), f"{game_id}: MTU {game_data['mtu']} out of range (1280-1500)"
+
+            # Optional mod support validation
+            if "mod_support" in game_data:
+                mod_support = game_data["mod_support"]
+                mode = mod_support.get("mode", "managed")
+                assert mode in [
+                    "native",
+                    "managed",
+                    "hybrid",
+                ], f"{game_id}: mod_support.mode must be 'native', 'managed', or 'hybrid'"
+
+                verify_method = mod_support.get("verify_method", "id_list")
+                assert verify_method in [
+                    "id_list",
+                    "hash_list",
+                    "none",
+                ], (
+                    f"{game_id}: mod_support.verify_method must be "
+                    "'id_list', 'hash_list', or 'none'"
+                )
 
     @pytest.mark.parametrize("profile_path", get_all_game_profiles())
     def test_no_duplicate_game_ids(self, profile_path):

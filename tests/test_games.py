@@ -8,7 +8,9 @@ from core.config import Config
 from core.games import (
     GAME_PROFILES,
     GameDetector,
+    GameManager,
     GameProfile,
+    ModSupport,
     initialize_game_profiles,
 )
 
@@ -123,6 +125,81 @@ def test_game_profile_properties():
     assert profile.low_latency is True
     assert profile.high_bandwidth is False
     assert profile.packet_priority == "high"
+    assert profile.mod_support.mode == "managed"
+
+
+def test_mod_sync_strategy_native_requires_native_download():
+    """Native mod strategy should require in-game/native sync when artifacts are missing."""
+    manager = GameManager(Config())
+    game_id = "test_native_mods"
+
+    GAME_PROFILES[game_id] = GameProfile(
+        name="Test Native Mods",
+        executable="test_native.exe",
+        ports=[12345],
+        protocol="udp",
+        broadcast=False,
+        multicast=False,
+        keepalive=20,
+        mtu=1420,
+        description="Native mods test profile",
+        mod_support=ModSupport(
+            mode="native",
+            native_provider="fastdl",
+            verify_method="id_list",
+            required_artifacts=["pak0", "pak1"],
+        ),
+    )
+
+    try:
+        result = manager.evaluate_mod_compatibility(game_id, local_artifacts=["pak0"])
+        assert result["mode"] == "native"
+        assert result["native_sync_required"] is True
+        assert result["lanrage_sync_enabled"] is False
+        assert result["missing_artifacts"] == ["pak1"]
+    finally:
+        del GAME_PROFILES[game_id]
+
+
+def test_mod_sync_strategy_hybrid_allows_lanrage_after_native_check():
+    """Hybrid strategy should expose missing native artifacts and allow LANrage extras."""
+    manager = GameManager(Config())
+    game_id = "test_hybrid_mods"
+
+    GAME_PROFILES[game_id] = GameProfile(
+        name="Test Hybrid Mods",
+        executable="test_hybrid.exe",
+        ports=[12345],
+        protocol="udp",
+        broadcast=False,
+        multicast=False,
+        keepalive=20,
+        mtu=1420,
+        description="Hybrid mods test profile",
+        mod_support=ModSupport(
+            mode="hybrid",
+            native_provider="steam_workshop",
+            verify_method="id_list",
+            required_artifacts=["workshop_101", "workshop_202"],
+        ),
+    )
+
+    try:
+        missing_result = manager.evaluate_mod_compatibility(
+            game_id, local_artifacts=["workshop_101"]
+        )
+        assert missing_result["mode"] == "hybrid"
+        assert missing_result["native_sync_required"] is True
+        assert missing_result["lanrage_sync_enabled"] is True
+        assert missing_result["missing_artifacts"] == ["workshop_202"]
+
+        ready_result = manager.evaluate_mod_compatibility(
+            game_id, local_artifacts=["workshop_101", "workshop_202"]
+        )
+        assert ready_result["ready"] is True
+        assert ready_result["missing_artifacts"] == []
+    finally:
+        del GAME_PROFILES[game_id]
 
 
 def test_get_optimization_settings():
