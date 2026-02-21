@@ -276,6 +276,7 @@ Sample supported games:
 - Call of Duty: World at War
 
 If a game fails detection, create or adjust a custom profile in `game_profiles/custom/`.
+Full generated list: [`docs/SUPPORTED_GAMES.md`](docs/SUPPORTED_GAMES.md).
 <!-- SUPPORTED_GAMES:END -->
 
 See [docs/TESTING.md](docs/TESTING.md) for test results.
