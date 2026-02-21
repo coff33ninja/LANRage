@@ -1,18 +1,18 @@
 # LANrage Quick Start Guide
 
-Get LANrage v1.0 running in under 5 minutes.
+Get LANrage v1.2.5 running in under 5 minutes.
 
 ## What You're Getting
 
-LANrage v1.0 is production-ready with:
+LANrage v1.2.5 is production-ready with:
 - ✅ Direct P2P connections (<5ms overhead)
 - ✅ Smart relay fallback (<15ms overhead)
-- ✅ 27 game profiles with auto-optimization
+- ✅ 21 built-in game profiles with auto-optimization (+ custom profiles)
 - ✅ Broadcast/multicast emulation
 - ✅ Discord integration
 - ✅ Game server browser
 - ✅ Real-time statistics
-- ✅ 88% test coverage, 100% pass rate
+- ✅ Latest full suite passing (463/463)
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ### 3. Clone and Setup
 
 ```bash
-git clone https://github.com/yourusername/lanrage.git
+git clone https://github.com/coff33ninja/LANRage.git
 cd lanrage
 python setup.py
 ```
@@ -52,7 +52,7 @@ python setup.py
 The setup script will:
 - Create `.venv` virtual environment
 - Install all dependencies via uv
-- Create `.env` configuration file
+- Initialize SQLite settings database
 - Generate WireGuard keys
 
 ### 4. Activate Virtual Environment
@@ -77,7 +77,7 @@ python lanrage.py
 
 Expected output:
 ```
-🔥 LANrage v1.0 - If it runs on LAN, it runs on LANrage
+🔥 LANrage - If it runs on LAN, it runs on LANrage
 ============================================================
 ✓ Settings database initialized
 ✓ Config loaded (mode: client)
@@ -90,7 +90,7 @@ Expected output:
 ✓ Metrics collector started
 ✓ API server running on http://127.0.0.1:8666
 ============================================================
-LANrage v1.0 - Production Ready
+LANrage v1.2.5 - Production Ready
 ```
 
 ### Access the Web UI
@@ -143,23 +143,11 @@ Configure:
 
 Settings are stored in SQLite database at `~/.lanrage/settings.db`
 
-### Environment Variables
+### Configuration Storage
 
-Alternatively, edit `.env` file:
-```bash
-# Mode: client or relay
-LANRAGE_MODE=client
-
-# API settings
-LANRAGE_API_HOST=127.0.0.1
-LANRAGE_API_PORT=8666
-
-# Peer name
-LANRAGE_PEER_NAME=Player
-
-# Relay settings (for relay mode)
-LANRAGE_RELAY_IP=your.public.ip
-```
+LANrage uses a database-first configuration model. Manage settings through:
+- Web UI: `http://localhost:8666/settings.html`
+- SQLite DB: `~/.lanrage/config.db`
 
 ## Troubleshooting
 
@@ -176,10 +164,7 @@ Install WireGuard:
 
 ### "Port 8666 already in use"
 
-Change port in settings UI or `.env`:
-```
-LANRAGE_API_PORT=8667
-```
+Change port in Settings UI (`/settings.html`).
 
 ### Friends can't join party
 

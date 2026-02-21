@@ -1,11 +1,14 @@
 # Testing LANrage
 
-## v1.0 Testing Status
+## Current Testing Status
 
-**Test Coverage**: 88% (exceeds 85% target)  
-**Total Tests**: 62 automated tests  
-**Pass Rate**: 100% (62/62 passing)  
-**Performance**: All targets met and exceeded
+**Latest Full-Suite Baseline (2026-02-21)**  
+- **Total Tests**: 463 automated tests  
+- **Pass Rate**: 100% (463/463 passing)  
+- **Coverage**: 51.34% (`--cov=core --cov=api --cov=servers`)  
+- **Warnings**: 0  
+
+> Historical v1.0 scenario content remains below for reference.
 
 ### Test Suites (All Passing ✅)
 

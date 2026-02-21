@@ -1,5 +1,8 @@
 # LANrage Roadmap
 
+> Historical roadmap snapshot from the v1.0 planning cycle.
+> For active implementation status, see `IMPLEMENTATION_PLAN.md`.
+
 ## ✅ Phase 1: Production Ready v1.0 (COMPLETE)
 **Goal**: Fully functional gaming VPN with all core features
 

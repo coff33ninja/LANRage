@@ -7,7 +7,7 @@
   
   [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](CHANGELOG.md)
+  [![Version](https://img.shields.io/badge/version-1.2.5-brightgreen.svg)](CHANGELOG.md)
   [![CI Status](https://img.shields.io/github/actions/workflow/status/coff33ninja/LANRage/ci.yml?branch=main&label=CI)](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml)
   [![Coverage](https://img.shields.io/badge/coverage-see%20CI%20artifact-blue.svg)](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml)
   [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -61,7 +61,7 @@ LANrage creates a virtual LAN over the internet with:
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/lanrage.git
+git clone https://github.com/coff33ninja/LANRage.git
 cd lanrage
 
 # Run setup
@@ -150,7 +150,7 @@ All core features implemented, tested, and documented:
 - NAT traversal (STUN + hole punching)
 - Direct P2P and relay fallback
 - Control plane with SQLite persistence
-- Game detection and optimization (27 games)
+- Game detection and optimization (21 built-in profiles + custom profiles)
 - Broadcast/multicast emulation
 - Game server browser
 - Discord integration
@@ -209,9 +209,9 @@ All core features implemented, tested, and documented:
 
 ## Status
 
-✅ **v1.0 - PRODUCTION READY** (January 29, 2026)
+✅ **v1.2.5 - PRODUCTION READY** (January 31, 2026)
 
-**Version**: 1.0  
+**Version**: 1.2.5  
 **Test Coverage & Pass Rate**: See [docs/TESTING.md](docs/TESTING.md) and the latest [CI run](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml).  
 **Performance**: All targets met and exceeded  
 **Documentation**: 1650+ lines, comprehensive  
@@ -223,7 +223,7 @@ All core features implemented, tested, and documented:
 - ✅ Direct P2P connections (<5ms overhead)
 - ✅ Smart relay fallback (<15ms overhead)
 - ✅ Broadcast emulation for LAN games
-- ✅ Game detection & optimization (27 games)
+- ✅ Game detection & optimization (21 built-in profiles + custom profiles)
 - ✅ Relay server with intelligent selection
 - ✅ Multi-peer mesh networking (up to 255)
 - ✅ Auto reconnection & relay switching
@@ -235,7 +235,7 @@ All core features implemented, tested, and documented:
 - ✅ Performance optimization (all targets met)
 - ✅ One-click setup (90 seconds)
 
-### Supported Games (112+)
+### Supported Games (Examples)
 
 **Strategy/RTS (4)**:
 - Minecraft Java Edition

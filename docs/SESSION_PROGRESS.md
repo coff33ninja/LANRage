@@ -1,5 +1,8 @@
 # LANrage - Session Progress & Consolidation Report
 
+> Historical snapshot: this file captures v1.0-era progress details.
+> For current implementation/test status, see `IMPLEMENTATION_PLAN.md`.
+
 **Date**: January 29, 2026  
 **Session Duration**: Full Development Cycle  
 **Status**: ✅ PRODUCTION READY - v1.0 Complete
@@ -436,7 +439,7 @@ These TODOs still exist in the current codebase and are tracked as **post-phase 
 ### Quick Start
 ```bash
 # 1. Clone repository
-git clone https://github.com/yourusername/lanrage.git
+git clone https://github.com/coff33ninja/LANRage.git
 cd lanrage
 
 # 2. Run setup (Windows/Linux)
@@ -477,7 +480,7 @@ python lanrage.py
 ### Support
 - Email: support@lanrage.dev
 - Docs: https://docs.lanrage.dev
-- GitHub: https://github.com/yourusername/lanrage
+- GitHub: https://github.com/coff33ninja/LANRage
 
 ---
 

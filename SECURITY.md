@@ -6,8 +6,8 @@ We take security seriously. The following versions of LANrage are currently supp
 
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 1.0.x   | :white_check_mark: | Current stable release |
-| < 1.0   | :x:                | Development versions (not supported) |
+| 1.2.x   | :white_check_mark: | Current stable release |
+| < 1.2   | :x:                | Older versions (not supported) |
 
 ## Security Features
 
@@ -113,8 +113,8 @@ We use the following severity classifications:
 
 ### Current Limitations
 
-1. **Local Control Plane** - v1.0 uses local-only peer discovery
-   - **Mitigation**: Remote control plane planned for v1.1 with authentication
+1. **Local/Hybrid Control Plane Limits** - some remote orchestration features are still evolving
+   - **Mitigation**: Continue rollout of Phase 6 web-agent orchestration and auth hardening
    
 2. **No Rate Limiting** - API endpoints lack rate limiting
    - **Mitigation**: Planned for v1.1, currently localhost-only reduces risk
@@ -139,8 +139,8 @@ The following are **not** considered security vulnerabilities:
 
 Security updates will be released as:
 
-- **Patch Releases** - Critical/High severity (e.g., 1.0.1)
-- **Minor Releases** - Medium severity (e.g., 1.1.0)
+- **Patch Releases** - Critical/High severity (e.g., 1.2.6)
+- **Minor Releases** - Medium severity (e.g., 1.3.0)
 - **Announcements** - Posted on GitHub Releases and README
 
 Subscribe to GitHub releases to receive security notifications.
@@ -173,5 +173,5 @@ This security policy is part of the LANrage project and is licensed under the MI
 
 ---
 
-**Last Updated**: January 30, 2026  
-**Version**: 1.0
+**Last Updated**: February 21, 2026  
+**Version**: 1.2.5

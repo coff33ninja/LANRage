@@ -2,9 +2,9 @@
 
 ## Current Status
 
-LANrage v1.0 is **production ready** and now open for contributions! 🎉
+LANrage v1.2.5 is **production ready** and open for contributions.
 
-**Phase 1 Complete**: All core features implemented, tested (88% coverage), and documented (1650+ lines).
+**Current baseline**: 463/463 tests passing in latest full-suite run.
 
 We welcome contributions for:
 - 🐛 Bug fixes
@@ -22,7 +22,7 @@ We welcome contributions for:
 
 ```bash
 # Fork and clone
-git clone https://github.com/YOUR_USERNAME/lanrage.git
+git clone https://github.com/YOUR_USERNAME/LANRage.git
 cd lanrage
 
 # Run setup
@@ -136,7 +136,7 @@ For new features:
 **Title**: Clear, specific description
 
 **Environment**:
-- LANrage version: 1.0.0
+- LANrage version: 1.2.5
 - OS: Windows 11 / Ubuntu 22.04
 - Python: 3.12.1
 - Game: Minecraft Java 1.20.4
@@ -576,5 +576,5 @@ Now go play some games! 🎮
 
 ---
 
-**LANrage v1.0 - Production Ready**  
+**LANrage v1.2.5 - Production Ready**  
 *If it runs on LAN, it runs on LANrage.*

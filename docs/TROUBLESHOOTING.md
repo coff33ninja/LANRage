@@ -895,7 +895,7 @@ Include:
 
 If you've tried everything:
 
-1. **Create GitHub Issue**: https://github.com/yourusername/lanrage/issues
+1. **Create GitHub Issue**: https://github.com/coff33ninja/LANRage/issues
 2. **Include diagnostic info**
 3. **Be patient**: Community volunteers will help
 4. **Consider workarounds**: Local mode, different network, etc.

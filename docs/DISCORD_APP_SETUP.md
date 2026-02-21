@@ -166,7 +166,7 @@ Once LANrage has an official Discord app, this guide will be updated with the of
 ## Support
 
 - Discord Developer Docs: https://discord.com/developers/docs/rich-presence/how-to
-- LANrage Issues: https://github.com/yourusername/lanrage/issues
+- LANrage Issues: https://github.com/coff33ninja/LANRage/issues
 - Discord API Server: https://discord.gg/discord-api
 
 ## Example Rich Presence

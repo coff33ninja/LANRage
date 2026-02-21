@@ -1,5 +1,8 @@
 # LANrage - Production Ready Status
 
+> Historical snapshot: this document reflects the v1.0 production-readiness milestone.
+> For current implementation and test status, see `IMPLEMENTATION_PLAN.md`.
+
 **Date**: January 29, 2026  
 **Version**: 1.0  
 **Status**: ✅ PRODUCTION READY

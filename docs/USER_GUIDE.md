@@ -1,7 +1,7 @@
 # LANrage User Guide
 
-**Version**: 1.0  
-**Last Updated**: January 29, 2026
+**Version**: 1.2.5  
+**Last Updated**: February 21, 2026
 
 ## Welcome to LANrage! 🎮
 
@@ -13,7 +13,7 @@ LANrage makes online gaming feel like a LAN party. If it runs on LAN, it runs on
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/lanrage.git
+git clone https://github.com/coff33ninja/LANRage.git
 cd lanrage
 
 # Run setup (installs dependencies)
@@ -32,7 +32,7 @@ python lanrage.py
 
 You'll see:
 ```
-🎮 LANrage v1.0
+🎮 LANrage v1.2.5
 🌐 Web UI: http://localhost:8666
 🔗 Virtual IP: 10.66.0.1
 ✓ Ready to party!

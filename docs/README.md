@@ -1,9 +1,10 @@
 # LANrage Documentation
 
-**Version**: 1.0 (Production Ready)  
+**Version**: 1.2.5 (Production Ready)  
 **Status**: ✅ Complete & Deployed  
-**Last Updated**: January 29, 2026  
-**Test Coverage**: 88% (62/62 tests passing)  
+**Last Updated**: February 21, 2026  
+**Test Baseline**: 463/463 tests passing (latest full suite)  
+**Coverage Baseline**: 51.34% (latest full suite)  
 **Documentation**: 1650+ lines comprehensive
 
 ## Quick Links
@@ -100,7 +101,7 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 | Module | Purpose | Key Functions |
 |--------|---------|---------------|
 | `settings.py` | Persistent configuration storage | Database operations, config management |
-| `config.py` | Configuration loading | Load from DB or environment |
+| `config.py` | Configuration loading | Load from SQLite settings database |
 | `network.py` | WireGuard interface management | Create interface, add peers, measure latency |
 | `party.py` | Party creation and management | Create, join, leave parties |
 | `nat.py` | NAT traversal and hole punching | STUN, NAT detection, relay discovery |
@@ -214,8 +215,8 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 
 ## Project Status
 
-**Current Version**: 1.0  
-**Status**: ✅ Production Ready - January 29, 2026
+**Current Version**: 1.2.5  
+**Status**: ✅ Production Ready - January 31, 2026
 
 **All Core Features Complete** (Phases 0-3):
 - ✅ Settings system with web UI
@@ -223,7 +224,7 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 - ✅ NAT traversal (STUN/TURN + hole punching)
 - ✅ Party creation and joining (up to 255 peers)
 - ✅ Broadcast/Multicast emulation
-- ✅ Game detection and optimization (27 games)
+- ✅ Game detection and optimization (21 built-in profiles + custom profiles)
 - ✅ Relay server with intelligent selection
 - ✅ Server browser (discover & host servers)
 - ✅ Discord integration (webhooks + Rich Presence)
@@ -231,7 +232,7 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 - ✅ Comprehensive error handling (96% specific)
 - ✅ Performance optimization (all targets met)
 - ✅ Complete documentation (1650+ lines)
-- ✅ 62 automated tests (100% passing, 88% coverage)
+- ✅ 463 automated tests (100% passing in latest full-suite run)
 
 **Planned for v1.1+**:
 - 📋 Remote control plane (centralized discovery)

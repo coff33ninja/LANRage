@@ -135,6 +135,6 @@ This Code of Conduct may be updated from time to time. We will notify the commun
 
 ---
 
-**Version**: 1.0  
+**Version**: 1.2.5  
 **Last Updated**: January 30, 2026  
 **Effective Date**: January 30, 2026

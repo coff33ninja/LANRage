@@ -14,8 +14,8 @@ LANrage is a mesh VPN optimized for gaming. It creates virtual LANs over the int
 - Automatic cleanup of stale data
 
 **Implementation**: SQLite database via aiosqlite  
-**Status**: Production ready (v1.0)  
-**Future**: WebSocket-based remote control plane (v1.1)
+**Status**: Production ready (v1.2.5)  
+**Future**: Phase 6 agent/orchestrator and extended web server integration
 
 ### 2. Data Plane (WireGuard)
 - Encrypted tunnels between peers
@@ -108,7 +108,7 @@ Relays:
 **Status**: Production ready
 
 ### Game Profiles ✅
-- Per-game tuning (27 games supported)
+- Per-game tuning (21 built-in profiles supported + custom profiles)
 - Protocol detection
 - Automatic optimization
 - Custom JSON profiles
@@ -181,11 +181,11 @@ Relays:
 
 ## Implementation Status
 
-### ✅ Completed (v1.0)
+### ✅ Completed (v1.2.5)
 - WireGuard interface creation and management
 - STUN/TURN for NAT traversal
 - Control plane (SQLite-based local)
-- Game detection and optimization (27 games)
+- Game detection and optimization (21 built-in profiles + custom profiles)
 - Broadcast/multicast emulation
 - Relay server with database
 - QoS implementation
