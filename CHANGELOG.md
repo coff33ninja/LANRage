@@ -13,12 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Game Mod Sync Strategy Support** (`core/games.py`)
   - Added per-game `mod_support` strategy with `native`, `managed`, and `hybrid` modes.
   - Added `GameManager.evaluate_mod_compatibility()` preflight to report missing artifacts and recommended sync path.
+  - Added `GameManager.build_mod_sync_plan()` to generate WireGuard-reachable mod download plans from peers.
   - Added `ModSupport` model with provider metadata (`steam_workshop`, `fastdl`, `server_redirect`, etc.) and verification mode.
+- **WireGuard Mod Sync Planning Layer** (`core/mod_sync.py`)
+  - Added manifest model (`ModManifest`), artifact model (`ModArtifact`), and deterministic manifest fingerprinting.
+  - Added local artifact verification and sync planning for `native`, `managed`, and `hybrid` workflows.
+  - Added peer source URL planning designed for WireGuard overlay addresses.
 - **Profile Mod Strategy Examples**
   - Added native mod support metadata to `codmw2` in `game_profiles/custom/call_of_duty.json`.
   - Added native mod support metadata to `farcry2` in `game_profiles/custom/far_cry.json`.
+- **Expanded Game Coverage**
+  - Added 24 missing games in `game_profiles/custom/additional_games.json` including Garry's Mod, Arma 3, DayZ, Project Zomboid, Palworld, Sons of the Forest, V Rising, Team Fortress 2, Squad, Insurgency: Sandstorm, Ready or Not, Quake III Arena, Quake Live, Enshrouded, Raft, Astroneer, Unturned, BeamNG.drive, StarCraft II, and more.
 - **Test Coverage**
   - Added game tests validating native/hybrid mod strategy behavior and compatibility evaluation.
+  - Added dedicated mod sync tests for manifest fingerprinting and sync plan generation.
 
 ### Changed
 - **Game Profile Serialization**

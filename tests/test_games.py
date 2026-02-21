@@ -1,6 +1,7 @@
 """Tests for game detection and profiles"""
 
 import asyncio
+from pathlib import Path
 
 import pytest
 
@@ -198,6 +199,39 @@ def test_mod_sync_strategy_hybrid_allows_lanrage_after_native_check():
         )
         assert ready_result["ready"] is True
         assert ready_result["missing_artifacts"] == []
+    finally:
+        del GAME_PROFILES[game_id]
+
+
+@pytest.mark.asyncio
+async def test_game_manager_build_mod_sync_plan(tmp_path: Path):
+    """GameManager should build WG-compatible peer source download plans."""
+    manager = GameManager(Config())
+    game_id = "test_managed_sync"
+
+    GAME_PROFILES[game_id] = GameProfile(
+        name="Test Managed Sync",
+        executable="test_sync.exe",
+        ports=[12345],
+        protocol="udp",
+        broadcast=False,
+        multicast=False,
+        keepalive=20,
+        mtu=1420,
+        description="Managed sync test profile",
+        mod_support=ModSupport(mode="managed", required_artifacts=["pak0.pk3"]),
+    )
+
+    try:
+        plan = await manager.build_mod_sync_plan(
+            game_id=game_id,
+            mods_root=tmp_path,
+            peer_sources=["http://10.66.0.10:8670/mods"],
+        )
+        assert plan["mode"] == "managed"
+        assert plan["lanrage_download_enabled"] is True
+        assert plan["needed_artifacts"] == ["pak0.pk3"]
+        assert plan["downloads"][0]["sources"][0].startswith("http://10.66.0.10")
     finally:
         del GAME_PROFILES[game_id]
 

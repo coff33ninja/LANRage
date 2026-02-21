@@ -12,6 +12,7 @@ import psutil
 
 from .config import Config
 from .logging_config import get_logger, set_context, timing_decorator
+from .mod_sync import ModManifest, ModSyncService
 from .nat import NATType
 
 logger = get_logger(__name__)
@@ -1512,6 +1513,52 @@ class GameManager:
                 else "Mods verified. Launch game."
             ),
         }
+
+    async def build_mod_sync_plan(
+        self,
+        game_id: str,
+        mods_root: Path,
+        manifest_data: dict | None = None,
+        peer_sources: list[str] | None = None,
+    ) -> dict:
+        """
+        Build a mod sync plan that can run over WireGuard peer links.
+
+        `peer_sources` should be base URLs reachable via WireGuard, e.g.
+        `http://10.66.0.12:8670/mods`.
+        """
+        profile = self.detector.get_profile(game_id)
+        if profile is None:
+            return {
+                "game_id": game_id,
+                "status": "unknown_game",
+                "ready": False,
+                "next_step": "Game profile not found.",
+            }
+
+        if manifest_data is None:
+            artifacts = [
+                {"artifact_id": artifact, "relative_path": artifact}
+                for artifact in profile.mod_support.required_artifacts
+            ]
+            manifest_data = {
+                "game_id": game_id,
+                "version": "profile-required-artifacts",
+                "artifacts": artifacts,
+            }
+
+        manifest = ModManifest.from_dict(manifest_data)
+        service = ModSyncService()
+        plan = await service.build_sync_plan(
+            mode=profile.mod_support.mode,
+            manifest=manifest,
+            mods_root=mods_root,
+            native_provider=profile.mod_support.native_provider,
+            peer_sources=peer_sources,
+        )
+        plan["game_id"] = game_id
+        plan["game_name"] = profile.name
+        return plan
 
     def list_supported_games(self) -> list[GameProfile]:
         """List all supported games"""
