@@ -121,5 +121,78 @@ async def test_clear_presence(discord):
     await discord.clear_presence()
 
 
+class _FakeResponse:
+    def __init__(self, status: int, body: str = ""):
+        self.status = status
+        self._body = body
+
+    async def text(self):
+        return self._body
+
+
+class _FakeRequestContext:
+    def __init__(self, response: _FakeResponse):
+        self._response = response
+
+    async def __aenter__(self):
+        return self._response
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+class _FakeSession:
+    def __init__(self, statuses: list[int]):
+        self.statuses = statuses
+        self.calls = 0
+
+    async def close(self):
+        return None
+
+    def post(self, _url, json=None):
+        status = self.statuses[min(self.calls, len(self.statuses) - 1)]
+        self.calls += 1
+        return _FakeRequestContext(_FakeResponse(status, body=f"status={status}"))
+
+
+@pytest.mark.asyncio
+async def test_send_webhook_retries_transient_status(discord, monkeypatch):
+    """Transient 5xx errors should retry and eventually succeed."""
+    discord.webhook_url = "https://discord.com/api/webhooks/123/abc"
+    original_session = discord.session
+    await original_session.close()
+    discord.session = _FakeSession([503, 204])
+
+    sleeps = []
+
+    async def fake_sleep(delay):
+        sleeps.append(delay)
+
+    monkeypatch.setattr("core.discord_integration.asyncio.sleep", fake_sleep)
+
+    await discord._send_webhook("Title", "Message")
+
+    assert discord.session.calls == 2
+    assert sleeps == [discord.webhook_retry_base_delay]
+
+
+@pytest.mark.asyncio
+async def test_send_webhook_does_not_retry_non_transient_status(discord, monkeypatch):
+    """4xx (except 429) should not be retried."""
+    discord.webhook_url = "https://discord.com/api/webhooks/123/abc"
+    original_session = discord.session
+    await original_session.close()
+    discord.session = _FakeSession([400, 204])
+
+    async def fake_sleep(_delay):
+        raise AssertionError("sleep should not be called for non-transient errors")
+
+    monkeypatch.setattr("core.discord_integration.asyncio.sleep", fake_sleep)
+
+    await discord._send_webhook("Title", "Message")
+
+    assert discord.session.calls == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

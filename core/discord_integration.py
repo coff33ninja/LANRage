@@ -92,6 +92,10 @@ class DiscordIntegration:
         self.notification_batcher = NotificationBatcher(batch_interval_ms=500.0)
         self.batch_flush_task: asyncio.Task | None = None
 
+        # Webhook retry policy
+        self.webhook_retry_attempts = 3
+        self.webhook_retry_base_delay = 0.25
+
         # Discord Rich Presence (if pypresence is available)
         self.rpc = None
         self.rpc_connected = False
@@ -366,39 +370,79 @@ class DiscordIntegration:
             logger.error(f"Failed to send bot message: {error_msg}")
 
     async def _send_webhook(self, title: str, message: str, color: int = 0x667EEA):
-        """Send notification directly to Discord webhook
+        """Send notification directly to Discord webhook.
+
+        Retries transient failures (HTTP 429/5xx and network errors)
+        with exponential backoff.
 
         Args:
             title: Notification title
             message: Notification message
             color: Embed color
         """
-        if not self.webhook_url:
+        if not self.webhook_url or not self.session:
             return
 
         set_context(correlation_id_val=f"discord_webhook_{title[:30]}")
 
-        try:
-            embed = {
-                "title": title,
-                "description": message,
-                "color": color,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
-                "footer": {"text": "LANrage"},
-            }
+        embed = {
+            "title": title,
+            "description": message,
+            "color": color,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
+            "footer": {"text": "LANrage"},
+        }
+        payload = {"embeds": [embed]}
 
-            payload = {"embeds": [embed]}
+        retryable_statuses = {429, 500, 502, 503, 504}
 
-            async with self.session.post(self.webhook_url, json=payload) as response:
-                if response.status != 204:
+        for attempt in range(1, self.webhook_retry_attempts + 1):
+            try:
+                async with self.session.post(self.webhook_url, json=payload) as response:
+                    if response.status == 204:
+                        logger.debug(f"Discord webhook sent: {title}")
+                        return
+
                     error_text = await response.text()
-                    logger.warning(f"Discord webhook failed: {error_text}")
-                else:
-                    logger.debug(f"Discord webhook sent: {title}")
+                    is_retryable = response.status in retryable_statuses
 
-        except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Discord notification failed: {error_msg}")
+                    if is_retryable and attempt < self.webhook_retry_attempts:
+                        delay = self.webhook_retry_base_delay * (2 ** (attempt - 1))
+                        logger.warning(
+                            "Discord webhook transient failure (status=%s, attempt=%d/%d); retrying in %.2fs",
+                            response.status,
+                            attempt,
+                            self.webhook_retry_attempts,
+                            delay,
+                        )
+                        await asyncio.sleep(delay)
+                        continue
+
+                    logger.warning(
+                        "Discord webhook failed (status=%s): %s",
+                        response.status,
+                        error_text,
+                    )
+                    return
+
+            except aiohttp.ClientError as e:
+                if attempt < self.webhook_retry_attempts:
+                    delay = self.webhook_retry_base_delay * (2 ** (attempt - 1))
+                    logger.warning(
+                        "Discord webhook network error (%s) attempt=%d/%d; retrying in %.2fs",
+                        type(e).__name__,
+                        attempt,
+                        self.webhook_retry_attempts,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+
+                logger.error(f"Discord notification failed after retries: {e}")
+                return
+            except Exception as e:
+                logger.error(f"Discord notification failed: {e}")
+                return
 
     async def notify_party_created(self, party_id: str, party_name: str, host: str):
         """Notify that a party was created"""
