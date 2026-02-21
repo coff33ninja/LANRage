@@ -309,7 +309,7 @@ await discord.update_presence(
 
 **Returns:** None
 
-**Note:** Requires Discord application ID (currently placeholder "1234567890")
+**Note:** Requires `discord_app_id` to be set in LANrage settings (UI/API/database-backed settings).
 
 ---
 
@@ -574,10 +574,10 @@ For Rich Presence to work, you need to register a Discord application:
 4. Go to "Rich Presence" → "Art Assets"
 5. Upload LANrage logo as "lanrage_logo"
 6. Copy Application ID
-7. Update `core/discord_integration.py` line 42:
-   ```python
-   self.rpc = Presence("YOUR_APPLICATION_ID")
-   ```
+7. Set `discord_app_id` in LANrage settings (via UI, settings API, or database-backed settings).
+8. Verify configuration by checking `GET /api/discord/status` for enabled Rich Presence or the startup log line:
+   - `✓ Discord Rich Presence connected`
+   - `ℹ Discord Rich Presence not configured (set Discord App ID in settings)`
 
 ---
 

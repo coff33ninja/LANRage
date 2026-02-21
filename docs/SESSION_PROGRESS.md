@@ -242,7 +242,7 @@ LANrage has progressed from prototype through full production-ready release. All
 
 5. ✅ **Discord App Registration**
    - Comprehensive setup guide (docs/DISCORD_APP_SETUP.md)
-   - Configurable from web UI (not hardcoded)
+   - Configurable via settings (UI/API/database-backed; not hardcoded)
    - Detailed inline comments in code
    - Status: Production ready
 

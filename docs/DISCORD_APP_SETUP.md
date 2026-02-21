@@ -43,21 +43,16 @@ Discord Rich Presence shows your LANrage status in Discord:
 
 **Note**: Assets take ~15 minutes to propagate to Discord's CDN.
 
-### 4. Update LANrage Code
+### 4. Configure LANrage Settings
 
-Edit `core/discord_integration.py`:
+Set `discord_app_id` in LANrage settings using any supported configuration path:
+- Web UI (Settings → Discord Integration)
+- Settings API
+- Database-backed settings storage
 
-```python
-# Find this line (around line 58):
-self.rpc = Presence("1234567890")
-
-# Replace with your Application ID:
-self.rpc = Presence("YOUR_APPLICATION_ID_HERE")
+Example value:
 ```
-
-Example:
-```python
-self.rpc = Presence("1234567890123456789")
+discord_app_id = "1234567890123456789"
 ```
 
 ### 5. Restart LANrage
@@ -72,8 +67,11 @@ python lanrage.py
 
 1. Open Discord
 2. Start LANrage
-3. Create or join a party
-4. Check your Discord profile - you should see:
+3. Verify that the integration status reports Rich Presence as configured:
+   - Check `GET /api/discord/status`, or
+   - Check startup logs for `✓ Discord Rich Presence connected`
+4. Create or join a party
+5. Check your Discord profile - you should see:
    - "Playing LANrage"
    - LANrage logo
    - Party/game info
@@ -158,15 +156,8 @@ Upload additional assets with names like:
 If you're contributing to LANrage:
 
 1. **Don't commit your Application ID** to the repository
-2. Keep the placeholder `"1234567890"` in code
-3. Document your setup in `.env.local` (gitignored)
-4. Use environment variable for production:
-
-```python
-import os
-app_id = os.getenv("DISCORD_APP_ID", "1234567890")
-self.rpc = Presence(app_id)
-```
+2. Configure `discord_app_id` via settings (UI/API/database), not by editing source files
+3. Keep local-only values in a gitignored local config or environment-specific settings management
 
 ## Official LANrage App
 
