@@ -106,9 +106,7 @@ def build_supported_games_doc(profiles: dict[str, dict]) -> str:
         name = str(payload.get("name", game_id)).replace("|", "\\|")
         source = str(payload.get("_source_file", "unknown")).replace("|", "\\|")
         source_link = f"../game_profiles/{source}"
-        lines.append(
-            f"| `{game_id}` | {name} | `{source}` | [Open]({source_link}) |"
-        )
+        lines.append(f"| `{game_id}` | {name} | `{source}` | [Open]({source_link}) |")
     lines.append("")
     return "\n".join(lines)
 
