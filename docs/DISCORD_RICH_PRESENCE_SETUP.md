@@ -14,7 +14,7 @@ Discord Rich Presence allows LANrage to update your Discord status with:
 
 - Discord Desktop App (Rich Presence doesn't work on web/mobile)
 - Discord Developer Account (free)
-- LANrage v1.2.3 or higher
+- LANrage v1.3.1 or higher
 
 ## Step 1: Create a Discord Application
 
@@ -185,5 +185,5 @@ See [Discord Integration Guide](DISCORD_SETUP_GUIDE.md) for full setup.
 
 ---
 
-**Last Updated**: January 31, 2026  
-**LANrage Version**: v1.2.3+
+**Last Updated**: February 21, 2026  
+**LANrage Version**: v1.3.1+
