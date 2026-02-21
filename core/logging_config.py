@@ -180,6 +180,9 @@ def timing_decorator(name: str | None = None) -> Callable:
         @wraps(func)
         def sync_wrapper(*args, **kwargs) -> Any:
             logger = get_logger(func.__module__)
+            if not logger.isEnabledFor(logging.DEBUG):
+                return func(*args, **kwargs)
+
             op_name = name or func.__name__
             start_time = time.perf_counter()
 
@@ -201,6 +204,9 @@ def timing_decorator(name: str | None = None) -> Callable:
 
         async def async_wrapper(*args, **kwargs) -> Any:
             logger = get_logger(func.__module__)
+            if not logger.isEnabledFor(logging.DEBUG):
+                return await func(*args, **kwargs)
+
             op_name = name or func.__name__
             start_time = time.perf_counter()
 

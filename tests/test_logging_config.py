@@ -303,6 +303,30 @@ class TestTimingDecorator:
         output = stream.getvalue()
         assert "test_operation" in output or "Completed" in output
 
+    def test_timing_decorator_skips_debug_overhead_when_disabled(self):
+        """Test timing logs are skipped when DEBUG logging is disabled."""
+        stream = StringIO()
+        handler = logging.StreamHandler(stream)
+        handler.setFormatter(PlainFormatter())
+
+        root_logger = logging.getLogger()
+        old_handlers = root_logger.handlers[:]
+        old_level = root_logger.level
+        root_logger.handlers = [handler]
+        root_logger.setLevel(logging.INFO)
+
+        @timing_decorator(name="no_debug_operation")
+        def test_func():
+            return "result"
+
+        result = test_func()
+
+        root_logger.handlers = old_handlers
+        root_logger.setLevel(old_level)
+
+        assert result == "result"
+        assert stream.getvalue() == ""
+
     @pytest.mark.asyncio
     async def test_timing_decorator_async(self):
         """Test timing decorator on async function."""

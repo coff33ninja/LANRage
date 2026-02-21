@@ -1,6 +1,7 @@
 """IP Address Management for LANrage virtual network"""
 
 import ipaddress
+import logging
 
 from .logging_config import get_logger, timing_decorator
 
@@ -80,7 +81,13 @@ class IPAddressPool:
                 # Allocate this IP
                 self.allocated_ips.add(ip_addr)
                 self.peer_id_to_ip[peer_id] = ip_addr
-                logger.info(f"Allocated IP {ip_addr} to peer {peer_id}")
+                if logger.isEnabledFor(logging.DEBUG) and len(self.allocated_ips) % 64 == 0:
+                    logger.debug(
+                        "Allocated %d IPs; latest peer=%s ip=%s",
+                        len(self.allocated_ips),
+                        peer_id,
+                        ip_addr,
+                    )
                 return ip_addr
 
         # Current subnet is full, try next subnet
@@ -113,7 +120,7 @@ class IPAddressPool:
         self.allocated_ips.discard(ip)
         del self.peer_id_to_ip[peer_id]
 
-        logger.info(f"Released IP {ip} from peer {peer_id}")
+        logger.debug("Released IP %s from peer %s", ip, peer_id)
         return ip
 
     def get_ip(self, peer_id: str) -> ipaddress.IPv4Address | None:
