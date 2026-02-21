@@ -311,27 +311,19 @@ async def test_unicode_values(temp_db):
 async def test_lock_mechanism(temp_db):
     """Test database lock prevents race conditions"""
     # Set initial value
-    await temp_db.set_setting("counter", "0")
+    await temp_db.set_setting("counter", 0)
 
     async def increment():
         for _ in range(10):
-            # The lock in SettingsDatabase should prevent race conditions
-            current = await temp_db.get_setting("counter", default="0")
-            new_value = str(int(current) + 1)
-            await temp_db.set_setting("counter", new_value)
+            # Use atomic increment to avoid lost updates across concurrent tasks
+            await temp_db.increment_setting("counter")
             # Small delay to increase chance of race condition if lock doesn't work
             await asyncio.sleep(0.001)
 
     # Run concurrent increments
     await asyncio.gather(increment(), increment())
 
-    # Final value should be 20 (10 * 2) if lock works correctly
-    # Note: SQLite's own locking may also help here
+    # Final value should be exact because increment_setting is atomic.
     final = await temp_db.get_setting("counter")
     final_int = int(final)
-
-    # The lock should ensure we get 20, but due to the async nature
-    # and how aiosqlite works, we might get less if there are race conditions
-    # Let's just verify it's a reasonable value (at least 10, ideally 20)
-    assert final_int >= 10, f"Expected at least 10, got {final_int}"
-    assert final_int <= 20, f"Expected at most 20, got {final_int}"
+    assert final_int == 20, f"Expected 20, got {final_int}"

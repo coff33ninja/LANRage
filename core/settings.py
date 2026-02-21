@@ -121,6 +121,50 @@ class SettingsDatabase:
             )
             await db.commit()
 
+    async def increment_setting(
+        self, key: str, delta: int = 1, default: int = 0
+    ) -> int:
+        """
+        Atomically increment an integer setting and return the new value.
+
+        This prevents lost updates from concurrent read-modify-write patterns.
+        """
+        if delta == 0:
+            value = await self.get_setting(key, default=default)
+            return int(value)
+
+        async with self._lock, aiosqlite.connect(self.db_path) as db:
+            await db.execute("BEGIN IMMEDIATE")
+            async with db.execute(
+                "SELECT value, type FROM settings WHERE key = ?", (key,)
+            ) as cursor:
+                row = await cursor.fetchone()
+
+            if row is None:
+                current = default
+            else:
+                raw_value, value_type = row
+                parsed = self._deserialize(raw_value, value_type)
+                current = int(parsed)
+
+            new_value = current + delta
+            value_str, value_type = self._serialize(new_value)
+            now = datetime.now().isoformat()
+
+            await db.execute(
+                """
+                INSERT INTO settings (key, value, type, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = excluded.value,
+                    type = excluded.type,
+                    updated_at = excluded.updated_at
+                """,
+                (key, value_str, value_type, now),
+            )
+            await db.commit()
+            return new_value
+
     async def get_all_settings(self) -> dict[str, Any]:
         """Get all settings"""
         settings = {}
