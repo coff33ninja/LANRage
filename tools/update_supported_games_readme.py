@@ -89,14 +89,26 @@ def build_supported_games_doc(profiles: dict[str, dict]) -> str:
         "- Port/process details may vary by platform, patch level, launcher, and mods."
     )
     lines.append("")
+    lines.append("## Profile JSON Files")
+    lines.append("")
+    unique_sources = sorted(
+        {str(payload.get("_source_file", "unknown")) for payload in profiles.values()}
+    )
+    for source in unique_sources:
+        link = f"../game_profiles/{source}"
+        lines.append(f"- [`{source}`]({link})")
+    lines.append("")
     lines.append("## All Profiles")
     lines.append("")
-    lines.append("| Game ID | Name | Source |")
-    lines.append("|---|---|---|")
+    lines.append("| Game ID | Name | Source | Profile JSON |")
+    lines.append("|---|---|---|---|")
     for game_id, payload in sorted(profiles.items(), key=lambda item: item[0]):
         name = str(payload.get("name", game_id)).replace("|", "\\|")
         source = str(payload.get("_source_file", "unknown")).replace("|", "\\|")
-        lines.append(f"| `{game_id}` | {name} | `{source}` |")
+        source_link = f"../game_profiles/{source}"
+        lines.append(
+            f"| `{game_id}` | {name} | `{source}` | [Open]({source_link}) |"
+        )
     lines.append("")
     return "\n".join(lines)
 
