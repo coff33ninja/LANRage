@@ -58,6 +58,222 @@ class SystemMetrics:
     )
 
 
+@dataclass
+class ConnectionQualitySample:
+    """Single connection quality measurement."""
+
+    timestamp: float
+    latency_ms: float
+    jitter_ms: float
+    packet_loss_percent: float
+    bandwidth_mbps: float
+    stability_percent: float
+    quality_score: float
+    quality_grade: str
+
+
+class ConnectionQualityMonitor:
+    """Tracks connection quality over a bounded in-memory window."""
+
+    def __init__(
+        self,
+        window_size: int = 100,
+        rolling_window_seconds: int = 300,
+        hourly_history_hours: int = 24,
+    ):
+        self.window_size = window_size
+        self.rolling_window_seconds = rolling_window_seconds
+        self.hourly_history_hours = hourly_history_hours
+        self.samples: dict[str, deque[ConnectionQualitySample]] = {}
+        self.peer_registered_at: dict[str, float] = {}
+        self.measurement_attempts: dict[str, int] = {}
+        self.successful_measurements: dict[str, int] = {}
+
+    def register_peer(self, peer_id: str) -> None:
+        """Register peer for quality tracking."""
+        if peer_id not in self.samples:
+            self.samples[peer_id] = deque(maxlen=self.window_size)
+            self.peer_registered_at[peer_id] = time.time()
+            self.measurement_attempts[peer_id] = 0
+            self.successful_measurements[peer_id] = 0
+
+    def record_failed_measurement(self, peer_id: str) -> None:
+        """Track a failed quality measurement attempt."""
+        self.register_peer(peer_id)
+        self.measurement_attempts[peer_id] += 1
+
+    def record_measurement(
+        self,
+        peer_id: str,
+        latency_ms: float,
+        packet_loss_percent: float = 0.0,
+        bandwidth_mbps: float = 100.0,
+        timestamp: float | None = None,
+    ) -> ConnectionQualitySample:
+        """Record a measurement and compute quality score."""
+        self.register_peer(peer_id)
+        now = timestamp if timestamp is not None else time.time()
+
+        self.measurement_attempts[peer_id] += 1
+        self.successful_measurements[peer_id] += 1
+
+        recent_latencies = [sample.latency_ms for sample in self.samples[peer_id]]
+        recent_latencies.append(latency_ms)
+        jitter_ms = 0.0
+        if len(recent_latencies) >= 2:
+            avg = sum(recent_latencies) / len(recent_latencies)
+            variance = sum((value - avg) ** 2 for value in recent_latencies) / len(
+                recent_latencies
+            )
+            jitter_ms = variance**0.5
+
+        attempts = self.measurement_attempts[peer_id]
+        successful = self.successful_measurements[peer_id]
+        stability_percent = (successful / attempts) * 100 if attempts else 100.0
+
+        quality_score, quality_grade = self.calculate_quality_score(
+            latency_ms=latency_ms,
+            jitter_ms=jitter_ms,
+            packet_loss_percent=packet_loss_percent,
+            bandwidth_mbps=bandwidth_mbps,
+            stability_percent=stability_percent,
+        )
+
+        sample = ConnectionQualitySample(
+            timestamp=now,
+            latency_ms=latency_ms,
+            jitter_ms=jitter_ms,
+            packet_loss_percent=packet_loss_percent,
+            bandwidth_mbps=bandwidth_mbps,
+            stability_percent=stability_percent,
+            quality_score=quality_score,
+            quality_grade=quality_grade,
+        )
+        self.samples[peer_id].append(sample)
+        return sample
+
+    @staticmethod
+    def calculate_quality_score(
+        latency_ms: float,
+        jitter_ms: float,
+        packet_loss_percent: float,
+        bandwidth_mbps: float,
+        stability_percent: float,
+    ) -> tuple[float, str]:
+        """Calculate quality score and grade (0-100, A-F)."""
+        latency_weight = 0.30
+        jitter_weight = 0.15
+        packet_loss_weight = 0.25
+        bandwidth_weight = 0.15
+        stability_weight = 0.15
+
+        normalized_latency = min(100.0, max(0.0, latency_ms / 2.0))
+        normalized_jitter = min(100.0, max(0.0, jitter_ms * 2.0))
+        normalized_loss = min(100.0, max(0.0, packet_loss_percent))
+        normalized_bandwidth = min(100.0, max(0.0, bandwidth_mbps * 5.0))
+        normalized_stability = min(100.0, max(0.0, stability_percent))
+
+        quality_score = (
+            latency_weight * (100.0 - normalized_latency)
+            + jitter_weight * (100.0 - normalized_jitter)
+            + packet_loss_weight * (100.0 - normalized_loss)
+            + bandwidth_weight * normalized_bandwidth
+            + stability_weight * normalized_stability
+        )
+        quality_score = min(100.0, max(0.0, quality_score))
+        quality_grade = ConnectionQualityMonitor.score_to_grade(quality_score)
+        return quality_score, quality_grade
+
+    @staticmethod
+    def score_to_grade(score: float) -> str:
+        """Convert score to letter grade."""
+        if score >= 90:
+            return "A"
+        if score >= 70:
+            return "B"
+        if score >= 50:
+            return "C"
+        if score >= 30:
+            return "D"
+        return "F"
+
+    def get_latest(self, peer_id: str) -> ConnectionQualitySample | None:
+        """Get latest quality sample for peer."""
+        peer_samples = self.samples.get(peer_id)
+        if not peer_samples:
+            return None
+        return peer_samples[-1]
+
+    def get_rolling_average(self, peer_id: str) -> dict[str, float | str] | None:
+        """Get rolling average metrics for configured time window."""
+        peer_samples = self.samples.get(peer_id)
+        if not peer_samples:
+            return None
+
+        cutoff = time.time() - self.rolling_window_seconds
+        recent = [sample for sample in peer_samples if sample.timestamp >= cutoff]
+        if not recent:
+            return None
+
+        avg_score = sum(sample.quality_score for sample in recent) / len(recent)
+        avg_latency = sum(sample.latency_ms for sample in recent) / len(recent)
+        avg_jitter = sum(sample.jitter_ms for sample in recent) / len(recent)
+        avg_packet_loss = sum(sample.packet_loss_percent for sample in recent) / len(
+            recent
+        )
+        avg_bandwidth = sum(sample.bandwidth_mbps for sample in recent) / len(recent)
+        avg_stability = sum(sample.stability_percent for sample in recent) / len(recent)
+
+        return {
+            "sample_count": float(len(recent)),
+            "avg_score": avg_score,
+            "grade": self.score_to_grade(avg_score),
+            "avg_latency_ms": avg_latency,
+            "avg_jitter_ms": avg_jitter,
+            "avg_packet_loss_percent": avg_packet_loss,
+            "avg_bandwidth_mbps": avg_bandwidth,
+            "avg_stability_percent": avg_stability,
+        }
+
+    def get_hourly_aggregates(self, peer_id: str) -> list[dict[str, float | str]]:
+        """Get hourly aggregates for recent samples."""
+        peer_samples = self.samples.get(peer_id)
+        if not peer_samples:
+            return []
+
+        now = time.time()
+        cutoff = now - (self.hourly_history_hours * 3600)
+
+        hourly_buckets: dict[int, list[ConnectionQualitySample]] = {}
+        for sample in peer_samples:
+            if sample.timestamp < cutoff:
+                continue
+            hour_bucket = int(sample.timestamp // 3600)
+            hourly_buckets.setdefault(hour_bucket, []).append(sample)
+
+        aggregates = []
+        for hour_bucket in sorted(hourly_buckets.keys()):
+            bucket_samples = hourly_buckets[hour_bucket]
+            avg_score = sum(s.quality_score for s in bucket_samples) / len(bucket_samples)
+            aggregates.append(
+                {
+                    "hour_start": float(hour_bucket * 3600),
+                    "sample_count": float(len(bucket_samples)),
+                    "avg_score": avg_score,
+                    "grade": self.score_to_grade(avg_score),
+                    "avg_latency_ms": (
+                        sum(s.latency_ms for s in bucket_samples) / len(bucket_samples)
+                    ),
+                    "avg_packet_loss_percent": (
+                        sum(s.packet_loss_percent for s in bucket_samples)
+                        / len(bucket_samples)
+                    ),
+                }
+            )
+
+        return aggregates
+
+
 def predict_connection_quality(
     latency_ms: float,
     packet_loss_percent: float = 0.0,
@@ -214,6 +430,9 @@ class MetricsCollector:
         # Collection interval (seconds)
         self.collection_interval = 10
 
+        # Advanced per-peer connection quality monitoring
+        self.quality_monitor = ConnectionQualityMonitor()
+
     async def start(self):
         """Start metrics collection"""
         self.running = True
@@ -298,6 +517,7 @@ class MetricsCollector:
             self.peer_metrics[peer_id] = PeerMetrics(
                 peer_id=peer_id, peer_name=peer_name
             )
+            self.quality_monitor.register_peer(peer_id)
             logger.debug(f"Added peer to metrics tracking: {peer_name} ({peer_id})")
 
     def remove_peer(self, peer_id: str):
@@ -367,11 +587,39 @@ class MetricsCollector:
                 logger.warning(
                     f"Connection degraded: quality score {quality_score:.1f}"
                 )
+
+            quality_sample = self.quality_monitor.record_measurement(
+                peer_id=peer_id,
+                latency_ms=latency,
+                packet_loss_percent=peer.packet_loss_percent,
+                bandwidth_mbps=max(
+                    0.0,
+                    (
+                        (peer.bytes_sent + peer.bytes_received) / (1024 * 1024)
+                        if (peer.bytes_sent + peer.bytes_received) > 0
+                        else 10.0
+                    ),
+                ),
+                timestamp=current_time,
+            )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "Advanced quality sample peer=%s score=%.1f grade=%s "
+                    "latency=%.1fms jitter=%.1fms loss=%.1f%% stability=%.1f%%",
+                    peer_id,
+                    quality_sample.quality_score,
+                    quality_sample.quality_grade,
+                    quality_sample.latency_ms,
+                    quality_sample.jitter_ms,
+                    quality_sample.packet_loss_percent,
+                    quality_sample.stability_percent,
+                )
         else:
             # No latency = connection issue
             peer.status = "degraded"
             peer.quality_score = 0.0
             peer.quality_trend = "degrading"
+            self.quality_monitor.record_failed_measurement(peer_id)
             logger.warning("No latency recorded - connection issue detected")
 
     async def record_bandwidth(
@@ -390,8 +638,8 @@ class MetricsCollector:
         if peer_id not in self.peer_metrics:
             return
 
-        # Store packet loss data (could be added to PeerMetrics if needed)
         peer = self.peer_metrics[peer_id]
+        peer.packet_loss_percent = max(0.0, min(100.0, packet_loss))
         peer.last_seen = time.time()
 
     async def start_game_session(self, game_id: str, game_name: str, peers: list[str]):
@@ -624,7 +872,10 @@ class MetricsCollector:
         if peer.latency:
             avg_latency = sum(p.value for p in peer.latency) / len(peer.latency)
 
-        return {
+        latest_advanced = self.quality_monitor.get_latest(peer_id)
+        rolling = self.quality_monitor.get_rolling_average(peer_id)
+
+        result = {
             "peer_id": peer_id,
             "peer_name": peer.peer_name,
             "quality_score": peer.quality_score,
@@ -646,6 +897,29 @@ class MetricsCollector:
             "bytes_received": peer.bytes_received,
             "uptime_seconds": peer.connection_uptime,
         }
+        if latest_advanced:
+            result["advanced"] = {
+                "quality_score": latest_advanced.quality_score,
+                "quality_grade": latest_advanced.quality_grade,
+                "latency_ms": latest_advanced.latency_ms,
+                "jitter_ms": latest_advanced.jitter_ms,
+                "packet_loss_percent": latest_advanced.packet_loss_percent,
+                "bandwidth_mbps": latest_advanced.bandwidth_mbps,
+                "stability_percent": latest_advanced.stability_percent,
+            }
+        if rolling:
+            result["rolling_5m"] = rolling
+        return result
+
+    def get_quality_rolling_average(
+        self, peer_id: str
+    ) -> dict[str, float | str] | None:
+        """Get 5-minute rolling quality metrics for a peer."""
+        return self.quality_monitor.get_rolling_average(peer_id)
+
+    def get_quality_hourly_aggregates(self, peer_id: str) -> list[dict[str, float | str]]:
+        """Get hourly quality aggregates for a peer."""
+        return self.quality_monitor.get_hourly_aggregates(peer_id)
 
     def get_aggregated_system_metrics(self, window_seconds: float = 60.0) -> dict:
         """Get aggregated system metrics for a time window

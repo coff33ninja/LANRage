@@ -2,10 +2,127 @@
 
 import asyncio
 from collections.abc import Callable, Coroutine
+from dataclasses import dataclass, field
+from enum import IntEnum
 
 from .logging_config import get_logger, timing_decorator
 
 logger = get_logger(__name__)
+
+
+class TaskPriority(IntEnum):
+    """Task priority levels for advanced execution."""
+
+    DEFERRED = 0
+    LOW = 1
+    NORMAL = 2
+    HIGH = 3
+    CRITICAL = 4
+
+
+@dataclass
+class TaskDefinition:
+    """Task definition for priority/dependency execution."""
+
+    name: str
+    coroutine_factory: Callable[[], Coroutine]
+    priority: TaskPriority = TaskPriority.NORMAL
+    dependencies: list[str] = field(default_factory=list)
+    retries: int = 0
+    retry_backoff_seconds: float = 0.1
+
+
+class TaskExecutionEngine:
+    """Executes named tasks with priority and dependency support."""
+
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+    def __init__(self):
+        self.tasks: dict[str, TaskDefinition] = {}
+        self.status: dict[str, str] = {}
+        self.results: dict[str, object] = {}
+        self.execution_order: list[str] = []
+
+    def register_task(self, task: TaskDefinition) -> None:
+        """Register a task in the execution graph."""
+        self.tasks[task.name] = task
+        self.status[task.name] = self.PENDING
+
+    def _dependencies_completed(self, task_name: str) -> bool:
+        task = self.tasks[task_name]
+        return all(self.status.get(dep) == self.COMPLETED for dep in task.dependencies)
+
+    def _dependency_failed(self, task_name: str) -> bool:
+        task = self.tasks[task_name]
+        return any(
+            self.status.get(dep) in {self.FAILED, self.SKIPPED}
+            for dep in task.dependencies
+        )
+
+    async def _execute_single(self, task: TaskDefinition) -> tuple[str, object | None]:
+        self.status[task.name] = self.RUNNING
+        attempt = 0
+        while True:
+            try:
+                result = await task.coroutine_factory()
+                self.status[task.name] = self.COMPLETED
+                self.results[task.name] = result
+                self.execution_order.append(task.name)
+                return task.name, result
+            except Exception as exc:
+                attempt += 1
+                if attempt > task.retries:
+                    self.status[task.name] = self.FAILED
+                    self.results[task.name] = exc
+                    self.execution_order.append(task.name)
+                    return task.name, None
+                await asyncio.sleep(task.retry_backoff_seconds * (2 ** (attempt - 1)))
+
+    @timing_decorator(name="execute_task_graph")
+    async def execute_all(self) -> dict[str, object]:
+        """Execute all registered tasks honoring priority and dependencies."""
+        while True:
+            pending = [name for name, state in self.status.items() if state == self.PENDING]
+            if not pending:
+                break
+
+            progressed = False
+            for task_name in pending:
+                if self._dependency_failed(task_name):
+                    self.status[task_name] = self.SKIPPED
+                    progressed = True
+
+            runnable = [
+                self.tasks[name]
+                for name in pending
+                if self.status[name] == self.PENDING and self._dependencies_completed(name)
+            ]
+            if not runnable:
+                if not progressed:
+                    # Unresolvable dependency cycle.
+                    for task_name in pending:
+                        if self.status[task_name] == self.PENDING:
+                            self.status[task_name] = self.FAILED
+                    break
+                continue
+
+            highest_priority = max(task.priority for task in runnable)
+            to_run = [task for task in runnable if task.priority == highest_priority]
+            progressed = True
+
+            if len(to_run) == 1:
+                await self._execute_single(to_run[0])
+            else:
+                await asyncio.gather(*(self._execute_single(task) for task in to_run))
+
+            if not progressed:
+                break
+
+        return self.results.copy()
 
 
 class TaskManager:

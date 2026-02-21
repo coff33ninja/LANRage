@@ -8,7 +8,7 @@ from collections import deque
 import pytest
 
 from core.config import Config
-from core.metrics import MetricsCollector
+from core.metrics import ConnectionQualityMonitor, MetricsCollector
 
 
 @pytest.fixture
@@ -270,3 +270,81 @@ async def test_metrics_cleanup(metrics):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+def test_connection_quality_monitor_perfect_score():
+    """Perfect conditions should produce top quality score."""
+    monitor = ConnectionQualityMonitor()
+    score, grade = monitor.calculate_quality_score(
+        latency_ms=0.0,
+        jitter_ms=0.0,
+        packet_loss_percent=0.0,
+        bandwidth_mbps=100.0,
+        stability_percent=100.0,
+    )
+    assert score == 100.0
+    assert grade == "A"
+
+
+def test_connection_quality_monitor_latency_spike_degrades_score():
+    """Higher latency should lower quality score."""
+    monitor = ConnectionQualityMonitor()
+    high_score, _ = monitor.calculate_quality_score(
+        latency_ms=15.0,
+        jitter_ms=2.0,
+        packet_loss_percent=0.0,
+        bandwidth_mbps=50.0,
+        stability_percent=100.0,
+    )
+    low_score, _ = monitor.calculate_quality_score(
+        latency_ms=250.0,
+        jitter_ms=20.0,
+        packet_loss_percent=0.0,
+        bandwidth_mbps=50.0,
+        stability_percent=100.0,
+    )
+    assert low_score < high_score
+
+
+def test_connection_quality_monitor_packet_loss_impact():
+    """Packet loss must impact score significantly."""
+    monitor = ConnectionQualityMonitor()
+    no_loss, _ = monitor.calculate_quality_score(
+        latency_ms=30.0,
+        jitter_ms=4.0,
+        packet_loss_percent=0.0,
+        bandwidth_mbps=20.0,
+        stability_percent=100.0,
+    )
+    with_loss, _ = monitor.calculate_quality_score(
+        latency_ms=30.0,
+        jitter_ms=4.0,
+        packet_loss_percent=30.0,
+        bandwidth_mbps=20.0,
+        stability_percent=100.0,
+    )
+    assert with_loss < no_loss
+
+
+def test_connection_quality_monitor_stability_integration():
+    """Failed measurements should reduce stability and score."""
+    monitor = ConnectionQualityMonitor()
+    peer_id = "peer-stability"
+    monitor.record_measurement(peer_id, latency_ms=20.0)
+    monitor.record_failed_measurement(peer_id)
+    monitor.record_failed_measurement(peer_id)
+    sample = monitor.record_measurement(peer_id, latency_ms=25.0)
+    assert sample.stability_percent < 100.0
+    assert sample.quality_score < 100.0
+
+
+def test_connection_quality_monitor_rolling_average():
+    """Rolling average should aggregate recent samples."""
+    monitor = ConnectionQualityMonitor()
+    peer_id = "peer-rolling"
+    monitor.record_measurement(peer_id, latency_ms=20.0)
+    monitor.record_measurement(peer_id, latency_ms=30.0)
+    rolling = monitor.get_rolling_average(peer_id)
+    assert rolling is not None
+    assert rolling["sample_count"] == 2.0
+    assert rolling["avg_score"] > 0

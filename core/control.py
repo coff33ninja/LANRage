@@ -5,13 +5,17 @@ import contextlib
 import json
 import secrets
 import sys
+from collections.abc import Awaitable, Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from .config import Config
+from .conflict_resolver import ConflictResolver
 from .logging_config import get_logger, set_context, timing_decorator
 from .nat import NATType
+from .operation_lock import AtomicOperation, OperationLockManager
+from .task_manager import TaskPriority
 
 logger = get_logger(__name__)
 
@@ -205,6 +209,10 @@ class ControlPlane:
         # Persistence with batched writes (100ms default batch interval)
         self.state_file = config.config_dir / "control_state.json"
         self.state_persister = StatePersister(self.state_file, batch_interval_ms=100.0)
+
+        # Phase 5: conflict resolution for concurrent operations
+        self.operation_lock_manager = OperationLockManager()
+        self.conflict_resolver = ConflictResolver(self.operation_lock_manager)
 
     async def initialize(self):
         """Initialize control plane"""
@@ -422,6 +430,34 @@ class ControlPlane:
 
         # Queue write through batched persister (deduplicated, 100ms batch interval)
         await self.state_persister.queue_write(state)
+
+    @timing_decorator(name="control_execute_atomic")
+    async def execute_atomic_operations(
+        self,
+        operations: list[
+            tuple[
+                str,
+                str,
+                TaskPriority,
+                Callable[[], Awaitable[object]],
+                Callable[[], Awaitable[object]] | None,
+            ]
+        ],
+    ) -> list[object]:
+        """Execute control-plane operations atomically with locking support.
+
+        Each tuple is:
+        (resource_id, operation_type, priority, execute_fn, optional_rollback_fn)
+        """
+        atomic_ops = [
+            AtomicOperation(
+                resource_id=resource_id,
+                operation=execute_fn,
+                rollback=rollback_fn,
+            )
+            for resource_id, _operation_type, _priority, execute_fn, rollback_fn in operations
+        ]
+        return await self.operation_lock_manager.execute_atomic(atomic_ops)
 
     async def _load_state(self):
         """Load state from disk"""

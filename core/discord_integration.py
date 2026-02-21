@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import sys
 import time
+import warnings
 from collections import deque
 from dataclasses import dataclass
 
@@ -246,8 +247,6 @@ class DiscordIntegration:
     async def _connect_bot(self):
         """Connect Discord bot for online presence"""
         try:
-            import discord
-
             # Load Discord bot settings from database
             from .settings import get_settings_db
 
@@ -258,6 +257,14 @@ class DiscordIntegration:
             if not bot_token:
                 logger.info("Discord bot not configured (set bot token in settings)")
                 return
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="'audioop' is deprecated and slated for removal in Python 3.13",
+                    category=DeprecationWarning,
+                )
+                import discord
 
             # Create bot with minimal intents
             intents = discord.Intents.default()

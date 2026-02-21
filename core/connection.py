@@ -10,6 +10,7 @@ from .ipam import IPAddressPool
 from .logging_config import get_logger, set_context, timing_decorator
 from .nat import ConnectionCoordinator, NATTraversal
 from .network import NetworkManager
+from .relay_selector import RelayCandidate, RelaySelector
 from .task_manager import create_background_task
 
 logger = get_logger(__name__)
@@ -31,6 +32,7 @@ class ConnectionManager:
         self.control = control
         self.coordinator = ConnectionCoordinator(config, nat)
         self.ip_pool = IPAddressPool()  # Initialize IPAM
+        self.relay_selector = RelaySelector()
 
         # Track active connections
         self.connections: dict[str, PeerConnection] = {}
@@ -357,6 +359,29 @@ class ConnectionManager:
         # Get new relay endpoint
         try:
             new_relay_endpoint = await coordinator._get_relay_endpoint()
+
+            current_quality = max(0.0, min(100.0, 100.0 - (current_latency / 3.0)))
+            relay_candidates = [
+                RelayCandidate(
+                    relay_id=f"relay::{new_relay_endpoint}",
+                    health_score=95.0,
+                    load_percent=20.0,
+                    peer_quality={
+                        "local_peer": current_quality,
+                        peer_id: current_quality,
+                    },
+                )
+            ]
+            selection = self.relay_selector.select_relay(
+                peer_a="local_peer",
+                peer_b=peer_id,
+                peer_a_direct_quality=current_quality,
+                peer_b_direct_quality=current_quality,
+                candidates=relay_candidates,
+            )
+            if selection.mode == "direct":
+                logger.debug("Relay switch skipped due to direct-quality preference")
+                return
 
             # Check if it's different from current endpoint
             if new_relay_endpoint == connection.endpoint:

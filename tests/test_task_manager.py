@@ -6,7 +6,10 @@ import contextlib
 import pytest
 
 from core.task_manager import (
+    TaskDefinition,
+    TaskExecutionEngine,
     TaskManager,
+    TaskPriority,
     cancel_all_background_tasks,
     create_background_task,
     get_task_manager,
@@ -399,3 +402,151 @@ async def test_cancel_all_timeout(task_manager):
 
     # Should have cleared tasks despite timeout
     assert task_manager.task_count() == 0
+
+
+@pytest.mark.asyncio
+async def test_task_execution_respects_priority_order():
+    """Higher-priority tasks run before lower-priority tasks."""
+    engine = TaskExecutionEngine()
+    execution = []
+
+    async def low():
+        execution.append("low")
+        return "low"
+
+    async def high():
+        execution.append("high")
+        return "high"
+
+    engine.register_task(
+        TaskDefinition(
+            name="low",
+            coroutine_factory=low,
+            priority=TaskPriority.LOW,
+        )
+    )
+    engine.register_task(
+        TaskDefinition(
+            name="high",
+            coroutine_factory=high,
+            priority=TaskPriority.HIGH,
+        )
+    )
+
+    await engine.execute_all()
+    assert execution[0] == "high"
+
+
+@pytest.mark.asyncio
+async def test_dependency_resolution_and_sequencing():
+    """Dependent tasks run only after prerequisites."""
+    engine = TaskExecutionEngine()
+    execution = []
+
+    async def first():
+        execution.append("first")
+        return "done"
+
+    async def second():
+        execution.append("second")
+        return "done"
+
+    engine.register_task(TaskDefinition(name="first", coroutine_factory=first))
+    engine.register_task(
+        TaskDefinition(
+            name="second",
+            coroutine_factory=second,
+            dependencies=["first"],
+        )
+    )
+
+    await engine.execute_all()
+    assert execution == ["first", "second"]
+
+
+@pytest.mark.asyncio
+async def test_parallel_execution_of_independent_tasks():
+    """Independent tasks of same priority execute in parallel."""
+    engine = TaskExecutionEngine()
+    starts = []
+
+    async def first():
+        starts.append("first")
+        await asyncio.sleep(0.05)
+        return 1
+
+    async def second():
+        starts.append("second")
+        await asyncio.sleep(0.05)
+        return 2
+
+    engine.register_task(
+        TaskDefinition(
+            name="first",
+            coroutine_factory=first,
+            priority=TaskPriority.NORMAL,
+        )
+    )
+    engine.register_task(
+        TaskDefinition(
+            name="second",
+            coroutine_factory=second,
+            priority=TaskPriority.NORMAL,
+        )
+    )
+
+    results = await engine.execute_all()
+    assert results["first"] == 1
+    assert results["second"] == 2
+    assert set(starts) == {"first", "second"}
+
+
+@pytest.mark.asyncio
+async def test_failure_propagation_skips_dependents():
+    """Dependent task should be skipped when dependency fails."""
+    engine = TaskExecutionEngine()
+
+    async def failing():
+        raise RuntimeError("boom")
+
+    async def dependent():
+        return "never"
+
+    engine.register_task(TaskDefinition(name="failing", coroutine_factory=failing))
+    engine.register_task(
+        TaskDefinition(
+            name="dependent",
+            coroutine_factory=dependent,
+            dependencies=["failing"],
+        )
+    )
+
+    await engine.execute_all()
+    assert engine.status["failing"] == TaskExecutionEngine.FAILED
+    assert engine.status["dependent"] == TaskExecutionEngine.SKIPPED
+
+
+@pytest.mark.asyncio
+async def test_retry_logic_for_transient_failures():
+    """Transient errors should be retried with backoff."""
+    engine = TaskExecutionEngine()
+    attempts = {"count": 0}
+
+    async def flaky():
+        attempts["count"] += 1
+        if attempts["count"] < 2:
+            raise RuntimeError("transient")
+        return "ok"
+
+    engine.register_task(
+        TaskDefinition(
+            name="flaky",
+            coroutine_factory=flaky,
+            retries=2,
+            retry_backoff_seconds=0.01,
+        )
+    )
+
+    results = await engine.execute_all()
+    assert results["flaky"] == "ok"
+    assert attempts["count"] == 2
