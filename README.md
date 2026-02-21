@@ -8,7 +8,8 @@
   [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
   [![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](CHANGELOG.md)
-  [![Test Coverage](https://img.shields.io/badge/coverage-88%25-brightgreen.svg)](docs/TESTING.md)
+  [![CI Status](https://img.shields.io/github/actions/workflow/status/coff33ninja/LANRage/ci.yml?branch=main&label=CI)](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml)
+  [![Coverage](https://img.shields.io/badge/coverage-see%20CI%20artifact-blue.svg)](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml)
   [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
   [![Linter](https://img.shields.io/badge/linter-ruff-red.svg)](https://github.com/astral-sh/ruff)
   [![WireGuard](https://img.shields.io/badge/VPN-WireGuard-88171A.svg)](https://www.wireguard.com/)
@@ -155,7 +156,7 @@ All core features implemented, tested, and documented:
 - Discord integration
 - QoS implementation
 - Web UI and REST API
-- Comprehensive testing (88% coverage)
+- Comprehensive testing (see [Testing docs](docs/TESTING.md) and CI artifacts for latest results)
 - Production-grade error handling
 
 ### Phase 2 (v1.1): Scale & Polish - Q1 2026
@@ -211,7 +212,7 @@ All core features implemented, tested, and documented:
 ✅ **v1.0 - PRODUCTION READY** (January 29, 2026)
 
 **Version**: 1.0  
-**Test Coverage**: 88% (62/62 tests passing)  
+**Test Coverage & Pass Rate**: See [docs/TESTING.md](docs/TESTING.md) and the latest [CI run](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml).  
 **Performance**: All targets met and exceeded  
 **Documentation**: 1650+ lines, comprehensive  
 **Error Handling**: 96% specific exceptions  
