@@ -243,14 +243,14 @@ All core features implemented, tested, and documented:
 - Custom/community entries may be based on publicly available documentation and **Google search results**; validate ports/process names in your environment.
 
 Current profile sources:
-- `custom\additional_games.json`: 25
+- `custom/additional_games.json`: 25
 - `fps.json`: 10
 - `rpg.json`: 8
 - `coop.json`: 7
-- `custom\call_of_duty.json`: 6
-- `custom\need_for_speed.json`: 6
+- `custom/call_of_duty.json`: 6
+- `custom/need_for_speed.json`: 6
 - `horror.json`: 6
-- `custom\far_cry.json`: 5
+- `custom/far_cry.json`: 5
 - `party.json`: 5
 - `racing.json`: 5
 - `sandbox.json`: 5
@@ -268,7 +268,7 @@ Current profile sources:
 - `sports.json`: 3
 - `tower_defense.json`: 3
 - `strategy.json`: 2
-- `custom\example.json`: 1
+- `custom/example.json`: 1
 
 Sample supported games:
 - 7 Days to Die
