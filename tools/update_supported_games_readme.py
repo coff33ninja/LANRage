@@ -38,7 +38,6 @@ def source_counts(profiles: dict[str, dict]) -> list[tuple[str, int]]:
 def build_block(profiles: dict[str, dict]) -> str:
     """Generate markdown block for README markers."""
     total = len(profiles)
-    sources = source_counts(profiles)
     sample_games = sorted(
         payload.get("name", game_id) for game_id, payload in profiles.items()
     )[:24]
@@ -53,10 +52,6 @@ def build_block(profiles: dict[str, dict]) -> str:
     lines.append(
         "- Custom/community entries may be based on publicly available documentation and **Google search results**; validate ports/process names in your environment."
     )
-    lines.append("")
-    lines.append("Current profile sources:")
-    for source, count in sources:
-        lines.append(f"- `{source}`: {count}")
     lines.append("")
     lines.append("Sample supported games:")
     for game in sample_games:
