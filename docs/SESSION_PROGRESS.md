@@ -11,7 +11,7 @@
 LANrage has progressed from prototype through full production-ready release. All core features are implemented, tested, documented, and deployed. The project is ready for public release.
 
 **Key Achievements**:
-- ✅ All 15 TODOs completed (Phase 0-2)
+- ✅ Phase 0-2 implementation goals delivered (with post-phase backlog noted below)
 - ✅ 62 automated tests (100% pass rate, 88% coverage)
 - ✅ Error handling improved 96%
 - ✅ Performance all targets met
@@ -213,7 +213,7 @@ LANrage has progressed from prototype through full production-ready release. All
 
 ---
 
-## Completed TODOs (All 9 Complete)
+## Completed TODOs (Phase Scope)
 
 ### Critical (P0) - All Complete ✅
 
@@ -272,7 +272,14 @@ LANrage has progressed from prototype through full production-ready release. All
    - Tracks: DISCONNECTED, CONNECTING, CONNECTED, RECONNECTING, FAILED
    - Status: Production ready
 
-**Summary**: 9/9 TODOs complete (100%)
+**Summary**: 9/9 in-scope phase TODOs complete
+
+### Remaining TODOs
+
+These TODOs still exist in the current codebase and are tracked as **post-phase backlog** items (not contradictions of the completed Phase 0-2 scope above):
+
+- `core/config.py` near `control_server` default/comment (`# TODO: implement`) — **post-phase backlog**.
+- `core/control.py` near control-plane authentication and WebRTC-style signaling comments (`# TODO: Implement authentication`, `# TODO: Implement signaling for WebRTC-style connection setup`) — **post-phase backlog**.
 
 ---
 
