@@ -2,263 +2,115 @@
 
 ## Overview
 
-LANrage uses GitHub Actions for continuous integration and deployment. The pipeline ensures code quality, runs comprehensive tests, and automates releases.
+LANrage uses GitHub Actions for code quality, test execution, automated version tagging, release publishing, and documentation sync.
 
-## Workflows
+## Active Workflows
 
-### 1. Main CI Pipeline (`.github/workflows/ci.yml`)
+### 1. Main CI (`.github/workflows/ci.yml`)
 
-**Triggers**: Push to `main`/`develop`, Pull Requests
+**Triggers**
+- Push to `main` and `develop`
+- Pull requests to `main` and `develop`
 
-**Jobs**:
+**Jobs**
+- `code-quality`
+  - `isort --check-only`
+  - `black --check`
+  - `ruff check` (strict)
+- `test` (matrix)
+  - OS: `ubuntu-latest`, `windows-latest`
+  - Python: `3.12`, `3.13`
+  - Coverage artifact upload on Linux + Python 3.12
+- `security`
+  - `safety` vulnerability scan
+  - `bandit` static security scan
 
-#### Code Quality
-- **Import Sorting**: Verifies imports are sorted with isort
-- **Code Formatting**: Checks Black formatting compliance
-- **Ruff Linting**: Strict mode - zero tolerance for warnings
-- **Zero Warnings Check**: Enforces 100% Ruff compliance
+## Release and Version Automation
 
-#### Test Suite
-- **Matrix Testing**: Python 3.12 & 3.13 on Ubuntu & Windows
-- **Coverage**: 88% target (measured on Python 3.12/Ubuntu)
-- **Test Count**: 375 tests across 24 test files
-- **Artifacts**: Coverage reports uploaded for analysis
+### 2. Auto Tag (`.github/workflows/auto-tag.yml`)
 
-#### Security Scan
-- **Vulnerability Check**: Safety checks for known CVEs
-- **Security Linting**: Bandit scans for security issues
-- **Reports**: JSON reports uploaded as artifacts
+**Purpose**
+- Creates and pushes a git tag (`vX.Y.Z`) when `pyproject.toml` version changes on `main`.
 
-### 2. Ruff Code Quality (`.github/workflows/ruff.yml`)
+**Trigger**
+- Push to `main` affecting `pyproject.toml`
+- Manual dispatch
 
-**Triggers**: Push, Pull Requests, Manual dispatch
+### 3. Release (`.github/workflows/release.yml`)
 
-**Jobs**:
+**Purpose**
+- Creates GitHub Releases from tags and generates release notes automatically.
 
-#### Ruff Check
-- **Linting**: Comprehensive Ruff analysis with statistics
-- **Strict Mode**: Fails on any warnings (100% compliance required)
-- **GitHub Integration**: Annotations on PR diffs
-- **Report Generation**: JSON report for detailed analysis
+**Triggers**
+- Push tags matching `v*.*.*`
+- Manual dispatch with `tag_name`
 
-#### Ruff Format Check (Experimental)
-- **Format Compatibility**: Checks Ruff formatter vs Black
-- **Non-blocking**: Informational only, doesn't fail build
-- **Future-proofing**: Prepares for potential Black → Ruff migration
+**Key behavior**
+- Extracts version from tag
+- Uses `softprops/action-gh-release`
+- `generate_release_notes: true`
+- Builds source distribution and uploads `dist/*` assets
 
-#### Code Quality Summary
-- **Status Report**: Aggregates all check results
-- **Pass/Fail**: Clear indication of code quality status
-- **Guidance**: Provides fix commands on failure
+### 4. README Version Sync (`.github/workflows/update-readme-version.yml`)
 
-### 3. Pylint Analysis (`.github/workflows/pylint.yml`)
+**Purpose**
+- Keeps README version badge/status aligned with the project version.
 
-**Triggers**: Push, Pull Requests, Manual dispatch
+**Triggers**
+- Push to `main`
+- Tag push `v*.*.*`
+- Manual dispatch
 
-**Jobs**:
+### 5. Supported Games Sync (`.github/workflows/update-supported-games-readme.yml`)
 
-#### Pylint Analysis
-- **Matrix**: Python 3.12 & 3.13
-- **Scoring**: Tracks code quality score (target: 9.0+/10.0)
-- **Reports**: JSON reports per Python version
-- **Colorized Output**: Easy-to-read console output
+**Purpose**
+- Regenerates supported-games documentation from JSON profile data.
 
-### 4. Release Automation (`.github/workflows/release.yml`)
+**Triggers**
+- Push to `main` when:
+  - `game_profiles/**/*.json` changes
+  - `tools/update_supported_games_readme.py` changes
+  - `README.md` changes
+- Manual dispatch
 
-**Triggers**: Tag push (`v*`)
+**Outputs**
+- Updates `README.md` supported games block
+- Updates `docs/SUPPORTED_GAMES.md`
 
-**Jobs**:
+### 6. Ruff Workflow (`.github/workflows/ruff.yml`)
 
-#### Create Release
-- **Changelog Extraction**: Auto-extracts version notes
-- **Asset Building**: Creates distribution packages
-- **GitHub Release**: Publishes release with notes
-- **Permissions**: Requires `contents: write`
+Runs standalone Ruff checks for lint-focused validation.
 
-## Code Quality Standards
+### 7. Pylint Workflow (`.github/workflows/pylint.yml`)
 
-### Ruff Configuration
+Runs Pylint analysis as an additional quality gate.
 
-```toml
-[tool.ruff]
-line-length = 88
-target-version = "py312"
+## Local Commands (Match CI)
 
-[tool.ruff.lint]
-select = [
-    "E",    # pycodestyle errors
-    "F",    # pyflakes
-    "I",    # isort
-    "N",    # pep8-naming
-    "W",    # pycodestyle warnings
-    "UP",   # pyupgrade
-    "B",    # flake8-bugbear
-    "C4",   # flake8-comprehensions
-    "SIM",  # flake8-simplify
-    "RET",  # flake8-return
-]
-```
-
-### Quality Gates
-
-| Check | Tool | Threshold | Status |
-|-------|------|-----------|--------|
-| Linting | Ruff | Zero warnings | ✅ 100% |
-| Formatting | Black | 100% compliant | ✅ Pass |
-| Import Sorting | isort | 100% compliant | ✅ Pass |
-| Test Coverage | pytest-cov | 85%+ | ✅ 88% |
-| Pylint Score | pylint | 9.0+/10.0 | ✅ 10.0 |
-| Security | Bandit | No high issues | ✅ Pass |
-
-## Running Checks Locally
-
-### Quick Check (Pre-commit)
 ```bash
-# Windows
-.venv\Scripts\python.exe -m isort .
-.venv\Scripts\python.exe -m black .
-.venv\Scripts\python.exe -m ruff check --fix .
-.venv\Scripts\python.exe -m pytest tests/
-
-# Linux/Mac
-.venv/bin/python -m isort .
-.venv/bin/python -m black .
-.venv/bin/python -m ruff check --fix .
-.venv/bin/python -m pytest tests/
-```
-
-### Full CI Simulation
-```bash
-# Code quality
+# Linux/macOS
+source .venv/bin/activate
 python -m isort --check-only --diff .
 python -m black --check --diff .
-python -m ruff check . --output-format=github
-
-# Tests with coverage
-python -m pytest tests/ -v --cov=core --cov=api --cov-report=term
-
-# Pylint analysis
-pylint $(git ls-files '*.py') --score=yes
-
-# Security scan
-safety check
-bandit -r core/ api/ servers/
+python -m ruff check .
+python -m pytest tests/ -v
 ```
 
-## Workflow Status Badges
-
-Add to README.md:
-
-```markdown
-![CI](https://github.com/coff33ninja/LANRage/workflows/CI/badge.svg)
-![Ruff](https://github.com/coff33ninja/LANRage/workflows/Ruff%20Code%20Quality/badge.svg)
-![Pylint](https://github.com/coff33ninja/LANRage/workflows/Pylint/badge.svg)
+```powershell
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+python -m isort --check-only --diff .
+python -m black --check --diff .
+python -m ruff check .
+python -m pytest tests/ -v
 ```
 
-## Troubleshooting
+## Notes
 
-### Ruff Failures
-
-**Issue**: Ruff check fails in CI but passes locally
-
-**Solution**:
-```bash
-# Ensure you're using the same Ruff version
-pip show ruff
-
-# Update to latest
-uv pip install --upgrade ruff
-
-# Run with same output format as CI
-python -m ruff check . --output-format=github
-```
-
-### Test Failures
-
-**Issue**: Tests pass locally but fail in CI
-
-**Common Causes**:
-1. **Platform differences**: Windows vs Linux path separators
-2. **Missing dependencies**: Check requirements.txt
-3. **Environment variables**: Verify .env configuration
-4. **Timing issues**: Async tests may be flaky
-
-**Solution**:
-```bash
-# Run tests in verbose mode
-pytest tests/ -v --tb=long
-
-# Check for platform-specific issues
-pytest tests/ -v -k "not windows" # On Linux
-pytest tests/ -v -k "not linux"   # On Windows
-```
-
-### Coverage Drops
-
-**Issue**: Coverage below 85% threshold
-
-**Solution**:
-```bash
-# Generate detailed coverage report
-pytest --cov=core --cov=api --cov-report=html
-
-# Open htmlcov/index.html to see uncovered lines
-# Add tests for uncovered code paths
-```
-
-## Performance
-
-### CI Pipeline Timing
-
-| Job | Duration | Notes |
-|-----|----------|-------|
-| Code Quality | ~2 min | Ruff is very fast |
-| Test Suite (Ubuntu) | ~3 min | 375 tests |
-| Test Suite (Windows) | ~4 min | Slightly slower |
-| Security Scan | ~2 min | Includes downloads |
-| **Total** | **~5-7 min** | Parallel execution |
-
-### Optimization Tips
-
-1. **Cache Dependencies**: uv is already fast, but consider caching `.venv`
-2. **Parallel Tests**: Use `pytest -n auto` for parallel execution
-3. **Selective Testing**: Use `pytest -k` for targeted test runs
-4. **Skip Slow Tests**: Mark slow tests with `@pytest.mark.slow`
-
-## Future Improvements
-
-### Planned Enhancements
-
-1. **Ruff Format Migration**: Replace Black with Ruff's formatter
-2. **Pre-commit Hooks**: Auto-run checks before commit
-3. **Codecov Integration**: Better coverage tracking and visualization
-4. **Dependabot**: Automated dependency updates
-5. **Performance Benchmarks**: Track performance regressions
-6. **Docker CI**: Test in containerized environments
-
-### Experimental Features
-
-1. **Ruff Format**: Currently in experimental check mode
-2. **Python 3.13**: Testing compatibility with latest Python
-3. **Matrix Expansion**: Consider macOS testing
-
-## Resources
-
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Ruff Documentation](https://docs.astral.sh/ruff/)
-- [pytest Documentation](https://docs.pytest.org/)
-- [LANrage Testing Guide](./TESTING.md)
-- [LANrage Ruff Migration](./RUFF_MIGRATION.md)
-
-## Support
-
-For CI/CD issues:
-1. Check workflow logs in GitHub Actions tab
-2. Review this documentation
-3. Run checks locally to reproduce
-4. Open an issue with workflow run link
+- `CHANGELOG.md` remains the manual source of truth for curated release notes.
+- GitHub auto-generated release notes are enabled in release workflow.
+- README and supported-games docs are auto-synced by CI workflows.
 
 ---
 
-**Last Updated**: January 30, 2026  
-**Maintained By**: LANrage Development Team
+**Last Updated**: February 21, 2026

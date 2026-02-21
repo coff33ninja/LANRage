@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-02-21
+
+### Changed
+- Bumped project version metadata from `1.3.0` to `1.3.1` in `pyproject.toml`.
+- Updated `README.md` version badge and status text to `v1.3.1`.
+
 ## [1.3.0] - 2026-02-21
 
 ### Added
