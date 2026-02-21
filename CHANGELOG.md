@@ -27,12 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test Coverage**
   - Added game tests validating native/hybrid mod strategy behavior and compatibility evaluation.
   - Added dedicated mod sync tests for manifest fingerprinting and sync plan generation.
+- **README Automation**
+  - Added `tools/update_supported_games_readme.py` to regenerate supported game inventory from profile JSON files.
+  - Added GitHub Actions workflow `.github/workflows/update-supported-games-readme.yml` to auto-update README when game profiles change.
 
 ### Changed
 - **Game Profile Serialization**
   - `mod_support` now loads from JSON profiles and persists when saving custom profiles.
 - **Game Profiles Documentation**
   - Updated `game_profiles/README.md` with `mod_support` schema and field descriptions.
+- **README Status and Support Section**
+  - Updated README to reflect `v1.3.0`.
+  - Reduced release-history duplication by pointing detailed change history to `CHANGELOG.md`.
+  - Added explicit disclaimer that many custom/community profiles are untested and may be based on public documentation and Google search results.
 
 ### Added
 

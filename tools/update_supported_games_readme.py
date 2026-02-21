@@ -21,7 +21,7 @@ def load_profiles(base_dir: Path) -> dict[str, dict]:
             if game_id.startswith("_") or not isinstance(payload, dict):
                 continue
             entry = dict(payload)
-            entry["_source_file"] = str(path.relative_to(base_dir))
+            entry["_source_file"] = path.relative_to(base_dir).as_posix()
             profiles[game_id] = entry
     return profiles
 

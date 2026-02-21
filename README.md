@@ -7,7 +7,7 @@
   
   [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
   [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  [![Version](https://img.shields.io/badge/version-1.2.5-brightgreen.svg)](CHANGELOG.md)
+  [![Version](https://img.shields.io/badge/version-1.3.0-brightgreen.svg)](CHANGELOG.md)
   [![CI Status](https://img.shields.io/github/actions/workflow/status/coff33ninja/LANRage/ci.yml?branch=main&label=CI)](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml)
   [![Coverage](https://img.shields.io/badge/coverage-see%20CI%20artifact-blue.svg)](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml)
   [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -209,31 +209,10 @@ All core features implemented, tested, and documented:
 
 ## Status
 
-✅ **v1.2.5 - PRODUCTION READY** (January 31, 2026)
+✅ **v1.3.0 - PRODUCTION READY** (February 21, 2026)
 
-**Version**: 1.2.5  
-**Test Coverage & Pass Rate**: See [docs/TESTING.md](docs/TESTING.md) and the latest [CI run](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml).  
-**Performance**: All targets met and exceeded  
-**Documentation**: 1650+ lines, comprehensive  
-**Error Handling**: 96% specific exceptions  
-
-### Core Features (Phase 0-3 Complete)
-- ✅ WireGuard interface management (Windows/Linux)
-- ✅ NAT traversal (STUN/TURN + hole punching)
-- ✅ Direct P2P connections (<5ms overhead)
-- ✅ Smart relay fallback (<15ms overhead)
-- ✅ Broadcast emulation for LAN games
-- ✅ Game detection & optimization (21 built-in profiles + custom profiles)
-- ✅ Relay server with intelligent selection
-- ✅ Multi-peer mesh networking (up to 255)
-- ✅ Auto reconnection & relay switching
-- ✅ Custom game profiles (JSON-based)
-- ✅ Statistics dashboard (real-time metrics)
-- ✅ Discord integration (webhooks + Rich Presence)
-- ✅ Game server browser (discover & host)
-- ✅ Comprehensive error handling (96% specific)
-- ✅ Performance optimization (all targets met)
-- ✅ One-click setup (90 seconds)
+**Release Notes**: [CHANGELOG.md](CHANGELOG.md) is the source of truth for version history and detailed changes.  
+**Quality Metrics**: See [docs/TESTING.md](docs/TESTING.md) and the latest [CI run](https://github.com/coff33ninja/LANRage/actions/workflows/ci.yml).  
 
 <!-- SUPPORTED_GAMES:START -->
 ### Supported Games
