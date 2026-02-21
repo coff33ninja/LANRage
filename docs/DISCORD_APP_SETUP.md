@@ -67,7 +67,7 @@ python lanrage.py
 
 1. Open Discord
 2. Start LANrage
-3. Verify integration status reports Rich Presence configured:
+3. Verify that the integration status reports Rich Presence as configured:
    - Check `GET /api/discord/status`, or
    - Check startup logs for `✓ Discord Rich Presence connected`
 4. Create or join a party
