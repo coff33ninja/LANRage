@@ -587,7 +587,7 @@ All Discord operations handle errors gracefully:
 
 - **Webhook Failures**: Print warning, continue operation
 - **Rich Presence Failures**: Print warning, disable Rich Presence
-- **Network Errors**: Retry not implemented (fire-and-forget)
+- **Network Errors**: Automatic retry with exponential backoff (3 attempts for 429/5xx and client network errors)
 
 No Discord errors will crash LANrage or interrupt gameplay.
 

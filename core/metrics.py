@@ -1,6 +1,7 @@
 """Metrics collection and statistics tracking"""
 
 import asyncio
+import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -320,7 +321,6 @@ class MetricsCollector:
         if latency is not None:
             peer.latency.append(MetricPoint(timestamp=current_time, value=latency))
             peer.last_seen = current_time
-            logger.debug(f"Recorded latency: {latency}ms")
 
             # Calculate jitter (standard deviation of recent latencies)
             if len(peer.latency) >= 2:
@@ -330,7 +330,6 @@ class MetricsCollector:
                     latencies
                 )
                 peer.jitter_ms = variance**0.5
-                logger.debug(f"Jitter calculated: {peer.jitter_ms:.2f}ms")
 
             # Update connection quality prediction
             quality_score, quality_status = predict_connection_quality(
@@ -350,9 +349,15 @@ class MetricsCollector:
             else:
                 peer.quality_trend = "stable"
 
-            logger.debug(
-                f"Quality: {quality_status} ({quality_score:.1f}), Trend: {peer.quality_trend}"
-            )
+            if logger.isEnabledFor(logging.DEBUG) and len(peer.latency) % 60 == 0:
+                logger.debug(
+                    "Peer %s quality=%s score=%.1f trend=%s latency_samples=%d",
+                    peer_id,
+                    quality_status,
+                    quality_score,
+                    peer.quality_trend,
+                    len(peer.latency),
+                )
 
             # Update status based on quality score
             if quality_score >= 60:
