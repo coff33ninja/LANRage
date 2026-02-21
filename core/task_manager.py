@@ -77,7 +77,7 @@ class TaskManager:
                     f"Error in task completion callback {callback.__name__}: {type(e).__name__}: {e}"
                 )
 
-    async def cancel_all(self, timeout: int = 30) -> None:
+    async def cancel_all(self, timeout: float = 30) -> None:
         """Cancel all tracked tasks gracefully
 
         Args:
@@ -90,24 +90,23 @@ class TaskManager:
         self.running = False
         logger.info(f"Cancelling {len(self.tasks)} background tasks...")
 
-        # Cancel all tasks
-        for task in self.tasks.copy():
+        tasks_to_cancel = self.tasks.copy()
+
+        # Cancel all tracked tasks
+        for task in tasks_to_cancel:
             task.cancel()
             logger.debug(f"Cancelled task: {task.get_name()}")
 
         # Wait for cancellation with timeout
-        try:
-            await asyncio.wait_for(
-                asyncio.gather(*self.tasks, return_exceptions=True), timeout=timeout
-            )
-        except asyncio.TimeoutError:
+        _done, pending = await asyncio.wait(tasks_to_cancel, timeout=timeout)
+        if pending:
             logger.warning(f"Task cancellation timeout after {timeout}s")
             # Force-remove remaining tasks
             self.tasks.clear()
 
         logger.info("All background tasks cancelled")
 
-    async def wait_all(self, timeout: int | None = None) -> None:
+    async def wait_all(self, timeout: float | None = None) -> None:
         """Wait for all tasks to complete
 
         Args:
@@ -116,11 +115,8 @@ class TaskManager:
         if not self.tasks:
             return
 
-        try:
-            await asyncio.wait_for(
-                asyncio.gather(*self.tasks, return_exceptions=True), timeout=timeout
-            )
-        except asyncio.TimeoutError:
+        _done, pending = await asyncio.wait(self.tasks.copy(), timeout=timeout)
+        if pending:
             logger.warning(f"Task wait timeout after {timeout}s")
 
     def task_count(self) -> int:
@@ -157,7 +153,7 @@ def create_background_task(coro: Coroutine, name: str | None = None) -> asyncio.
     return get_task_manager().create_task(coro, name)
 
 
-async def cancel_all_background_tasks(timeout: int = 30) -> None:
+async def cancel_all_background_tasks(timeout: float = 30) -> None:
     """Cancel all background tasks using the global task manager
 
     Args:
