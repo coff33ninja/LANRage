@@ -100,7 +100,7 @@ class TaskManager:
             await asyncio.wait_for(
                 asyncio.gather(*self.tasks, return_exceptions=True), timeout=timeout
             )
-        except TimeoutError:
+        except asyncio.TimeoutError:
             logger.warning(f"Task cancellation timeout after {timeout}s")
             # Force-remove remaining tasks
             self.tasks.clear()
@@ -120,7 +120,7 @@ class TaskManager:
             await asyncio.wait_for(
                 asyncio.gather(*self.tasks, return_exceptions=True), timeout=timeout
             )
-        except TimeoutError:
+        except asyncio.TimeoutError:
             logger.warning(f"Task wait timeout after {timeout}s")
 
     def task_count(self) -> int:
