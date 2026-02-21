@@ -31,25 +31,11 @@ jobs:
       id: get_version
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
     
-    - name: Extract changelog for this version
-      id: changelog
-      run: |
-        VERSION=${{ steps.get_version.outputs.VERSION }}
-        # Extract changelog between this version and the next version (or end of file)
-        awk "/## \[$VERSION\]/,/## \[.*\]/ {if (/## \[.*\]/ && !/## \[$VERSION\]/) exit; print}" CHANGELOG.md | sed '1d' > release_notes.md
-        # If release_notes.md is empty or too short, use a fallback
-        if [ ! -s release_notes.md ] || [ $(wc -l < release_notes.md) -lt 3 ]; then
-          echo "Release v$VERSION" > release_notes.md
-          echo "" >> release_notes.md
-          echo "See CHANGELOG.md for details." >> release_notes.md
-        fi
-    
     - name: Create GitHub Release
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
         name: LANrage v${{ steps.get_version.outputs.VERSION }}
-        body_path: release_notes.md
         draft: false
         prerelease: false
         make_latest: true
