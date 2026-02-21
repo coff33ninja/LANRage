@@ -80,7 +80,10 @@ class IPAddressPool:
                 # Allocate this IP
                 self.allocated_ips.add(ip_addr)
                 self.peer_id_to_ip[peer_id] = ip_addr
-                if logger.isEnabledFor(logging.DEBUG) and len(self.allocated_ips) % 64 == 0:
+                if (
+                    logger.isEnabledFor(logging.DEBUG)
+                    and len(self.allocated_ips) % 64 == 0
+                ):
                     logger.debug(
                         "Allocated %d IPs; latest peer=%s ip=%s",
                         len(self.allocated_ips),

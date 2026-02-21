@@ -7,17 +7,16 @@ Tests the multi-method detection system including:
 - Confidence scoring and detection ranking
 """
 
-import asyncio
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from core.config import Config
 from core.games import (
-    GameProfile,
     DetectionResult,
     GameDetector,
-    GAME_PROFILES,
+    GameProfile,
 )
-from core.config import Config
 
 
 @pytest.fixture
@@ -47,8 +46,7 @@ def config():
 @pytest.fixture
 def game_detector(config):
     """Create GameDetector instance"""
-    detector = GameDetector(config)
-    return detector
+    return GameDetector(config)
 
 
 class TestDetectionResult:
@@ -123,57 +121,58 @@ class TestProcessDetection:
     async def test_process_detection_exact_match(self, game_detector, sample_profile):
         """Test detecting game via exact process name match"""
         # Set up mock GAME_PROFILES
-        with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
-            with patch("psutil.process_iter") as mock_proc_iter:
-                # Mock process that matches
-                mock_proc = MagicMock()
-                mock_proc.info = {"name": "testgame.exe"}
-                mock_proc_iter.return_value = [mock_proc]
+        with (
+            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("psutil.process_iter") as mock_proc_iter,
+        ):
+            # Mock process that matches
+            mock_proc = MagicMock()
+            mock_proc.info = {"name": "testgame.exe"}
+            mock_proc_iter.return_value = [mock_proc]
 
-                # Run detection
-                await game_detector._detect_games()
+            # Run detection
+            await game_detector._detect_games()
 
-                # Verify game was detected
-                assert "test_game" in game_detector.detected_games
+            # Verify game was detected
+            assert "test_game" in game_detector.detected_games
 
     @pytest.mark.asyncio
     async def test_process_detection_fuzzy_match(self, game_detector, sample_profile):
         """Test detecting game via fuzzy process name match"""
-        with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
-            with patch("psutil.process_iter") as mock_proc_iter:
-                # Mock process with similar name
-                mock_proc = MagicMock()
-                mock_proc.info = {"name": "TestGame.exe"}  # Mixed case
-                mock_proc_iter.return_value = [mock_proc]
+        with (
+            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("psutil.process_iter") as mock_proc_iter,
+        ):
+            # Mock process with similar name
+            mock_proc = MagicMock()
+            mock_proc.info = {"name": "TestGame.exe"}  # Mixed case
+            mock_proc_iter.return_value = [mock_proc]
 
-                # Run detection
-                await game_detector._detect_games()
+            # Run detection
+            await game_detector._detect_games()
 
-                # Verify game was detected despite case difference
-                assert "test_game" in game_detector.detected_games
+            # Verify game was detected despite case difference
+            assert "test_game" in game_detector.detected_games
 
     @pytest.mark.asyncio
     async def test_process_detection_confidence(self, game_detector, sample_profile):
         """Test process detection has high confidence"""
-        results = []
+        with (
+            patch.object(GameDetector, "_detect_by_window_title", return_value=[]),
+            patch.object(GameDetector, "_detect_by_open_ports", return_value=[]),
+            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("psutil.process_iter") as mock_proc_iter,
+        ):
+            # Mock process
+            mock_proc = MagicMock()
+            mock_proc.info = {"name": "testgame.exe"}
+            mock_proc_iter.return_value = [mock_proc]
 
-        async def mock_method(self):
-            return results
+            # Run detection
+            await game_detector._detect_games()
 
-        with patch.object(GameDetector, "_detect_by_window_title", return_value=[]):
-            with patch.object(GameDetector, "_detect_by_open_ports", return_value=[]):
-                with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
-                    with patch("psutil.process_iter") as mock_proc_iter:
-                        # Mock process
-                        mock_proc = MagicMock()
-                        mock_proc.info = {"name": "testgame.exe"}
-                        mock_proc_iter.return_value = [mock_proc]
-
-                        # Run detection
-                        await game_detector._detect_games()
-
-                        # Process detection should have high confidence (0.95)
-                        assert "test_game" in game_detector.detected_games
+            # Process detection should have high confidence (0.95)
+            assert "test_game" in game_detector.detected_games
 
 
 class TestPortDetection:
@@ -271,29 +270,31 @@ class TestDetectionRanking:
         mock_optimizer.active_profile = None
         game_detector.optimizer = mock_optimizer
 
-        with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
-            with patch("psutil.process_iter") as mock_proc_iter:
-                # Mock process
-                mock_proc = MagicMock()
-                mock_proc.info = {"name": "testgame.exe"}
-                mock_proc_iter.return_value = [mock_proc]
+        with (
+            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("psutil.process_iter") as mock_proc_iter,
+        ):
+            # Mock process
+            mock_proc = MagicMock()
+            mock_proc.info = {"name": "testgame.exe"}
+            mock_proc_iter.return_value = [mock_proc]
 
-                # Run detection first time
-                await game_detector._detect_games()
-                initial_history_len = len(game_detector.detection_history)
+            # Run detection first time
+            await game_detector._detect_games()
+            initial_history_len = len(game_detector.detection_history)
 
-                # Run detection second time
-                await game_detector._detect_games()
+            # Run detection second time
+            await game_detector._detect_games()
 
-                # History should still be same length (no duplicate entries for same game)
-                assert len(game_detector.detection_history) == initial_history_len
+            # History should still be same length (no duplicate entries for same game)
+            assert len(game_detector.detection_history) == initial_history_len
 
-                # Stop game
-                mock_proc_iter.return_value = []
-                await game_detector._detect_games()
+            # Stop game
+            mock_proc_iter.return_value = []
+            await game_detector._detect_games()
 
-                # History should record stop event
-                assert len(game_detector.detection_history) > initial_history_len
+            # History should record stop event
+            assert len(game_detector.detection_history) > initial_history_len
 
 
 class TestGameDetectorIntegration:
@@ -355,18 +356,20 @@ class TestGameDetectorIntegration:
             ),
         }
 
-        with patch("core.games.GAME_PROFILES", profiles):
-            with patch("psutil.process_iter") as mock_proc_iter:
-                # Mock both processes running
-                mock_proc1 = MagicMock()
-                mock_proc1.info = {"name": "game1.exe"}
-                mock_proc2 = MagicMock()
-                mock_proc2.info = {"name": "game2.exe"}
-                mock_proc_iter.return_value = [mock_proc1, mock_proc2]
+        with (
+            patch("core.games.GAME_PROFILES", profiles),
+            patch("psutil.process_iter") as mock_proc_iter,
+        ):
+            # Mock both processes running
+            mock_proc1 = MagicMock()
+            mock_proc1.info = {"name": "game1.exe"}
+            mock_proc2 = MagicMock()
+            mock_proc2.info = {"name": "game2.exe"}
+            mock_proc_iter.return_value = [mock_proc1, mock_proc2]
 
-                # Run detection
-                await game_detector._detect_games()
+            # Run detection
+            await game_detector._detect_games()
 
-                # Both games should be detected
-                assert "game1" in game_detector.detected_games
-                assert "game2" in game_detector.detected_games
+            # Both games should be detected
+            assert "game1" in game_detector.detected_games
+            assert "game2" in game_detector.detected_games

@@ -135,7 +135,7 @@ class PartyManager:
             # Detect NAT type
             await self.nat.detect_nat()
             self.coordinator = ConnectionCoordinator(self.config, self.nat)
-            logger.info(f"NAT initialized successfully")
+            logger.info("NAT initialized successfully")
         except Exception as e:
             # NAT detection failed, but continue
             # Will fall back to relay-only mode

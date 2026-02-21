@@ -357,7 +357,6 @@ class TestTimingDecorator:
 
     def test_timing_decorator_captures_duration(self):
         """Test that decorator captures execution time."""
-        stream = StringIO()
 
         @timing_decorator(name="timed_op")
         def slow_func():

@@ -86,7 +86,9 @@ class TaskExecutionEngine:
     async def execute_all(self) -> dict[str, object]:
         """Execute all registered tasks honoring priority and dependencies."""
         while True:
-            pending = [name for name, state in self.status.items() if state == self.PENDING]
+            pending = [
+                name for name, state in self.status.items() if state == self.PENDING
+            ]
             if not pending:
                 break
 
@@ -99,7 +101,8 @@ class TaskExecutionEngine:
             runnable = [
                 self.tasks[name]
                 for name in pending
-                if self.status[name] == self.PENDING and self._dependencies_completed(name)
+                if self.status[name] == self.PENDING
+                and self._dependencies_completed(name)
             ]
             if not runnable:
                 if not progressed:

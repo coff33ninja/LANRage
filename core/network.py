@@ -412,7 +412,7 @@ ListenPort = 51820
             cmd.extend(["persistent-keepalive", "25"])
 
             await self._run_command(cmd)
-            logger.debug(f"WireGuard peer added successfully")
+            logger.debug("WireGuard peer added successfully")
 
         except Exception as e:
             logger.error(f"Failed to add peer: {e}")
@@ -422,7 +422,7 @@ ListenPort = 51820
     async def remove_peer(self, peer_public_key: str):
         """Remove a WireGuard peer"""
         set_context(peer_id_val=peer_public_key[:16])
-        logger.info(f"Removing WireGuard peer")
+        logger.info("Removing WireGuard peer")
 
         if not self.interface_created:
             raise WireGuardError("Interface not created") from None

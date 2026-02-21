@@ -69,7 +69,9 @@ class ConflictResolver:
     @timing_decorator(name="resolve_conflicts")
     async def resolve_pair(self, first: OperationSpec, second: OperationSpec) -> object:
         """Resolve and execute two operations."""
-        set_context(correlation_id_val=f"{first.operation_type}:{second.operation_type}")
+        set_context(
+            correlation_id_val=f"{first.operation_type}:{second.operation_type}"
+        )
         strategy = self.resolve_strategy(first, second)
         logger.warning(
             "Conflict resolution strategy=%s for %s vs %s on %s",

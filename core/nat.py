@@ -5,7 +5,6 @@ import secrets
 import socket
 import struct
 import subprocess
-import sys
 from dataclasses import dataclass
 from enum import Enum
 
@@ -261,7 +260,7 @@ class NATTraversal:
             # Send multiple packets to punch hole
             punch_message = b"LANRAGE_PUNCH"
 
-            for i in range(5):
+            for _i in range(5):
                 sock.sendto(punch_message, (peer_public_ip, peer_public_port))
                 await asyncio.sleep(0.1)
 

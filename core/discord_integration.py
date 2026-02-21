@@ -405,7 +405,9 @@ class DiscordIntegration:
 
         for attempt in range(1, self.webhook_retry_attempts + 1):
             try:
-                async with self.session.post(self.webhook_url, json=payload) as response:
+                async with self.session.post(
+                    self.webhook_url, json=payload
+                ) as response:
                     if response.status == 204:
                         logger.debug(f"Discord webhook sent: {title}")
                         return

@@ -39,20 +39,17 @@ class SettingsDatabase:
         logger.info(f"Initializing settings database: {self.db_path}")
         async with self._lock, aiosqlite.connect(self.db_path) as db:
             # Settings table
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS settings (
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL,
                     type TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
-            """
-            )
+            """)
 
             # Server configurations table
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS server_configs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -62,12 +59,10 @@ class SettingsDatabase:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
-            """
-            )
+            """)
 
             # Favorite servers table
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS favorite_servers (
                     server_id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -75,12 +70,10 @@ class SettingsDatabase:
                     address TEXT NOT NULL,
                     added_at TEXT NOT NULL
                 )
-            """
-            )
+            """)
 
             # Game profiles table
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS game_profiles (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL UNIQUE,
@@ -89,8 +82,7 @@ class SettingsDatabase:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
-            """
-            )
+            """)
 
             await db.commit()
 

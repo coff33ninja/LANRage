@@ -36,14 +36,18 @@ class RelaySelection:
 class RelaySelector:
     """Selects the best relay for a peer pair with automatic fallback ordering."""
 
-    def __init__(self, direct_threshold: float = 80.0, failover_cooldown_s: float = 2.0):
+    def __init__(
+        self, direct_threshold: float = 80.0, failover_cooldown_s: float = 2.0
+    ):
         self.direct_threshold = direct_threshold
         self.failover_cooldown_s = failover_cooldown_s
         self.failed_relays: dict[str, float] = {}
 
     def mark_relay_failed(self, relay_id: str, failed_at: float | None = None) -> None:
         """Mark a relay as failed and temporarily avoid selecting it."""
-        self.failed_relays[relay_id] = failed_at if failed_at is not None else time.time()
+        self.failed_relays[relay_id] = (
+            failed_at if failed_at is not None else time.time()
+        )
 
     def _is_temporarily_failed(self, relay_id: str, now: float) -> bool:
         failed_at = self.failed_relays.get(relay_id)

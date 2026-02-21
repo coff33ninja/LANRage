@@ -67,7 +67,9 @@ class OperationLockManager:
                 try:
                     await op.rollback()
                 except Exception as rollback_exc:
-                    logger.error("Rollback failed for %s: %s", op.resource_id, rollback_exc)
+                    logger.error(
+                        "Rollback failed for %s: %s", op.resource_id, rollback_exc
+                    )
             raise
         finally:
             for lock in reversed(acquired_locks):

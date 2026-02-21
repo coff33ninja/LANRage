@@ -1,7 +1,8 @@
 """Tests for control plane logging integration"""
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from core.config import Config
 from core.control import ControlPlane
@@ -38,7 +39,7 @@ async def test_register_party_logging_sets_context(control_plane, caplog):
     )
 
     # Register a party with proper arguments
-    party = await control_plane.register_party(party_id, "Test Party", peer_info)
+    await control_plane.register_party(party_id, "Test Party", peer_info)
 
     # Check that context was established (we can log after and context should be set)
     set_context(party_id_val=party_id, peer_id_val=peer_id)

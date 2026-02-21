@@ -254,7 +254,9 @@ class ConnectionQualityMonitor:
         aggregates = []
         for hour_bucket in sorted(hourly_buckets.keys()):
             bucket_samples = hourly_buckets[hour_bucket]
-            avg_score = sum(s.quality_score for s in bucket_samples) / len(bucket_samples)
+            avg_score = sum(s.quality_score for s in bucket_samples) / len(
+                bucket_samples
+            )
             aggregates.append(
                 {
                     "hour_start": float(hour_bucket * 3600),
@@ -917,7 +919,9 @@ class MetricsCollector:
         """Get 5-minute rolling quality metrics for a peer."""
         return self.quality_monitor.get_rolling_average(peer_id)
 
-    def get_quality_hourly_aggregates(self, peer_id: str) -> list[dict[str, float | str]]:
+    def get_quality_hourly_aggregates(
+        self, peer_id: str
+    ) -> list[dict[str, float | str]]:
         """Get hourly quality aggregates for a peer."""
         return self.quality_monitor.get_hourly_aggregates(peer_id)
 
