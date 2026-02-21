@@ -106,6 +106,7 @@ class TestPerformanceProfiling:
         """Profile metrics collection performance."""
         config = Config()
         collector = MetricsCollector(config)
+        collector.add_peer("test_peer", "Test Peer")
 
         iterations = 1000
         times = []
@@ -239,6 +240,7 @@ class TestPerformanceProfiling:
             """Simulate typical peer operations."""
             peer_id = f"peer_{id(asyncio.current_task())}"
             ip = ipam.allocate(peer_id)
+            collector.add_peer(str(ip), peer_id)
             await collector.record_latency(str(ip), 10.5)
             await collector.record_bandwidth(str(ip), 1024 * 1024)
             return ip
@@ -447,6 +449,9 @@ class TestPerformanceRegression:
         """Test metrics collection performance with increasing data."""
         config = Config()
         collector = MetricsCollector(config)
+        for i in range(10):
+            collector.add_peer(f"peer_{i}", f"Peer {i}")
+        collector.add_peer("test_peer", "Test Peer")
 
         data_points = [100, 500, 1000, 5000]
         results = {}
