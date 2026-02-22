@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Architecture Diagram Pack** (`docs/diagrams/`)
   - Added detailed diagram index and split Mermaid docs for context, components, runtime sequences, control loops, CI/CD flow, and failure domains.
   - Added cross-links from `docs/README.md` and `docs/ARCHITECTURE.md` to improve architecture discoverability.
+- **Reusable Code Quality Runner** (`tools/run_code_quality.py`)
+  - Added single command entry-point for `isort`, `black`, and `ruff`.
+  - Supports check-only mode (`--check`) and Ruff autofix mode (`--ruff-fix`).
+  - Documented usage in developer-facing docs (`docs/CI_CD.md`, `docs/MODERNIZATION.md`).
 
 ### Changed
 - **Documentation Alignment (Core-accurate)**

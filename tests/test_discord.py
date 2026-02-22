@@ -3,6 +3,7 @@
 import pytest
 import pytest_asyncio
 
+import core.discord_integration as discord_module
 from core.config import Config
 from core.discord_integration import DiscordIntegration, DiscordWebhookHelper
 
@@ -119,6 +120,54 @@ async def test_clear_presence(discord):
     """Test clearing Rich Presence"""
     # Should not raise even if RPC not connected
     await discord.clear_presence()
+
+
+@pytest.mark.asyncio
+async def test_rich_presence_reconnect_loop_attempts_when_disconnected(monkeypatch):
+    """Reconnect loop should attempt RPC connect while disconnected."""
+    config = await Config.load()
+    discord = DiscordIntegration(config)
+    discord.running = True
+    discord.rpc_connected = False
+    discord.rpc_reconnect_interval = 0
+
+    attempts = {"count": 0}
+
+    async def fake_connect(*, suppress_fail_log=False):
+        attempts["count"] += 1
+
+    async def fake_sleep(_delay):
+        discord.running = False
+
+    discord._connect_rich_presence = fake_connect  # type: ignore[method-assign]
+    monkeypatch.setattr(discord_module.asyncio, "sleep", fake_sleep)
+    await discord._rich_presence_reconnect_loop()
+
+    assert attempts["count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_update_presence_marks_rpc_disconnected_on_failure(monkeypatch):
+    """RPC update failure should mark RPC disconnected for auto-retry."""
+    config = await Config.load()
+    discord = DiscordIntegration(config)
+    discord.rpc_connected = True
+
+    class _FailingRPC:
+        def update(self, **_kwargs):
+            raise RuntimeError("rpc offline")
+
+    class _FakeLoop:
+        async def run_in_executor(self, _executor, fn):
+            return fn()
+
+    discord.rpc = _FailingRPC()
+
+    monkeypatch.setattr(discord_module.asyncio, "get_event_loop", lambda: _FakeLoop())
+    await discord.update_presence("In Party")
+
+    assert discord.rpc_connected is False
+    assert discord.rpc is None
 
 
 class _FakeResponse:

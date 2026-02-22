@@ -100,6 +100,8 @@ class DiscordIntegration:
         # Discord Rich Presence (if pypresence is available)
         self.rpc = None
         self.rpc_connected = False
+        self.rpc_reconnect_interval = 2.0
+        self.rpc_reconnect_task: asyncio.Task | None = None
 
         # Discord Bot (if discord.py is available)
         self.bot = None
@@ -129,6 +131,11 @@ class DiscordIntegration:
         # Try to connect Rich Presence
         await self._connect_rich_presence()
 
+        # Keep retrying Rich Presence while running so late-started Discord is detected
+        self.rpc_reconnect_task = asyncio.create_task(
+            self._rich_presence_reconnect_loop()
+        )
+
         # Try to connect Discord bot
         await self._connect_bot()
 
@@ -151,6 +158,13 @@ class DiscordIntegration:
         # Final flush of pending notifications
         await self._flush_pending_notifications()
 
+        # Stop Rich Presence reconnect task
+        if self.rpc_reconnect_task:
+            self.rpc_reconnect_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self.rpc_reconnect_task
+            self.rpc_reconnect_task = None
+
         # Stop Discord bot
         if self.bot and self.bot_connected:
             try:
@@ -169,9 +183,11 @@ class DiscordIntegration:
         if self.session:
             await self.session.close()
 
-        if self.rpc and self.rpc_connected:
+        if self.rpc:
             try:
                 self.rpc.close()
+                self.rpc_connected = False
+                self.rpc = None
             except OSError as e:
                 # Discord RPC cleanup is optional, log but don't fail
                 print(f"Debug: Discord RPC cleanup failed: {e}", file=sys.stderr)
@@ -187,6 +203,16 @@ class DiscordIntegration:
             while self.running:
                 await asyncio.sleep(self.notification_batcher.batch_interval)
                 await self._flush_pending_notifications()
+        except asyncio.CancelledError:
+            pass
+
+    async def _rich_presence_reconnect_loop(self):
+        """Periodically retry Discord RPC connection while running."""
+        try:
+            while self.running:
+                if not self.rpc_connected:
+                    await self._connect_rich_presence(suppress_fail_log=True)
+                await asyncio.sleep(self.rpc_reconnect_interval)
         except asyncio.CancelledError:
             pass
 
@@ -208,8 +234,11 @@ class DiscordIntegration:
             n = notifications[0]
             await self._send_webhook(n.title, n.description, color=n.color)
 
-    async def _connect_rich_presence(self):
+    async def _connect_rich_presence(self, suppress_fail_log: bool = False):
         """Connect to Discord Rich Presence"""
+        if self.rpc_connected:
+            return
+
         try:
             from pypresence import Presence
 
@@ -242,7 +271,10 @@ class DiscordIntegration:
             logger.info("Discord Rich Presence not available (install pypresence)")
         except Exception as e:
             error_msg = str(e)
-            logger.warning(f"Discord Rich Presence failed: {error_msg}")
+            if suppress_fail_log:
+                logger.debug(f"Discord Rich Presence retry failed: {error_msg}")
+            else:
+                logger.warning(f"Discord Rich Presence failed: {error_msg}")
 
     async def _connect_bot(self):
         """Connect Discord bot for online presence"""
@@ -568,6 +600,9 @@ class DiscordIntegration:
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Discord presence update failed: {error_msg}")
+            # Mark RPC disconnected so reconnect loop can restore it.
+            self.rpc_connected = False
+            self.rpc = None
 
     async def clear_presence(self):
         """Clear Discord Rich Presence"""

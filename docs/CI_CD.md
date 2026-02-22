@@ -105,6 +105,21 @@ python -m ruff check .
 python -m pytest tests/ -v
 ```
 
+## Reusable Quality Script
+
+Use the project helper script to run formatting/lint in a consistent order:
+
+```bash
+# Format + lint
+python tools/run_code_quality.py
+
+# CI-style checks only
+python tools/run_code_quality.py --check
+
+# Format + Ruff autofix
+python tools/run_code_quality.py --ruff-fix
+```
+
 ## Notes
 
 - `CHANGELOG.md` remains the manual source of truth for curated release notes.

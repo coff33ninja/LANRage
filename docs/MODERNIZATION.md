@@ -105,6 +105,21 @@ uv pip install -r requirements.txt
 .venv\Scripts\python.exe -m pytest
 ```
 
+### Reusable Code Quality Script
+
+Use the helper script for repeatable local checks:
+
+```bash
+# Format + lint
+python tools/run_code_quality.py
+
+# Check-only mode (no file modifications)
+python tools/run_code_quality.py --check
+
+# Enable Ruff auto-fixes
+python tools/run_code_quality.py --ruff-fix
+```
+
 ### Using Ruff Instead of Multiple Tools
 
 Ruff can replace several tools:
