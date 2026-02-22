@@ -185,5 +185,5 @@ See [Discord Integration Guide](DISCORD_SETUP_GUIDE.md) for full setup.
 
 ---
 
-**Last Updated**: February 21, 2026  
+**Last Updated**: February 22, 2026  
 **LANrage Version**: v1.3.1+
