@@ -15,17 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added single command entry-point for `isort`, `black`, and `ruff`.
   - Supports check-only mode (`--check`) and Ruff autofix mode (`--ruff-fix`).
   - Documented usage in developer-facing docs (`docs/CI_CD.md`, `docs/MODERNIZATION.md`).
+- **Unified Dashboard App Shell** (`static/index.html`)
+  - Added a new default `Dashboard` tab as the primary UI surface.
+  - Added cross-tab quick actions to jump into Party, Servers, and Settings flows.
+  - Added dashboard server snapshot with inline join actions.
+  - Added dashboard quick settings controls (mode + Discord/Metrics toggles) to reduce configuration friction.
+- **Versioning Playbook** (`docs/VERSIONING.md`)
+  - Added a practical Semantic Versioning strategy, release workflow, and changelog policy for this project.
+  - Added a reusable “Versioning Assistant Skill” template section for future Codex skill automation.
 
 ### Changed
 - **Documentation Alignment (Core-accurate)**
   - Updated major docs to reflect current database-first configuration model and removed stale `.env`/CLI-flag guidance.
   - Updated architecture/docs module coverage to include current core components (`mod_sync`, `task_manager`, `operation_lock`, `conflict_resolver`, `relay_selector`, `profiler`).
   - Fixed broken/missing internal doc references and refreshed docs flow consistency with current CI/release automation.
+- **Dashboard Visual Consistency** (`static/dashboard.html`, `static/index.html`)
+  - Reworked dashboard styling to align with the primary LANrage UI design language.
+  - Improved mobile responsiveness for metrics cards, peer rows, and chart containers.
+  - Switched to stable card-based layout primitives to reduce visual drift across tabs.
 
 ### Fixed
 - **Windows Console Unicode Startup Crash** (`lanrage.py`)
   - Added startup console stream reconfiguration to UTF-8 for `stdout`/`stderr` with safe fallback.
   - Prevents `UnicodeEncodeError` crashes when printing Unicode status symbols in non-UTF8 Windows terminals.
+- **Settings Toggle Alignment** (`static/index.html`)
+  - Fixed checkbox/label misalignment in settings toggles caused by global input width styling.
+  - Added dedicated toggle row styling and checkbox-specific width overrides.
 
 ## [1.3.1] - 2026-02-21
 

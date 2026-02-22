@@ -281,6 +281,21 @@
             color: rgba(255, 255, 255, 0.5);
         }
 
+        input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            flex: 0 0 auto;
+            accent-color: #ff4d6d;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+            line-height: 1.35;
+        }
+
         .party-info {
             background: rgba(196, 30, 58, 0.1);
             padding: 20px;
@@ -519,6 +534,47 @@
             margin-bottom: 20px;
         }
 
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(196, 30, 58, 0.25);
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .dashboard-panel h3 {
+            margin-bottom: 12px;
+        }
+
+        .dashboard-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .dashboard-server-item {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-server-item:last-child {
+            margin-bottom: 0;
+        }
+
         .metric-card {
             background: rgba(196, 30, 58, 0.1);
             padding: 20px;
@@ -664,6 +720,10 @@
             .button-grid {
                 grid-template-columns: 1fr;
             }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -714,15 +774,83 @@
 
             <!-- Tabs -->
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('party', this)">🎮 Party</button>
+                <button class="tab active" onclick="switchTab('dashboard', this)">🏠 Dashboard</button>
+                <button class="tab" onclick="switchTab('party', this)">🎮 Party</button>
                 <button class="tab" onclick="switchTab('servers', this)">🖥️ Servers</button>
                 <button class="tab" onclick="switchTab('metrics', this)">📊 Metrics</button>
                 <button class="tab" onclick="switchTab('discord', this)">💬 Discord</button>
                 <button class="tab" onclick="switchTab('settings', this)">⚙️ Settings</button>
             </div>
 
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="dashboard-panel">
+                        <h3>Unified Control Surface</h3>
+                        <div class="dashboard-actions">
+                            <button class="copy-button" onclick="jumpToTab('party')">Party Controls</button>
+                            <button class="copy-button" onclick="jumpToTab('servers')">Server Browser</button>
+                            <button class="copy-button" onclick="jumpToTab('settings')">Settings</button>
+                            <button class="copy-button" onclick="loadDashboard()">Refresh</button>
+                        </div>
+                        <div class="metrics-grid" style="margin-bottom: 0;">
+                            <div class="metric-card">
+                                <div class="metric-value" id="dashQuality">--</div>
+                                <div class="metric-label">Network Quality</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="dashLatency">--</div>
+                                <div class="metric-label">Average Latency</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="dashPeers">0</div>
+                                <div class="metric-label">Active Peers</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="dashServers">0</div>
+                                <div class="metric-label">Visible Servers</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-panel">
+                        <h3>Quick Settings</h3>
+                        <div class="input-group">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="dashEnableDiscord">
+                                <span>Enable Discord</span>
+                            </label>
+                        </div>
+                        <div class="input-group">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="dashEnableMetrics">
+                                <span>Enable Metrics</span>
+                            </label>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <label>Mode</label>
+                            <select id="dashMode" style="padding: 12px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
+                                <option value="client">Client</option>
+                                <option value="relay">Relay</option>
+                            </select>
+                        </div>
+                        <div class="dashboard-actions" style="margin-top: 12px; margin-bottom: 0;">
+                            <button class="copy-button" onclick="saveDashboardQuickSettings()">Apply Quick Settings</button>
+                            <button class="copy-button" onclick="jumpToTab('settings')">Open Full Settings</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-panel">
+                    <h3>Server Snapshot</h3>
+                    <div id="dashboardServersList">
+                        <div class="empty-state" style="padding: 10px;">
+                            <div>Loading servers...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Party Tab -->
-            <div id="party-tab" class="tab-content active">
+            <div id="party-tab" class="tab-content">
                 <div id="party-main">
                     <div class="button-grid">
                         <button class="big-button primary" onclick="showCreateParty()">
@@ -971,28 +1099,28 @@
                     </div>
 
                     <div class="input-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="toggle-label">
                             <input type="checkbox" id="settingsAutoOptimize">
                             <span>Auto-optimize for detected games</span>
                         </label>
                     </div>
 
                     <div class="input-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="toggle-label">
                             <input type="checkbox" id="settingsEnableBroadcast">
                             <span>Enable LAN broadcast emulation</span>
                         </label>
                     </div>
 
                     <div class="input-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="toggle-label">
                             <input type="checkbox" id="settingsEnableDiscord">
                             <span>Enable Discord Rich Presence</span>
                         </label>
                     </div>
 
                     <div class="input-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="toggle-label">
                             <input type="checkbox" id="settingsEnableMetrics">
                             <span>Enable metrics collection</span>
                         </label>
@@ -1111,7 +1239,7 @@
     <script>
         const API_BASE = 'http://localhost:8666';
         let statusInterval;
-        let currentTab = 'party';
+        let currentTab = 'dashboard';
 
         // Tab switching
         function switchTab(tab, element) {
@@ -1121,7 +1249,7 @@
             element.classList.add('active');
             document.getElementById(tab + '-tab').classList.add('active');
 
-            if (tab === 'servers') {
+            if (tab === 'servers' || tab === 'dashboard') {
                 loadServers();
                 startServersAutoRefresh();
 
@@ -1156,9 +1284,69 @@
                 stopServersAutoRefresh();
             }
 
+            if (tab === 'dashboard') loadDashboard();
             if (tab === 'metrics') loadMetrics();
             if (tab === 'discord') loadDiscordSettings();
             if (tab === 'settings') loadSettingsTab();
+        }
+
+        function jumpToTab(tab) {
+            const target = document.querySelector(`.tab[onclick*="'${tab}'"]`);
+            if (target) {
+                switchTab(tab, target);
+            }
+        }
+
+        async function loadDashboard() {
+            await Promise.all([
+                updateStatus(),
+                loadMetrics(),
+                loadServers(),
+                loadDashboardQuickSettings(),
+            ]);
+        }
+
+        async function loadDashboardQuickSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+
+                const dashDiscord = document.getElementById('dashEnableDiscord');
+                const dashMetrics = document.getElementById('dashEnableMetrics');
+                const dashMode = document.getElementById('dashMode');
+
+                if (dashDiscord) dashDiscord.checked = settings.enable_discord === true;
+                if (dashMetrics) dashMetrics.checked = settings.enable_metrics !== false;
+                if (dashMode) dashMode.value = settings.mode || 'client';
+            } catch (error) {
+                console.error('Failed to load dashboard quick settings:', error);
+            }
+        }
+
+        async function saveDashboardQuickSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const settings = await response.json();
+
+                settings.mode = document.getElementById('dashMode').value;
+                settings.enable_discord = document.getElementById('dashEnableDiscord').checked;
+                settings.enable_metrics = document.getElementById('dashEnableMetrics').checked;
+
+                const saveResponse = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                if (!saveResponse.ok) {
+                    throw new Error('Failed to save quick settings');
+                }
+
+                await loadDashboardQuickSettings();
+                alert('Quick settings saved. Restart LANrage for mode-level changes.');
+            } catch (error) {
+                alert('Failed to save quick settings: ' + error.message);
+            }
         }
 
         // Party views
@@ -1310,6 +1498,10 @@
                 const isHost = data.party && data.party.host_peer_id === data.peer_id;
                 partyText.textContent = isHost ? 'Host' : 'Member';
                 peerCount.textContent = data.peer_count || 0;
+                const dashPeers = document.getElementById('dashPeers');
+                if (dashPeers) {
+                    dashPeers.textContent = data.peer_count || 0;
+                }
 
                 // Update latency and quality if available
                 if (data.party && data.party.peers) {
@@ -1321,6 +1513,12 @@
                 peerCount.textContent = '0';
                 document.getElementById('latency').textContent = '--';
                 document.getElementById('quality').textContent = '--';
+                const dashLatency = document.getElementById('dashLatency');
+                const dashQuality = document.getElementById('dashQuality');
+                const dashPeers = document.getElementById('dashPeers');
+                if (dashLatency) dashLatency.textContent = '--';
+                if (dashQuality) dashQuality.textContent = '--';
+                if (dashPeers) dashPeers.textContent = '0';
             }
 
             // Server hosting status (check if we're hosting any servers)
@@ -1362,6 +1560,10 @@
             if (latencies.length > 0) {
                 const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
                 document.getElementById('latency').textContent = avgLatency.toFixed(0) + 'ms';
+                const dashLatency = document.getElementById('dashLatency');
+                if (dashLatency) {
+                    dashLatency.textContent = avgLatency.toFixed(0) + 'ms';
+                }
 
                 // Calculate quality based on latency
                 let quality = 'Excellent';
@@ -1369,6 +1571,10 @@
                 else if (avgLatency > 50) quality = 'Good';
 
                 document.getElementById('quality').textContent = quality;
+                const dashQuality = document.getElementById('dashQuality');
+                if (dashQuality) {
+                    dashQuality.textContent = quality;
+                }
             }
         }
 
@@ -1428,17 +1634,49 @@
                 document.getElementById('stat-servers').textContent = data.stats.total_servers;
                 document.getElementById('stat-players').textContent = data.stats.total_players;
                 document.getElementById('stat-games').textContent = data.stats.unique_games;
+                const dashServers = document.getElementById('dashServers');
+                if (dashServers) {
+                    dashServers.textContent = data.stats.total_servers;
+                }
 
                 // Update game filter dropdown
                 updateGameFilter(data.stats.games);
 
                 // Render servers
                 renderServers(data.servers);
+                updateDashboardServerSnapshot(data.servers);
             } catch (err) {
                 console.error('Failed to load servers:', err);
                 const list = document.getElementById('serversList');
                 list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Failed to load servers</div></div>';
             }
+        }
+
+        function updateDashboardServerSnapshot(servers) {
+            const container = document.getElementById('dashboardServersList');
+            if (!container) return;
+
+            if (!servers || servers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 10px;">
+                        <div>No servers available</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const topServers = servers.slice(0, 5);
+            container.innerHTML = topServers.map(server => `
+                <div class="dashboard-server-item">
+                    <div>
+                        <div style="font-weight: 600;">${escapeHtml(server.name)}</div>
+                        <div style="opacity: 0.8; font-size: 0.85em;">${escapeHtml(server.game)} • ${server.current_players}/${server.max_players}</div>
+                    </div>
+                    <button class="btn-join" onclick="joinServer('${server.id}')" ${server.is_full ? 'disabled' : ''}>
+                        ${server.is_full ? 'FULL' : 'JOIN'}
+                    </button>
+                </div>
+            `).join('');
         }
 
         function updateGameFilter(games) {
@@ -1626,6 +1864,10 @@
                 document.getElementById('memoryUsage').textContent = Math.round(data.system.memory.current) + '%';
                 document.getElementById('networkQuality').textContent = Math.round(data.network_quality);
                 document.getElementById('activePeers').textContent = data.peers.length;
+                const dashQuality = document.getElementById('dashQuality');
+                const dashPeers = document.getElementById('dashPeers');
+                if (dashQuality) dashQuality.textContent = Math.round(data.network_quality);
+                if (dashPeers) dashPeers.textContent = data.peers.length;
             } catch (err) {
                 console.error('Failed to load metrics:', err);
             }
@@ -2005,7 +2247,7 @@
         }
 
         // Initial load
-        updateStatus();
+        loadDashboard();
     </script>
 </body>
 
