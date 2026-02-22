@@ -13,9 +13,9 @@
 
 LANrage has progressed from prototype through full production-ready release. All core features are implemented, tested, documented, and deployed. The project is ready for public release.
 
-**Key Achievements**:
+**Key Achievements (historical snapshot)**:
 - ✅ Phase 0-2 implementation goals delivered (with post-phase backlog noted below)
-- ✅ 62 automated tests (100% pass rate, 88% coverage)
+- ✅ 62 automated tests (100% pass rate, 88% coverage at v1.0 snapshot time)
 - ✅ Error handling improved 96%
 - ✅ Performance all targets met
 - ✅ 1650+ lines of comprehensive documentation
@@ -513,7 +513,7 @@ LANrage v1.0 is **production ready** and fully deployed. All core features are i
 
 **Key Achievements**:
 - ✅ Complete feature set (Phases 0-3)
-- ✅ Comprehensive testing (88% coverage)
+- ✅ Comprehensive testing (88% coverage at v1.0 snapshot time)
 - ✅ Excellent performance (all targets met)
 - ✅ Extensive documentation (1650+ lines)
 - ✅ Robust error handling (96% improvement)

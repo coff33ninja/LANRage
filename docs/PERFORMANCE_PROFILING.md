@@ -401,34 +401,15 @@ Before releasing new features:
 
 ## Continuous Monitoring
 
-### GitHub Actions Integration
+### Current CI Coverage
 
-Add to `.github/workflows/performance.yml`:
+Performance-sensitive tests currently run as part of the standard CI matrix in `.github/workflows/ci.yml` via the full test suite.
 
-```yaml
-name: Performance Tests
+If you want a dedicated profiling workflow, create a new GitHub Actions workflow file for profiling and run:
 
-on: [push, pull_request]
-
-jobs:
-  performance:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.12'
-      - name: Install dependencies
-        run: |
-          pip install uv
-          uv pip install -r requirements.txt
-      - name: Run performance tests
-        run: |
-          pytest tests/test_profiling.py -v
-      - name: Run benchmarks
-        run: |
-          python tools/performance_monitor.py benchmark
+```bash
+python -m pytest tests/test_profiling.py -v -s
+python tools/performance_monitor.py benchmark
 ```
 
 ### Production Monitoring

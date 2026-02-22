@@ -303,37 +303,26 @@ Create custom profiles for unsupported games:
 
 Save to: `~/.lanrage/custom_profiles.json`
 
-### Environment Variables
+### Settings Configuration
 
-Configure LANrage via `.env` file:
+LANrage uses database-backed settings (not `.env` configuration at runtime):
 
-```bash
-# Mode: client or relay
-LANRAGE_MODE=client
-
-# API settings
-LANRAGE_API_HOST=127.0.0.1
-LANRAGE_API_PORT=8666
-
-# Relay settings (for relay mode)
-LANRAGE_RELAY_IP=your.public.ip
-```
+- WebUI: `http://localhost:8666/settings.html`
+- API: `GET /api/settings`, `POST /api/settings`
+- Stored in: `~/.lanrage/settings.db`
 
 ### Command Line Options
 
 ```bash
-# Start in relay mode
-python lanrage.py --mode relay
-
-# Custom API port
-python lanrage.py --port 9000
-
-# Verbose logging
-python lanrage.py --verbose
-
-# Show version
-python lanrage.py --version
+# Start LANrage
+python lanrage.py
 ```
+
+LANrage currently uses database-backed settings via WebUI/API rather than CLI flags.
+
+- Mode (`client`/`relay`): `Settings -> Mode` in WebUI
+- API host/port: `Settings -> API Host/API Port` in WebUI
+- Version: see `pyproject.toml` (`project.version`) or `README.md`
 
 ## Best Practices
 

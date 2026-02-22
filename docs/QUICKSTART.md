@@ -7,7 +7,7 @@ Get LANrage v1.3.1 running in under 5 minutes.
 LANrage v1.3.1 is production-ready with:
 - ✅ Direct P2P connections (<5ms overhead)
 - ✅ Smart relay fallback (<15ms overhead)
-- ✅ 21 built-in game profiles with auto-optimization (+ custom profiles)
+- ✅ Built-in and custom game profiles with auto-optimization
 - ✅ Broadcast/multicast emulation
 - ✅ Discord integration
 - ✅ Game server browser

@@ -288,4 +288,4 @@ For questions about the modernization:
 1. Check this document
 2. Review `pyproject.toml` comments
 3. Open an issue on GitHub
-4. Check the [development guide](DEVELOPMENT.md)
+4. Check [CI/CD pipeline docs](CI_CD.md) and `pyproject.toml`

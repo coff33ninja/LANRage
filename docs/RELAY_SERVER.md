@@ -221,15 +221,10 @@ config = Config(
 )
 ```
 
-### Environment Variables
+### Configuration Source
 
-Alternatively, use `.env` file:
-
-```bash
-LANRAGE_MODE=relay
-LANRAGE_RELAY_PORT=51820
-LANRAGE_RELAY_IP=203.0.113.1
-```
+Relay settings are read from the settings database (`~/.lanrage/settings.db`) via `core/settings.py`.
+Use WebUI/API settings to manage relay-related values (`relay_port`, `relay_public_ip`, `mode`).
 
 ---
 

@@ -112,9 +112,15 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 | `connection.py` | Connection management | Monitor, reconnect, switch relays |
 | `broadcast.py` | LAN broadcast emulation | Capture and forward broadcasts |
 | `games.py` | Game detection and optimization | Detect games, apply profiles |
+| `mod_sync.py` | Mod compatibility and sync planning | Manifest validation, peer sync plans |
 | `metrics.py` | Performance monitoring | Collect stats, track history |
 | `discord_integration.py` | Discord Rich Presence | Update status, send notifications |
 | `server_browser.py` | Game server discovery | Register, browse, join servers |
+| `task_manager.py` | Background task orchestration | Priority scheduling, dependency management |
+| `operation_lock.py` | Atomic operation coordination | Named operation locks and scopes |
+| `conflict_resolver.py` | Concurrent operation policies | Queue/prioritize/merge conflict strategies |
+| `relay_selector.py` | Relay scoring and failover | Relay ranking and fallback selection |
+| `profiler.py` | Runtime profiling utilities | Hotspots, timing, performance reports |
 | `utils.py` | Utility functions | Admin checks, helpers |
 
 ### API Server (`api/`)
@@ -244,7 +250,7 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 ### Documentation
 - Read the relevant guide from the list above
 - Check [Troubleshooting](TROUBLESHOOTING.md) for common issues
-- Review [FAQ](FAQ.md) for frequently asked questions
+- Review [User Guide](USER_GUIDE.md) for end-user workflows
 
 ### Community
 - GitHub Issues: Bug reports and feature requests
@@ -253,8 +259,8 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 
 ### Contributing
 - See [Contributing Guide](../CONTRIBUTING.md)
-- Check [Development Setup](DEVELOPMENT.md)
-- Review [Code Quality Standards](../. kiro/steering/code-quality.md)
+- Review [CI/CD Pipeline](CI_CD.md) for quality gates and release automation
+- Review `pyproject.toml` for formatter/linter/test settings
 
 ## License
 

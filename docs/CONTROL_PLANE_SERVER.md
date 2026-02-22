@@ -192,10 +192,9 @@ GET /relays/{region}
 
 ### Configuration
 
-Set the control server URL in `.env`:
-```bash
-LANRAGE_CONTROL_SERVER=http://your-server:8667
-```
+Set the control server URL in LANrage settings (database-backed):
+- WebUI: `http://localhost:8666/settings.html` -> `control_server`
+- API: `POST /api/settings` with `{"control_server": "http://your-server:8667"}`
 
 Or in code:
 ```python

@@ -26,7 +26,7 @@
 2. **Real networks** - Not localhost
 3. **Real latency** - Measure everything
 4. **Real users** - Dogfood it
-5. **Automated tests** - 88% coverage
+5. **Automated tests** - see top-of-file latest baseline metrics
 
 ## Test Environments
 

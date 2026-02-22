@@ -390,11 +390,10 @@ Connection to control server failed
    - Windows: Allow LANrage through Windows Firewall
    - Linux: Check iptables/ufw rules
 
-3. **Use local mode (temporary):**
-   Edit `.env`:
-   ```bash
-   LANRAGE_CONTROL_MODE=local
-   ```
+3. **Verify control server setting (database-backed):**
+   - Open `http://localhost:8666/settings.html`
+   - Check `control_server` value
+   - For local testing, set it to default and restart LANrage
 
 ---
 
@@ -552,7 +551,7 @@ Running in generic mode
    See `game_profiles/` directory
 
 2. **Create custom profile:**
-   Create `game_profiles/custom/mygame.json`:
+   Create your own JSON file under `game_profiles/custom/`:
    ```json
    {
      "name": "My Game",
@@ -742,10 +741,10 @@ Running in generic mode
 
 ### Enable Debug Logging
 
-Add to `.env`:
-```bash
-LANRAGE_LOG_LEVEL=DEBUG
-```
+Set debug level in LANrage settings:
+- Open `http://localhost:8666/settings.html`
+- Set logging/debug-related settings as needed
+- Restart LANrage
 
 Restart LANrage. Check logs:
 ```bash
@@ -790,8 +789,8 @@ python lanrage.py
 For bug reports:
 
 ```bash
-# 1. LANrage version
-python lanrage.py --version
+# 1. LANrage version (from pyproject.toml)
+python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])"
 
 # 2. System info
 python -c "import platform; print(platform.platform())"
@@ -838,8 +837,8 @@ netstat -ano | findstr :8666
 # Linux/Mac
 lsof -i :8666
 
-# Use different port
-python lanrage.py --port 9000
+# Change API port in WebUI settings and restart LANrage
+# http://localhost:8666/settings.html
 ```
 
 ---

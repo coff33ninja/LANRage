@@ -18,7 +18,7 @@ LANrage now has full WireGuard interface management:
 1. **Install WireGuard**:
    - Download from: https://www.wireguard.com/install/
    - Run installer
-   - Verify: `wireguard --version`
+   - Verify: `wg --version`
 
 2. **Run as Administrator**:
    - Right-click LANrage
@@ -63,7 +63,7 @@ Run the test script to verify everything works:
 source .venv/bin/activate   # Linux
 
 # Run test
-python test_wireguard.py
+python -m pytest tests/test_wireguard.py -v
 ```
 
 Expected output:
@@ -265,10 +265,10 @@ sudo ip link delete dev lanrage0
 
 Now that WireGuard is working:
 
-1. **Implement NAT traversal** (STUN/TURN)
-2. **Build control plane** (peer discovery)
-3. **Add broadcast emulation** (for LAN games)
-4. **Test with real games** (Minecraft, etc.)
+1. Validate NAT behavior with `python -m pytest tests/test_nat.py -v`
+2. Validate connection orchestration with `python -m pytest tests/test_connection.py -v`
+3. Validate control-plane behavior with `python -m pytest tests/test_control_server.py -v`
+4. Validate broadcast/game integration with `python -m pytest tests/test_broadcast.py tests/test_games.py -v`
 
 ## References
 

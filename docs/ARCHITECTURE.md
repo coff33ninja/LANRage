@@ -112,10 +112,11 @@ Relays:
 **Status**: Production ready
 
 ### Game Profiles ✅
-- Per-game tuning (21 built-in profiles supported + custom profiles)
+- Per-game tuning (built-in + custom profile catalogs)
 - Protocol detection
 - Automatic optimization
 - Custom JSON profiles
+- Mod support strategies (`native`, `managed`, `hybrid`) for selected titles
 - QoS implementation (iptables/netsh/tc)
 
 **Status**: Production ready
@@ -189,13 +190,14 @@ Relays:
 - WireGuard interface creation and management
 - STUN/TURN for NAT traversal
 - Control plane (SQLite-based local)
-- Game detection and optimization (21 built-in profiles + custom profiles)
+- Game detection and optimization (built-in + custom profile catalogs)
+- Mod sync planning for compatible game profiles
 - Broadcast/multicast emulation
 - Relay server with database
 - QoS implementation
 - Discord integration
 - Server browser
-- Comprehensive testing (88% coverage)
+- Comprehensive testing (latest baseline tracked in docs/TESTING.md and CI artifacts)
 
 ### 🔄 In Progress (v1.1)
 - Remote control plane (WebSocket)
