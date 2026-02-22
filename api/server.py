@@ -12,6 +12,7 @@ from core.config import Config
 from core.network import NetworkManager
 from core.party import PartyManager
 from core.settings import get_settings_db, init_default_settings
+from core.updater import UpdateError, UpdateManager
 
 app = FastAPI(title="LANrage API", version="0.1.0")
 
@@ -102,6 +103,24 @@ class SaveConfigRequest(BaseModel):
     name: str
     mode: str
     config: dict
+
+
+class ApplyUpdateRequest(BaseModel):
+    """Self-update request payload."""
+
+    confirm: bool = Field(
+        default=False,
+        description="Must be true to execute update action",
+    )
+
+
+# Runtime dependencies injected by start_api_server()
+party_manager = None
+network_manager = None
+metrics_collector = None
+discord_integration = None
+server_browser = None
+update_manager = UpdateManager()
 
 
 @app.get("/api")
@@ -677,6 +696,31 @@ async def delete_config(config_id: int):
     return {"status": "ok", "message": "Configuration deleted"}
 
 
+@app.get("/api/system/update/status")
+async def get_update_status():
+    """Get self-update status for this installation."""
+    import asyncio
+
+    try:
+        return await asyncio.to_thread(update_manager.get_status)
+    except UpdateError as exc:
+        raise HTTPException(500, f"Failed to check update status: {exc}") from exc
+
+
+@app.post("/api/system/update")
+async def apply_system_update(req: ApplyUpdateRequest):
+    """Apply self-update from configured git remote/branch."""
+    import asyncio
+
+    if not req.confirm:
+        raise HTTPException(400, "Set confirm=true to apply update")
+
+    try:
+        return await asyncio.to_thread(update_manager.apply_update)
+    except UpdateError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
 async def start_api_server(
     config: Config,
     party: PartyManager,
@@ -686,12 +730,13 @@ async def start_api_server(
     browser=None,
 ):
     """Start the API server"""
-    global party_manager, network_manager, metrics_collector, discord_integration, server_browser
+    global party_manager, network_manager, metrics_collector, discord_integration, server_browser, update_manager
     party_manager = party
     network_manager = network
     metrics_collector = metrics
     discord_integration = discord
     server_browser = browser
+    update_manager = UpdateManager()
 
     server_config = uvicorn.Config(
         app, host=config.api_host, port=config.api_port, log_level="info"

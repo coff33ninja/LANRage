@@ -837,6 +837,16 @@
                             <button class="copy-button" onclick="saveDashboardQuickSettings()">Apply Quick Settings</button>
                             <button class="copy-button" onclick="jumpToTab('settings')">Open Full Settings</button>
                         </div>
+                        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.12);">
+                            <h4 style="margin-bottom: 10px;">App Updates</h4>
+                            <div id="updateStatusText" style="font-size: 0.9em; opacity: 0.85; margin-bottom: 10px;">
+                                Checking update status...
+                            </div>
+                            <div class="dashboard-actions" style="margin-bottom: 0;">
+                                <button class="copy-button" onclick="checkForUpdates()">Check Updates</button>
+                                <button class="copy-button" id="applyUpdateButton" onclick="applySystemUpdate()" disabled>Update Now</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="dashboard-panel">
@@ -1303,6 +1313,7 @@
                 loadMetrics(),
                 loadServers(),
                 loadDashboardQuickSettings(),
+                checkForUpdates(),
             ]);
         }
 
@@ -1346,6 +1357,80 @@
                 alert('Quick settings saved. Restart LANrage for mode-level changes.');
             } catch (error) {
                 alert('Failed to save quick settings: ' + error.message);
+            }
+        }
+
+        async function checkForUpdates() {
+            const statusText = document.getElementById('updateStatusText');
+            const applyButton = document.getElementById('applyUpdateButton');
+            if (!statusText || !applyButton) return;
+
+            statusText.textContent = 'Checking update status...';
+            applyButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/system/update/status');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to check updates');
+                }
+
+                if (!data.supported) {
+                    statusText.textContent = `Updates unavailable: ${data.reason || 'not supported in this install'}`;
+                    applyButton.disabled = true;
+                    return;
+                }
+
+                if (data.update_available) {
+                    statusText.textContent = `Update available (${data.behind_commits} commit(s) behind ${data.target_branch}).`;
+                    applyButton.disabled = !data.can_update;
+                    if (!data.can_update) {
+                        statusText.textContent += ' Resolve local changes/branch divergence first.';
+                    }
+                } else {
+                    statusText.textContent = 'You are up to date.';
+                    applyButton.disabled = true;
+                }
+            } catch (error) {
+                statusText.textContent = `Update check failed: ${error.message}`;
+                applyButton.disabled = true;
+            }
+        }
+
+        async function applySystemUpdate() {
+            const applyButton = document.getElementById('applyUpdateButton');
+            if (applyButton) {
+                applyButton.disabled = true;
+            }
+
+            const confirmed = confirm(
+                'Apply update now? LANrage may require restart after pull completes.'
+            );
+            if (!confirmed) {
+                await checkForUpdates();
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/system/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ confirm: true })
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Update failed');
+                }
+
+                alert(
+                    `${data.message}\n${data.restart_recommended ? 'Please restart LANrage to apply runtime changes.' : ''}`
+                );
+                await checkForUpdates();
+            } catch (error) {
+                alert(`Update failed: ${error.message}`);
+                await checkForUpdates();
             }
         }
 

@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Versioning Playbook** (`docs/VERSIONING.md`)
   - Added a practical Semantic Versioning strategy, release workflow, and changelog policy for this project.
   - Added a reusable “Versioning Assistant Skill” template section for future Codex skill automation.
+- **In-App Self-Update Capability** (`core/updater.py`, `api/server.py`, `static/index.html`)
+  - Added safe git-based update status checks (behind/ahead/dirty branch state).
+  - Added API endpoints:
+    - `GET /api/system/update/status`
+    - `POST /api/system/update` (requires `confirm=true`)
+  - Added Dashboard UI update controls to check for updates and apply fast-forward updates.
+  - Added safeguards to block auto-update when local changes/divergence exist.
 
 ### Changed
 - **Documentation Alignment (Core-accurate)**
@@ -41,6 +48,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Settings Toggle Alignment** (`static/index.html`)
   - Fixed checkbox/label misalignment in settings toggles caused by global input width styling.
   - Added dedicated toggle row styling and checkbox-specific width overrides.
+
+## [1.4.0] - 2026-02-22
+
+### Added
+- **In-App Self-Update Capability** (`core/updater.py`, `api/server.py`, `static/index.html`)
+  - Added safe git-based update status checks (behind/ahead/dirty branch state).
+  - Added API endpoints:
+    - `GET /api/system/update/status`
+    - `POST /api/system/update` (requires `confirm=true`)
+  - Added Dashboard UI controls to check for updates and apply fast-forward updates.
+  - Added safeguards to block auto-update when local changes/divergence exist.
+- **Versioning Playbook** (`docs/VERSIONING.md`)
+  - Added practical Semantic Versioning rules and a repeatable release workflow.
+  - Documented that previous versioning was informal and this process applies going forward.
+
+### Changed
+- **Unified Dashboard App Shell** (`static/index.html`)
+  - Added a default `Dashboard` tab as the primary UI surface.
+  - Added quick navigation actions for Party, Servers, and Settings.
+  - Added server snapshot and quick settings controls on the dashboard.
+- **Dashboard Visual Consistency** (`static/dashboard.html`, `static/index.html`)
+  - Improved responsiveness and card layout consistency across the UI.
+
+### Fixed
+- **Settings Toggle Alignment** (`static/index.html`)
+  - Fixed checkbox/label misalignment caused by global input width styling.
 
 ## [1.3.1] - 2026-02-21
 

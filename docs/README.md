@@ -1,6 +1,6 @@
 # LANrage Documentation
 
-**Version**: 1.3.1 (Production Ready)  
+**Version**: 1.4.0 (Production Ready)  
 **Status**: ✅ Complete & Deployed  
 **Last Updated**: February 22, 2026  
 **Test Baseline**: 463/463 tests passing (latest full suite)  
@@ -217,7 +217,7 @@ LANrage is a zero-config mesh VPN optimized for gaming. It makes online gaming f
 
 ## Project Status
 
-**Current Version**: 1.3.1  
+**Current Version**: 1.4.0  
 **Status**: ✅ Production Ready - February 21, 2026
 
 **All Core Features Complete** (Phases 0-3):
