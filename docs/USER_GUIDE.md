@@ -1,6 +1,6 @@
 # LANrage User Guide
 
-**Version**: 1.3.1  
+**Version**: 1.4.0  
 **Last Updated**: February 22, 2026
 
 ## Welcome to LANrage! 🎮
@@ -32,7 +32,7 @@ python lanrage.py
 
 You'll see:
 ```
-🎮 LANrage v1.3.1
+🎮 LANrage v1.4.0
 🌐 Web UI: http://localhost:8666
 🔗 Virtual IP: 10.66.0.1
 ✓ Ready to party!

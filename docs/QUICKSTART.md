@@ -1,10 +1,10 @@
 # LANrage Quick Start Guide
 
-Get LANrage v1.3.1 running in under 5 minutes.
+Get LANrage v1.4.0 running in under 5 minutes.
 
 ## What You're Getting
 
-LANrage v1.3.1 is production-ready with:
+LANrage v1.4.0 is production-ready with:
 - ✅ Direct P2P connections (<5ms overhead)
 - ✅ Smart relay fallback (<15ms overhead)
 - ✅ Built-in and custom game profiles with auto-optimization
@@ -90,7 +90,7 @@ Expected output:
 ✓ Metrics collector started
 ✓ API server running on http://127.0.0.1:8666
 ============================================================
-LANrage v1.3.1 - Production Ready
+LANrage v1.4.0 - Production Ready
 ```
 
 ### Access the Web UI
