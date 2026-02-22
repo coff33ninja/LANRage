@@ -31,6 +31,18 @@ logger = logging.getLogger(__name__)
 shutdown_event = asyncio.Event()
 
 
+def configure_console_encoding() -> None:
+    """Ensure console streams can print Unicode safely."""
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        if stream is None:
+            continue
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            with contextlib.suppress(Exception):
+                reconfigure(encoding="utf-8", errors="replace")
+
+
 def shutdown_handler(signum, frame):
     """Handle shutdown signals (SIGTERM, SIGINT)"""
     logger.info(f"Received signal {signum}, initiating graceful shutdown...")
@@ -39,6 +51,7 @@ def shutdown_handler(signum, frame):
 
 async def main():
     """Main entry point"""
+    configure_console_encoding()
     logger.info("🔥 LANrage - If it runs on LAN, it runs on LANrage")
 
     # Register signal handlers

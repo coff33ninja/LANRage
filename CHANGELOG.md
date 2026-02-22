@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Architecture Diagram Pack** (`docs/diagrams/`)
+  - Added detailed diagram index and split Mermaid docs for context, components, runtime sequences, control loops, CI/CD flow, and failure domains.
+  - Added cross-links from `docs/README.md` and `docs/ARCHITECTURE.md` to improve architecture discoverability.
+
+### Changed
+- **Documentation Alignment (Core-accurate)**
+  - Updated major docs to reflect current database-first configuration model and removed stale `.env`/CLI-flag guidance.
+  - Updated architecture/docs module coverage to include current core components (`mod_sync`, `task_manager`, `operation_lock`, `conflict_resolver`, `relay_selector`, `profiler`).
+  - Fixed broken/missing internal doc references and refreshed docs flow consistency with current CI/release automation.
+
+### Fixed
+- **Windows Console Unicode Startup Crash** (`lanrage.py`)
+  - Added startup console stream reconfiguration to UTF-8 for `stdout`/`stderr` with safe fallback.
+  - Prevents `UnicodeEncodeError` crashes when printing Unicode status symbols in non-UTF8 Windows terminals.
+
 ## [1.3.1] - 2026-02-21
 
 ### Changed
