@@ -2,6 +2,10 @@
 
 ## Overview
 
+See also: [System Flow Diagram](diagrams/SYSTEM_FLOW.md).
+
+Detailed diagrams: context, components, sequences, runtime loops, and CI/CD are in docs/diagrams/README.md.
+
 LANrage is a mesh VPN optimized for gaming. It creates virtual LANs over the internet with minimal latency and zero configuration.
 
 ## Core Components
@@ -203,3 +207,6 @@ Relays:
 - Voice chat
 - Screen sharing
 - Tournament mode
+
+
+

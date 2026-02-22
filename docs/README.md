@@ -36,6 +36,8 @@
 
 ### Development & Reference
 - [API Reference](API.md) - REST API documentation
+- [System Flow Diagram](diagrams/SYSTEM_FLOW.md) - End-to-end architecture flow
+- [Detailed system diagrams](diagrams/README.md) - Context, components, runtime sequences, and CI/CD automation maps
 - [CI/CD Pipeline](CI_CD.md) - Workflows, release, and automation details
 - [Session Progress](SESSION_PROGRESS.md) - Development summary
 - [Contributing](../CONTRIBUTING.md) - How to contribute
@@ -266,3 +268,6 @@ MIT License - See [LICENSE](../LICENSE) for details
 - **Oracle** - For the free VPS tier
 
 ---
+
+
+
