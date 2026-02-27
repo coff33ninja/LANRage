@@ -491,3 +491,58 @@ async def test_server_to_dict(server_browser):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+@pytest.mark.asyncio
+async def test_measure_latency_uses_tcp_fallback_when_ping_fails(server_browser, monkeypatch):
+    """When ICMP ping fails, TCP connect fallback should provide latency."""
+    await server_browser.register_server(
+        server_id="tcp-fallback",
+        name="Fallback Server",
+        game="TestGame",
+        host_peer_id="peer1",
+        host_peer_name="Alice",
+        host_ip="example.com",
+        max_players=4,
+    )
+
+    async def fail_ping(_command):
+        return 999.0
+
+    async def tcp_fallback(_host):
+        return 42.0
+
+    monkeypatch.setattr(server_browser, "_single_ping", fail_ping)
+    monkeypatch.setattr(server_browser, "_tcp_connect_fallback_latency", tcp_fallback)
+
+    latency = await server_browser.measure_latency("tcp-fallback")
+    assert latency == 42.0
+
+
+@pytest.mark.asyncio
+async def test_measure_latency_returns_cached_value_within_interval(
+    server_browser, monkeypatch
+):
+    """Repeated calls inside measurement interval should reuse cached latency."""
+    await server_browser.register_server(
+        server_id="cached-latency",
+        name="Cached Server",
+        game="TestGame",
+        host_peer_id="peer1",
+        host_peer_name="Alice",
+        host_ip="127.0.0.1",
+        max_players=4,
+    )
+
+    server = server_browser.get_server("cached-latency")
+    assert server is not None
+    server.latency_ms = 23.0
+    server.measurement_interval = 60
+    server.last_latency_check = time.time()
+
+    async def fail_ping(_command):
+        raise AssertionError("Ping should not run when cached latency is fresh")
+
+    monkeypatch.setattr(server_browser, "_single_ping", fail_ping)
+    latency = await server_browser.measure_latency("cached-latency")
+    assert latency == 23.0

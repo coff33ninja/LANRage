@@ -35,7 +35,7 @@ class Config(BaseModel):
     wireguard_keepalive: int = 25  # Default keepalive in seconds
 
     # Control plane
-    control_server: str = "https://control.lanrage.io"  # TODO: implement
+    control_server: str = "https://control.lanrage.io"
 
     # Relay settings (for relay mode)
     relay_public_ip: str | None = None

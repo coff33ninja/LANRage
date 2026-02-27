@@ -2,6 +2,8 @@
 
 import asyncio
 import contextlib
+import ipaddress
+import socket
 import statistics
 import time
 from dataclasses import dataclass, field
@@ -346,6 +348,13 @@ class ServerBrowser:
         if not server:
             return None
 
+        now = time.time()
+        if (
+            server.latency_ms is not None
+            and (now - server.last_latency_check) < server.measurement_interval
+        ):
+            return server.latency_ms
+
         try:
             # Take multiple samples for more reliable latency measurement
             import platform
@@ -374,6 +383,7 @@ class ServerBrowser:
                 # Use median for more robust latency estimate (less affected by outliers)
                 median_latency = statistics.median(valid_latencies)
                 server.latency_ms = median_latency
+                server.last_latency_check = now
 
                 # Update EMA (Exponential Moving Average) for smoothing
                 self._update_ema(server, median_latency)
@@ -385,8 +395,29 @@ class ServerBrowser:
                 self._adapt_measurement_interval(server)
 
                 return median_latency
+            # All ICMP pings failed; try TCP connect latency as fallback.
+            tcp_latency = await self._tcp_connect_fallback_latency(server.host_ip)
+            if tcp_latency is not None:
+                server.latency_ms = tcp_latency
+                server.last_latency_check = now
+                self._update_ema(server, tcp_latency)
+                self._update_latency_samples(server, tcp_latency)
+                self._adapt_measurement_interval(server)
+                return tcp_latency
+
+            # Final fallback: DNS lookup time if host is a hostname.
+            dns_latency = await self._dns_lookup_fallback_latency(server.host_ip)
+            if dns_latency is not None:
+                server.latency_ms = dns_latency
+                server.last_latency_check = now
+                self._update_ema(server, dns_latency)
+                self._update_latency_samples(server, dns_latency)
+                self._adapt_measurement_interval(server)
+                return dns_latency
+
             # All measurements failed or timed out
             server.latency_ms = 999
+            server.last_latency_check = now
             server.latency_trend = "degrading"
             return 999.0
 
@@ -394,6 +425,41 @@ class ServerBrowser:
             error_msg = str(e)
             print(f"⚠ Latency measurement failed for {server.name}: {error_msg}")
 
+        return None
+
+    async def _tcp_connect_fallback_latency(self, host: str) -> float | None:
+        """Measure latency via TCP connect fallback if ICMP is blocked."""
+        for port in (443, 80, 53):
+            start = time.time()
+            try:
+                reader, writer = await asyncio.wait_for(
+                    asyncio.open_connection(host, port),
+                    timeout=1.5,
+                )
+                del reader
+                writer.close()
+                await writer.wait_closed()
+                return (time.time() - start) * 1000
+            except Exception:
+                continue
+        return None
+
+    async def _dns_lookup_fallback_latency(self, host: str) -> float | None:
+        """Measure DNS lookup latency as tertiary fallback for hostnames."""
+        try:
+            ipaddress.ip_address(host)
+            return None
+        except ValueError:
+            pass
+
+        loop = asyncio.get_running_loop()
+        start = time.time()
+        try:
+            addresses = await loop.run_in_executor(None, socket.getaddrinfo, host, None)
+            if addresses:
+                return (time.time() - start) * 1000
+        except Exception:
+            return None
         return None
 
     def _update_ema(self, server: GameServer, new_latency: float, alpha: float = 0.3):
