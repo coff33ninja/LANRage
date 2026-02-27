@@ -155,8 +155,7 @@ class ConflictResolver:
                 continue
 
             if spec.timestamp > current.timestamp or (
-                spec.timestamp == current.timestamp
-                and spec.priority > current.priority
+                spec.timestamp == current.timestamp and spec.priority > current.priority
             ):
                 winners[key] = spec
 

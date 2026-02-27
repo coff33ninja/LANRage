@@ -299,7 +299,9 @@ async def create_party(
         # Create peer info
         host_peer_info = PeerInfo.from_dict(req.host_peer_info)
         if host_peer_info.peer_id != auth_peer_id:
-            raise HTTPException(403, "Token peer_id does not match host_peer_info.peer_id")
+            raise HTTPException(
+                403, "Token peer_id does not match host_peer_info.peer_id"
+            )
 
         # Generate party ID
         party_id = PartyInfo.generate_party_id()

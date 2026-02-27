@@ -699,9 +699,7 @@ class RemoteControlPlane(ControlPlane):
             }
             if self.auth_token:
                 auth_payload["token"] = self.auth_token
-            await self._send_message(
-                auth_payload
-            )
+            await self._send_message(auth_payload)
         except Exception as e:
             error_msg = str(e)
             print(f"⚠️  Authentication failed: {error_msg}")

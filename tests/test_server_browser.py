@@ -494,7 +494,9 @@ if __name__ == "__main__":
 
 
 @pytest.mark.asyncio
-async def test_measure_latency_uses_tcp_fallback_when_ping_fails(server_browser, monkeypatch):
+async def test_measure_latency_uses_tcp_fallback_when_ping_fails(
+    server_browser, monkeypatch
+):
     """When ICMP ping fails, TCP connect fallback should provide latency."""
     await server_browser.register_server(
         server_id="tcp-fallback",
