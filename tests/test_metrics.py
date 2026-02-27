@@ -217,6 +217,19 @@ async def test_network_quality_score(metrics):
 
 
 @pytest.mark.asyncio
+async def test_network_quality_report_contains_grade(metrics):
+    """Quality report should expose score+grade and peer metadata."""
+    metrics.add_peer("peer1", "Peer 1")
+    await metrics.record_latency("peer1", 35.0)
+
+    report = metrics.get_network_quality_report()
+    assert "score" in report
+    assert "grade" in report
+    assert report["peer_count"] >= 1
+    assert report["grade"] in {"A", "B", "C", "D", "F"}
+
+
+@pytest.mark.asyncio
 async def test_peer_connection_status(metrics):
     """Test peer connection status"""
     metrics.add_peer("peer1", "Peer 1")

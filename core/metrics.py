@@ -837,26 +837,48 @@ class MetricsCollector:
 
     def get_network_quality_score(self) -> float:
         """Calculate overall network quality score (0-100)"""
-        scores = []
+        report = self.get_network_quality_report()
+        return report["score"]
 
-        # Peer latency score
-        for peer_id in self.peer_metrics:
-            peer = self.peer_metrics[peer_id]
-            if peer.latency:
+    def get_network_quality_report(self) -> dict:
+        """Get comprehensive network quality report with score and grade."""
+        peer_scores: list[float] = []
+        peer_grades: dict[str, str] = {}
+
+        for peer_id, peer in self.peer_metrics.items():
+            advanced = self.quality_monitor.get_latest(peer_id)
+            if advanced:
+                peer_score = advanced.quality_score
+                peer_grade = advanced.quality_grade
+            elif peer.latency:
                 avg_latency = sum(p.value for p in peer.latency) / len(peer.latency)
-                # Score: 100 at 0ms, 0 at 500ms
-                latency_score = max(0, 100 - (avg_latency / 5))
-                scores.append(latency_score)
+                peer_score = max(0.0, 100.0 - (avg_latency / 5.0))
+                peer_grade = ConnectionQualityMonitor.score_to_grade(peer_score)
+            else:
+                continue
 
-        # System performance score
+            peer_scores.append(peer_score)
+            peer_grades[peer_id] = peer_grade
+
+        system_score = 100.0
         cpu_values = [p.value for p in self.system_metrics.cpu_percent]
         if cpu_values:
             avg_cpu = sum(cpu_values) / len(cpu_values)
-            # Score: 100 at 0%, 0 at 100%
-            cpu_score = max(0, 100 - avg_cpu)
-            scores.append(cpu_score)
+            system_score = max(0.0, 100.0 - avg_cpu)
 
-        return sum(scores) / len(scores) if scores else 100.0
+        if peer_scores:
+            overall = (sum(peer_scores) / len(peer_scores)) * 0.9 + (system_score * 0.1)
+        else:
+            overall = system_score
+
+        overall = max(0.0, min(100.0, overall))
+        return {
+            "score": overall,
+            "grade": ConnectionQualityMonitor.score_to_grade(overall),
+            "peer_count": len(peer_scores),
+            "system_score": system_score,
+            "peer_grades": peer_grades,
+        }
 
     def get_peer_connection_quality(self, peer_id: str) -> dict | None:
         """Get detailed connection quality metrics for a peer

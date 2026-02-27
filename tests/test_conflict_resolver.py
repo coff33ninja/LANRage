@@ -135,3 +135,64 @@ async def test_rollback_on_failure_in_multi_operation_transaction():
         )
 
     assert state["value"] == 0
+
+
+def test_resolve_batch_lww_picks_latest_timestamp():
+    resolver = ConflictResolver()
+
+    async def old_execute():
+        return "old"
+
+    async def new_execute():
+        return "new"
+
+    old = OperationSpec(
+        resource_id="party-1",
+        operation_type="allocate_ip",
+        priority=TaskPriority.NORMAL,
+        execute=old_execute,
+        timestamp=100.0,
+    )
+    new = OperationSpec(
+        resource_id="party-1",
+        operation_type="allocate_ip",
+        priority=TaskPriority.NORMAL,
+        execute=new_execute,
+        timestamp=200.0,
+    )
+
+    winners = resolver.resolve_batch_lww([old, new])
+    assert len(winners) == 1
+    assert winners[0].timestamp == 200.0
+
+
+@pytest.mark.asyncio
+async def test_conflict_hook_receives_event():
+    resolver = ConflictResolver()
+    events = []
+    resolver.register_conflict_hook(events.append)
+
+    async def op_one():
+        return "one"
+
+    async def op_two():
+        return "two"
+
+    first = OperationSpec(
+        resource_id="party-1",
+        operation_type="restart_network",
+        priority=TaskPriority.LOW,
+        execute=op_one,
+    )
+    second = OperationSpec(
+        resource_id="party-1",
+        operation_type="restart_network",
+        priority=TaskPriority.CRITICAL,
+        execute=op_two,
+    )
+
+    await resolver.resolve_pair(first, second)
+
+    assert len(events) == 1
+    assert events[0]["strategy"] == ResolutionStrategy.PRIORITIZE.value
+    assert events[0]["resource_id"] == "party-1"

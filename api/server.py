@@ -138,7 +138,12 @@ async def prometheus_metrics():
 
     peers = await metrics_collector.get_all_peers_summary()
     system = metrics_collector.get_system_summary()
-    quality = metrics_collector.get_network_quality_score()
+    quality_value = metrics_collector.get_network_quality_score()
+    quality_score = (
+        float(quality_value.get("score", 0.0))
+        if isinstance(quality_value, dict)
+        else float(quality_value)
+    )
 
     lines = [
         "# HELP lanrage_peers_total Number of peers currently tracked",
@@ -152,7 +157,7 @@ async def prometheus_metrics():
         f"lanrage_packet_loss_percent {float(system.get('avg_packet_loss', 0.0))}",
         "# HELP lanrage_quality_score Overall network quality score (0-100)",
         "# TYPE lanrage_quality_score gauge",
-        f"lanrage_quality_score {float(quality.get('score', 0.0))}",
+        f"lanrage_quality_score {quality_score}",
     ]
     return "\n".join(lines) + "\n"
 

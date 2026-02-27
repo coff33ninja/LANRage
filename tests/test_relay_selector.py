@@ -128,3 +128,36 @@ def test_fallback_relays_returned_in_priority_order():
     )
     assert result.selected_relay == "relay-1"
     assert result.fallback_relays == ["relay-2", "relay-3"]
+
+
+def test_geographic_weighting_prefers_lower_region_penalty():
+    selector = RelaySelector(direct_threshold=95.0)
+    result = selector.select_relay(
+        peer_a="p1",
+        peer_b="p2",
+        peer_a_direct_quality=30.0,
+        peer_b_direct_quality=30.0,
+        peer_regions={"p1": "us-east", "p2": "us-east"},
+        region_latency_ms={
+            ("us-east", "us-east"): 5.0,
+            ("us-east", "eu-west"): 85.0,
+        },
+        candidates=[
+            RelayCandidate(
+                relay_id="relay-eu",
+                region="eu-west",
+                health_score=100.0,
+                load_percent=5.0,
+                peer_quality={"p1": 90.0, "p2": 90.0},
+            ),
+            RelayCandidate(
+                relay_id="relay-us",
+                region="us-east",
+                health_score=95.0,
+                load_percent=10.0,
+                peer_quality={"p1": 88.0, "p2": 88.0},
+            ),
+        ],
+    )
+    assert result.mode == "relay"
+    assert result.selected_relay == "relay-us"
