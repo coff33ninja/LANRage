@@ -355,6 +355,7 @@ class ServerBrowser:
         ):
             return server.latency_ms
 
+        measured_latency: float | None = None
         try:
             # Take multiple samples for more reliable latency measurement
             import platform
@@ -381,51 +382,34 @@ class ServerBrowser:
 
             if valid_latencies:
                 # Use median for more robust latency estimate (less affected by outliers)
-                median_latency = statistics.median(valid_latencies)
-                server.latency_ms = median_latency
-                server.last_latency_check = now
+                measured_latency = statistics.median(valid_latencies)
+            else:
+                # All ICMP pings failed; try TCP connect latency as fallback.
+                measured_latency = await self._tcp_connect_fallback_latency(
+                    server.host_ip
+                )
+                if measured_latency is None:
+                    # Final fallback: DNS lookup time if host is a hostname.
+                    measured_latency = await self._dns_lookup_fallback_latency(
+                        server.host_ip
+                    )
 
-                # Update EMA (Exponential Moving Average) for smoothing
-                self._update_ema(server, median_latency)
+            if measured_latency is None:
+                measured_latency = 999.0
+                server.latency_trend = "degrading"
 
-                # Track samples and detect trends
-                self._update_latency_samples(server, median_latency)
-
-                # Adapt measurement interval based on latency quality
-                self._adapt_measurement_interval(server)
-
-                return median_latency
-            # All ICMP pings failed; try TCP connect latency as fallback.
-            tcp_latency = await self._tcp_connect_fallback_latency(server.host_ip)
-            if tcp_latency is not None:
-                server.latency_ms = tcp_latency
-                server.last_latency_check = now
-                self._update_ema(server, tcp_latency)
-                self._update_latency_samples(server, tcp_latency)
-                self._adapt_measurement_interval(server)
-                return tcp_latency
-
-            # Final fallback: DNS lookup time if host is a hostname.
-            dns_latency = await self._dns_lookup_fallback_latency(server.host_ip)
-            if dns_latency is not None:
-                server.latency_ms = dns_latency
-                server.last_latency_check = now
-                self._update_ema(server, dns_latency)
-                self._update_latency_samples(server, dns_latency)
-                self._adapt_measurement_interval(server)
-                return dns_latency
-
-            # All measurements failed or timed out
-            server.latency_ms = 999
+            server.latency_ms = measured_latency
             server.last_latency_check = now
-            server.latency_trend = "degrading"
-            return 999.0
+            self._update_ema(server, measured_latency)
+            self._update_latency_samples(server, measured_latency)
+            self._adapt_measurement_interval(server)
 
         except Exception as e:
             error_msg = str(e)
             print(f"⚠ Latency measurement failed for {server.name}: {error_msg}")
+            return None
 
-        return None
+        return measured_latency
 
     async def _tcp_connect_fallback_latency(self, host: str) -> float | None:
         """Measure latency via TCP connect fallback if ICMP is blocked."""

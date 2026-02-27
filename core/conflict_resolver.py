@@ -154,9 +154,10 @@ class ConflictResolver:
                 winners[key] = spec
                 continue
 
-            if spec.timestamp > current.timestamp:
-                winners[key] = spec
-            elif spec.timestamp == current.timestamp and spec.priority > current.priority:
+            if spec.timestamp > current.timestamp or (
+                spec.timestamp == current.timestamp
+                and spec.priority > current.priority
+            ):
                 winners[key] = spec
 
         return list(winners.values())

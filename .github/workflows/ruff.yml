@@ -36,7 +36,7 @@ jobs:
     - name: Run Ruff linter
       run: |
         source .venv/bin/activate
-        python -m ruff check . --output-format=github --statistics
+        python -m ruff check . --output-format=github
     
     - name: Verify zero warnings (strict mode)
       run: |

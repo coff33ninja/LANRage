@@ -2,8 +2,8 @@
 
 from fastapi.testclient import TestClient
 
-from api.server import app
 import api.server as server_module
+from api.server import app
 
 
 class _DummyMetrics:

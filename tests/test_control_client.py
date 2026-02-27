@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pytest
 
-from core.control import PeerInfo
 from core.config import Config
+from core.control import PeerInfo
 from core.control_client import RemoteControlPlaneClient
 
 
