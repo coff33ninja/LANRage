@@ -149,6 +149,13 @@ class PartyManager:
         self.control = create_control_plane(self.config)
         await self.control.initialize()
 
+        # For remote control-plane clients, establish token-bound identity up front.
+        if self.control and hasattr(self.control, "register_peer"):
+            try:
+                await self.control.register_peer(self.my_peer_id)
+            except Exception as e:
+                logger.warning(f"Control-plane peer registration failed: {e}")
+
         # Initialize connection manager
         if self.nat and self.control:
             self.connections = ConnectionManager(

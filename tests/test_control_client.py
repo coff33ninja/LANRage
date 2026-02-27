@@ -1,7 +1,10 @@
 """Tests for control plane client"""
 
+from datetime import datetime
+
 import pytest
 
+from core.control import PeerInfo
 from core.config import Config
 from core.control_client import RemoteControlPlaneClient
 
@@ -189,3 +192,58 @@ def test_heartbeat_task_initially_none(client):
 def test_server_url_from_config(client):
     """Test server URL comes from config"""
     assert client.server_url == client.config.control_server
+
+
+@pytest.mark.asyncio
+async def test_register_party_auto_authenticates(client, monkeypatch):
+    """Client should auto-register peer token before protected requests."""
+    called_peer_ids = []
+
+    async def fake_register_peer(peer_id: str):
+        called_peer_ids.append(peer_id)
+        client.auth_token = "token-123"
+        client.my_peer_id = peer_id
+        return "token-123"
+
+    async def fake_request(method: str, endpoint: str, json_data=None, retry_count=3):
+        del retry_count, method, endpoint, json_data
+        return {
+            "party": {
+                "party_id": "party-1",
+                "name": "My Party",
+                "host_id": "peer-a",
+                "created_at": datetime.now().isoformat(),
+                "peers": {
+                    "peer-a": {
+                        "peer_id": "peer-a",
+                        "name": "Alice",
+                        "public_key": "key",
+                        "nat_type": "open",
+                        "public_ip": "127.0.0.1",
+                        "public_port": 5000,
+                        "local_ip": "127.0.0.1",
+                        "local_port": 5001,
+                        "last_seen": datetime.now().isoformat(),
+                    }
+                },
+            }
+        }
+
+    monkeypatch.setattr(client, "register_peer", fake_register_peer)
+    monkeypatch.setattr(client, "_request", fake_request)
+
+    host = PeerInfo(
+        peer_id="peer-a",
+        name="Alice",
+        public_key="key",
+        nat_type="open",
+        public_ip="127.0.0.1",
+        public_port=5000,
+        local_ip="127.0.0.1",
+        local_port=5001,
+        last_seen=datetime.now(),
+    )
+
+    party = await client.register_party("party-1", "My Party", host)
+    assert party.party_id == "party-1"
+    assert called_peer_ids == ["peer-a"]

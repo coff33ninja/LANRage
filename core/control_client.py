@@ -10,6 +10,7 @@ Uses httpx for robust async HTTP communication with:
 
 import asyncio
 import contextlib
+import secrets
 
 import httpx
 
@@ -56,6 +57,17 @@ class RemoteControlPlaneClient:
             follow_redirects=True,
         )
         logger.info(f"Control plane client initialized successfully: {self.server_url}")
+
+    async def _ensure_authenticated(self, peer_id_hint: str | None = None) -> None:
+        """Ensure client has a valid auth token for a specific peer identity."""
+        target_peer_id = peer_id_hint or self.my_peer_id
+        if target_peer_id is None:
+            target_peer_id = f"peer_{secrets.token_hex(6)}"
+
+        if self.auth_token and self.my_peer_id == target_peer_id:
+            return
+
+        await self.register_peer(target_peer_id)
 
     @timing_decorator(name="control_client_close")
     async def close(self):
@@ -204,6 +216,7 @@ class RemoteControlPlaneClient:
             Created party information
         """
         try:
+            await self._ensure_authenticated(host_peer_info.peer_id)
             set_context(party_id_val=party_id)
             logger.info(
                 f"Registering party with control plane: {name} (ID: {party_id})"
@@ -243,6 +256,7 @@ class RemoteControlPlaneClient:
             Party information
         """
         try:
+            await self._ensure_authenticated(peer_info.peer_id)
             set_context(party_id_val=party_id)
             logger.info(f"Joining party with control plane: {party_id}")
             response = await self._request(
@@ -276,6 +290,7 @@ class RemoteControlPlaneClient:
             peer_id: Peer leaving
         """
         try:
+            await self._ensure_authenticated(peer_id)
             # Stop heartbeat
             if self.heartbeat_task:
                 self.heartbeat_task.cancel()
@@ -305,6 +320,7 @@ class RemoteControlPlaneClient:
             Party information or None if not found
         """
         try:
+            await self._ensure_authenticated()
             response = await self._request("GET", f"/parties/{party_id}")
             return PartyInfo.from_dict(response["party"])
 
@@ -324,6 +340,7 @@ class RemoteControlPlaneClient:
             Dictionary of peer_id -> PeerInfo
         """
         try:
+            await self._ensure_authenticated()
             response = await self._request("GET", f"/parties/{party_id}/peers")
             return {k: PeerInfo.from_dict(v) for k, v in response["peers"].items()}
 
@@ -342,6 +359,7 @@ class RemoteControlPlaneClient:
             Peer information or None if not found
         """
         try:
+            await self._ensure_authenticated()
             response = await self._request(
                 "GET", f"/parties/{party_id}/peers/{peer_id}"
             )
@@ -361,6 +379,7 @@ class RemoteControlPlaneClient:
             peer_id: Peer identifier
         """
         try:
+            await self._ensure_authenticated(peer_id)
             await self._request(
                 "POST",
                 f"/parties/{party_id}/peers/{peer_id}/heartbeat",
@@ -378,6 +397,7 @@ class RemoteControlPlaneClient:
             List of relay server information
         """
         try:
+            await self._ensure_authenticated()
             response = await self._request("GET", "/relays")
             return response["relays"]
 
@@ -395,6 +415,7 @@ class RemoteControlPlaneClient:
             List of relay servers in region
         """
         try:
+            await self._ensure_authenticated()
             response = await self._request("GET", f"/relays/{region}")
             return response["relays"]
 

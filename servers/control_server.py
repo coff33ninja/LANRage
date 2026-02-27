@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import aiosqlite
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -290,11 +290,16 @@ async def register_peer(peer_id: str):
 
 # Party management endpoints
 @app.post("/parties")
-async def create_party(req: CreatePartyRequest, peer_id: str = Header(None)):
+async def create_party(
+    req: CreatePartyRequest,
+    auth_peer_id: str = Depends(verify_token),
+):
     """Create a new party"""
     try:
         # Create peer info
         host_peer_info = PeerInfo.from_dict(req.host_peer_info)
+        if host_peer_info.peer_id != auth_peer_id:
+            raise HTTPException(403, "Token peer_id does not match host_peer_info.peer_id")
 
         # Generate party ID
         party_id = PartyInfo.generate_party_id()
@@ -351,10 +356,16 @@ async def create_party(req: CreatePartyRequest, peer_id: str = Header(None)):
 
 
 @app.post("/parties/{party_id}/join")
-async def join_party(party_id: str, req: JoinPartyRequest):
+async def join_party(
+    party_id: str,
+    req: JoinPartyRequest,
+    auth_peer_id: str = Depends(verify_token),
+):
     """Join an existing party"""
     try:
         peer_info = PeerInfo.from_dict(req.peer_info)
+        if peer_info.peer_id != auth_peer_id:
+            raise HTTPException(403, "Token peer_id does not match peer_info.peer_id")
         now = datetime.now()
 
         async with aiosqlite.connect(DB_PATH) as db:
@@ -404,8 +415,15 @@ async def join_party(party_id: str, req: JoinPartyRequest):
 
 
 @app.delete("/parties/{party_id}/peers/{peer_id}")
-async def leave_party(party_id: str, peer_id: str):
+async def leave_party(
+    party_id: str,
+    peer_id: str,
+    auth_peer_id: str = Depends(verify_token),
+):
     """Leave a party"""
+    if peer_id != auth_peer_id:
+        raise HTTPException(403, "Token peer_id does not match requested peer_id")
+
     async with aiosqlite.connect(DB_PATH) as db:
         # Check if party exists
         async with db.execute(
@@ -446,7 +464,10 @@ async def leave_party(party_id: str, peer_id: str):
 
 
 @app.get("/parties/{party_id}")
-async def get_party(party_id: str) -> PartyInfo | None:
+async def get_party(
+    party_id: str,
+    _auth_peer_id: str = Depends(verify_token),
+) -> PartyInfo | None:
     """Get party information"""
     async with aiosqlite.connect(DB_PATH) as db:
         # Get party
@@ -496,7 +517,10 @@ async def get_party(party_id: str) -> PartyInfo | None:
 
 
 @app.get("/parties/{party_id}/peers")
-async def get_peers(party_id: str):
+async def get_peers(
+    party_id: str,
+    _auth_peer_id: str = Depends(verify_token),
+):
     """Get all peers in a party"""
     async with aiosqlite.connect(DB_PATH) as db:
         # Check if party exists
@@ -535,7 +559,11 @@ async def get_peers(party_id: str):
 
 
 @app.get("/parties/{party_id}/peers/{peer_id}")
-async def discover_peer(party_id: str, peer_id: str):
+async def discover_peer(
+    party_id: str,
+    peer_id: str,
+    _auth_peer_id: str = Depends(verify_token),
+):
     """Discover a specific peer"""
     async with aiosqlite.connect(DB_PATH) as db:
         # Check if party exists
@@ -569,8 +597,15 @@ async def discover_peer(party_id: str, peer_id: str):
 
 
 @app.post("/parties/{party_id}/peers/{peer_id}/heartbeat")
-async def heartbeat(party_id: str, peer_id: str):
+async def heartbeat(
+    party_id: str,
+    peer_id: str,
+    auth_peer_id: str = Depends(verify_token),
+):
     """Send heartbeat to keep peer alive"""
+    if peer_id != auth_peer_id:
+        raise HTTPException(403, "Token peer_id does not match requested peer_id")
+
     now = datetime.now()
 
     async with aiosqlite.connect(DB_PATH) as db:
@@ -596,7 +631,10 @@ async def heartbeat(party_id: str, peer_id: str):
 
 # Relay server registry
 @app.post("/relays")
-async def register_relay(req: RegisterRelayRequest):
+async def register_relay(
+    req: RegisterRelayRequest,
+    _auth_peer_id: str = Depends(verify_token),
+):
     """Register a relay server"""
     now = datetime.now()
 
@@ -628,7 +666,9 @@ async def register_relay(req: RegisterRelayRequest):
 
 
 @app.get("/relays")
-async def list_relays():
+async def list_relays(
+    _auth_peer_id: str = Depends(verify_token),
+):
     """List available relay servers"""
     relays = []
 
@@ -655,7 +695,10 @@ async def list_relays():
 
 
 @app.get("/relays/{region}")
-async def get_relays_by_region(region: str):
+async def get_relays_by_region(
+    region: str,
+    _auth_peer_id: str = Depends(verify_token),
+):
     """Get relay servers in a specific region"""
     relays = []
 

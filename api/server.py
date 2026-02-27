@@ -4,6 +4,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
@@ -127,6 +128,33 @@ update_manager = UpdateManager()
 async def root():
     """Health check"""
     return {"status": "ok", "service": "LANrage"}
+
+
+@app.get("/metrics", response_class=PlainTextResponse)
+async def prometheus_metrics():
+    """Expose Prometheus-compatible metrics for scraping."""
+    if not metrics_collector:
+        raise HTTPException(500, "Metrics collector not initialized")
+
+    peers = await metrics_collector.get_all_peers_summary()
+    system = metrics_collector.get_system_summary()
+    quality = metrics_collector.get_network_quality_score()
+
+    lines = [
+        "# HELP lanrage_peers_total Number of peers currently tracked",
+        "# TYPE lanrage_peers_total gauge",
+        f"lanrage_peers_total {len(peers)}",
+        "# HELP lanrage_latency_avg_ms Average peer latency in milliseconds",
+        "# TYPE lanrage_latency_avg_ms gauge",
+        f"lanrage_latency_avg_ms {float(system.get('avg_latency_ms', 0.0))}",
+        "# HELP lanrage_packet_loss_percent Average packet loss percentage",
+        "# TYPE lanrage_packet_loss_percent gauge",
+        f"lanrage_packet_loss_percent {float(system.get('avg_packet_loss', 0.0))}",
+        "# HELP lanrage_quality_score Overall network quality score (0-100)",
+        "# TYPE lanrage_quality_score gauge",
+        f"lanrage_quality_score {float(quality.get('score', 0.0))}",
+    ]
+    return "\n".join(lines) + "\n"
 
 
 @app.get("/")
