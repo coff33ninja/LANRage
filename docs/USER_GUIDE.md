@@ -1,7 +1,7 @@
 # LANrage User Guide
 
 **Version**: 1.4.0  
-**Last Updated**: February 22, 2026
+**Last Updated**: February 27, 2026
 
 ## Welcome to LANrage! 🎮
 
