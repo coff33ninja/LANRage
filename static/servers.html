@@ -548,8 +548,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert(`Joining server!\nConnect to: ${data.host_ip}`);
-                    // TODO: Implement automatic party joining
+                    const partyId = data.party && data.party.id ? data.party.id : serverId;
+                    alert(`Joined ${data.server?.name || 'server'}.\nParty ID: ${partyId}`);
+                    window.location.href = '/';
                 } else {
                     alert(data.detail || 'Failed to join server');
                 }

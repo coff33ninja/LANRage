@@ -421,7 +421,7 @@ async def register_server(req: RegisterServerRequest):
 
     # Get host info from party
     party = party_manager.current_party
-    host_peer = party.peers.get(party.host_peer_id)
+    host_peer = party.peers.get(party.host_id)
     if not host_peer:
         raise HTTPException(500, "Host peer not found")
 
@@ -429,7 +429,7 @@ async def register_server(req: RegisterServerRequest):
         server_id=req.server_id,
         name=req.name,
         game=req.game,
-        host_peer_id=party.host_peer_id,
+        host_peer_id=party.host_id,
         host_peer_name=host_peer.name,
         host_ip=host_peer.virtual_ip,
         max_players=req.max_players,

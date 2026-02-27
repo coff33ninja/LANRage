@@ -6,6 +6,7 @@ import pytest
 import pytest_asyncio
 
 from core.config import Config
+from core.control import PartyInfo, PeerInfo
 from core.nat import NATType
 from core.network import NetworkManager
 from core.party import Party, PartyManager, Peer
@@ -197,3 +198,49 @@ async def test_party_creation_includes_nat_type(network_manager):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+@pytest.mark.asyncio
+async def test_join_party_lazy_initializes_control_and_nat(monkeypatch):
+    """join_party should lazily initialize NAT/control instead of hard-failing."""
+
+    class DummyNetwork:
+        public_key_b64 = "dummy-key"
+
+    class FakeNAT:
+        class _NatType:
+            value = "unknown"
+
+        nat_type = _NatType()
+        public_ip = "127.0.0.1"
+        public_port = 4000
+        local_ip = "127.0.0.1"
+        local_port = 4001
+
+    class FakeControl:
+        async def join_party(self, party_id: str, peer_info: PeerInfo) -> PartyInfo:
+            return PartyInfo(
+                party_id=party_id,
+                name="Joined Party",
+                host_id="host-peer",
+                created_at=peer_info.last_seen,
+                peers={peer_info.peer_id: peer_info},
+            )
+
+    manager = PartyManager(Config(), DummyNetwork())
+    manager.nat = None
+    manager.control = None
+
+    async def fake_init_nat():
+        manager.nat = FakeNAT()
+
+    async def fake_init_control():
+        manager.control = FakeControl()
+
+    monkeypatch.setattr(manager, "initialize_nat", fake_init_nat)
+    monkeypatch.setattr(manager, "initialize_control", fake_init_control)
+
+    party = await manager.join_party("party-123", "Tester")
+    assert party.id == "party-123"
+    assert manager.control is not None
+    assert manager.nat is not None

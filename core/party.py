@@ -197,8 +197,14 @@ class PartyManager:
 
     async def join_party(self, party_id: str, peer_name: str) -> Party:
         """Join an existing party"""
+        # Lazy initialization allows join flows (e.g. server browser auto-join)
+        # to work even if startup skipped explicit init calls.
+        if not self.nat:
+            await self.initialize_nat()
+        if not self.control:
+            await self.initialize_control()
         if not self.control or not self.nat:
-            raise NotImplementedError("Control plane not initialized")
+            raise RuntimeError("Control plane initialization failed")
 
         # Create peer info
         my_peer_info = PeerInfo(

@@ -202,6 +202,7 @@ class ControlPlane:
         self.parties: dict[str, PartyInfo] = {}
         self.my_peer_id: str | None = None
         self.my_party_id: str | None = None
+        self.pending_signals: dict[str, list[dict]] = {}
 
         # Track active party IDs for quick lookup
         self.active_party_ids: set[str] = set()
@@ -363,9 +364,37 @@ class ControlPlane:
         - Coordinate hole punching
         - Share relay endpoints
         """
-        # In a real implementation, this would send to the peer
-        # For now, we just store it for the peer to poll
-        pass
+        if party_id not in self.parties:
+            logger.warning(f"Signal for non-existent party: {party_id}")
+            return
+
+        party = self.parties[party_id]
+        if from_peer_id not in party.peers:
+            logger.warning(
+                f"Signal sender not found in party {party_id}: {from_peer_id}"
+            )
+            return
+        if to_peer_id not in party.peers:
+            logger.warning(f"Signal target not found in party {party_id}: {to_peer_id}")
+            return
+
+        envelope = {
+            "party_id": party_id,
+            "from_peer_id": from_peer_id,
+            "to_peer_id": to_peer_id,
+            "signal_data": signal_data,
+            "sent_at": datetime.now().isoformat(),
+        }
+        self.pending_signals.setdefault(to_peer_id, []).append(envelope)
+        logger.debug(f"Queued signal {from_peer_id} -> {to_peer_id} in {party_id}")
+
+    async def poll_signals(self, party_id: str, peer_id: str) -> list[dict]:
+        """Poll and clear pending signaling messages for a peer."""
+        if party_id not in self.parties:
+            return []
+        if peer_id not in self.parties[party_id].peers:
+            return []
+        return self.pending_signals.pop(peer_id, [])
 
     async def heartbeat(self, party_id: str, peer_id: str):
         """Send heartbeat to keep peer alive"""
@@ -587,6 +616,7 @@ class RemoteControlPlane(ControlPlane):
         self.server_url = server_url
         self.ws = None
         self.connected = False
+        self.auth_token: str | None = None
         self.reconnect_attempts = 0
         self.max_reconnect_attempts = 5
         self.reconnect_delay = 5  # seconds
@@ -658,11 +688,19 @@ class RemoteControlPlane(ControlPlane):
 
     async def _authenticate(self):
         """Authenticate with control server"""
-        # TODO: Implement authentication
-        # For now, just send a hello message
+        # Lightweight auth handshake over websocket; if no token is available
+        # we still identify the client for compatibility with unauthenticated servers.
         try:
+            auth_payload = {
+                "type": "auth",
+                "version": "1.0",
+                "client": "lanrage",
+                "peer_id": self.my_peer_id,
+            }
+            if self.auth_token:
+                auth_payload["token"] = self.auth_token
             await self._send_message(
-                {"type": "hello", "version": "1.0", "client": "lanrage"}
+                auth_payload
             )
         except Exception as e:
             error_msg = str(e)
@@ -794,8 +832,16 @@ class RemoteControlPlane(ControlPlane):
 
     async def _handle_signal(self, data: dict):
         """Handle signaling message"""
-        # TODO: Implement signaling for WebRTC-style connection setup
-        pass
+        party_id = data.get("party_id")
+        from_peer_id = data.get("from_peer_id")
+        to_peer_id = data.get("to_peer_id")
+        signal_data = data.get("signal_data", {})
+
+        if not party_id or not from_peer_id or not to_peer_id:
+            logger.warning("Received malformed signal payload")
+            return
+
+        await self.signal_connection(party_id, from_peer_id, to_peer_id, signal_data)
 
     async def register_party(
         self, party_id: str, name: str, host_peer_info: PeerInfo
@@ -866,9 +912,11 @@ class RemoteControlPlane(ControlPlane):
 
     async def heartbeat(self, party_id: str, peer_id: str):
         """Send heartbeat to control server"""
-        if self.connected and self.client:
+        if self.connected and self.ws:
             try:
-                await self.client.heartbeat(party_id, peer_id)
+                await self._send_message(
+                    {"type": "heartbeat", "party_id": party_id, "peer_id": peer_id}
+                )
             except OSError as e:
                 # Heartbeat failures are not critical, but log for debugging
                 print(
