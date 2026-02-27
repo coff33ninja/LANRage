@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added script to generate markdown-ready commit ID traces for release iterations.
 
 ### Changed
+- **Version bump to 2.0.0 (breaking import layout)**
+  - Bumped project version metadata to `2.0.0` after removing legacy `core/*.py` shim modules and requiring canonical package imports.
 - **Signaling and initialization flow hardening** (`api/server.py`, `core/control_plane/control.py`, `core/control_plane/party.py`, `static/servers.html`)
   - Refactored signal handling and lazy initialization to reduce startup/join instability. (commit: `0802b0e`)
 - **Integrations package refactor with compatibility shims** (`core/integrations/discord_integration.py`, `core/integrations/updater.py`)
@@ -40,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation information architecture (workspace in progress)** (`docs/project/`, `docs/diagrams/`, `docs/*.md`)
   - Consolidated planning/progress docs under `docs/project/`.
   - Expanded deep-dive/diagram coverage and cross-linking to reduce root-level clutter.
+  - Documentation refactoring is **not yet complete**; additional consolidation/alignment passes are still planned.
 - **Script and tooling folderization**
   - Moved Windows launch/install scripts to `scripts/windows/`.
   - Split tooling into `tools/docs/` (doc/release helpers) and `tools/dev/` (quality/perf/dev utilities).
