@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from core.config import Config
-from core.games import (
+from core.gameplay.games import (
     DetectionResult,
     GameDetector,
     GameProfile,
@@ -122,7 +122,7 @@ class TestProcessDetection:
         """Test detecting game via exact process name match"""
         # Set up mock GAME_PROFILES
         with (
-            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}),
             patch("psutil.process_iter") as mock_proc_iter,
         ):
             # Mock process that matches
@@ -140,7 +140,7 @@ class TestProcessDetection:
     async def test_process_detection_fuzzy_match(self, game_detector, sample_profile):
         """Test detecting game via fuzzy process name match"""
         with (
-            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}),
             patch("psutil.process_iter") as mock_proc_iter,
         ):
             # Mock process with similar name
@@ -160,7 +160,7 @@ class TestProcessDetection:
         with (
             patch.object(GameDetector, "_detect_by_window_title", return_value=[]),
             patch.object(GameDetector, "_detect_by_open_ports", return_value=[]),
-            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}),
             patch("psutil.process_iter") as mock_proc_iter,
         ):
             # Mock process
@@ -181,7 +181,7 @@ class TestPortDetection:
     @pytest.mark.asyncio
     async def test_port_detection_results(self, game_detector, sample_profile):
         """Test port-based detection returns DetectionResult instances"""
-        with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
+        with patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}):
             results = await game_detector._detect_by_open_ports()
 
             # Should return list of DetectionResult
@@ -196,7 +196,7 @@ class TestPortDetection:
     @pytest.mark.asyncio
     async def test_port_detection_confidence_range(self, game_detector, sample_profile):
         """Test port detection confidence is in valid range"""
-        with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
+        with patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}):
             results = await game_detector._detect_by_open_ports()
 
             for result in results:
@@ -271,7 +271,7 @@ class TestDetectionRanking:
         game_detector.optimizer = mock_optimizer
 
         with (
-            patch("core.games.GAME_PROFILES", {"test_game": sample_profile}),
+            patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}),
             patch("psutil.process_iter") as mock_proc_iter,
         ):
             # Mock process
@@ -312,7 +312,7 @@ class TestGameDetectorIntegration:
     @pytest.mark.asyncio
     async def test_get_active_games(self, game_detector, sample_profile):
         """Test retrieving active games"""
-        with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
+        with patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}):
             # Set active games
             game_detector.detected_games = {"test_game"}
 
@@ -323,7 +323,7 @@ class TestGameDetectorIntegration:
     @pytest.mark.asyncio
     async def test_get_profile_by_id(self, game_detector, sample_profile):
         """Test retrieving profile by game ID"""
-        with patch("core.games.GAME_PROFILES", {"test_game": sample_profile}):
+        with patch("core.gameplay.games.GAME_PROFILES", {"test_game": sample_profile}):
             profile = game_detector.get_profile("test_game")
             assert profile is not None
             assert profile.name == "Test Game"
@@ -357,7 +357,7 @@ class TestGameDetectorIntegration:
         }
 
         with (
-            patch("core.games.GAME_PROFILES", profiles),
+            patch("core.gameplay.games.GAME_PROFILES", profiles),
             patch("psutil.process_iter") as mock_proc_iter,
         ):
             # Mock both processes running

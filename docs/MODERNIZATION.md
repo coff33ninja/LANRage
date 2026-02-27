@@ -111,13 +111,13 @@ Use the helper script for repeatable local checks:
 
 ```bash
 # Format + lint
-python tools/run_code_quality.py
+python tools/dev/run_code_quality.py
 
 # Check-only mode (no file modifications)
-python tools/run_code_quality.py --check
+python tools/dev/run_code_quality.py --check
 
 # Enable Ruff auto-fixes
-python tools/run_code_quality.py --ruff-fix
+python tools/dev/run_code_quality.py --ruff-fix
 ```
 
 ### Using Ruff Instead of Multiple Tools
@@ -179,7 +179,7 @@ ruff check .
 ruff check --fix .
 
 # Check specific file
-ruff check core/games.py
+ruff check core/gameplay/games.py
 
 # Show all rules
 ruff rule --all

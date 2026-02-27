@@ -3,8 +3,8 @@
 import pytest
 
 from core.config import Config
-from core.games import GameDetector
-from core.logging_config import clear_context, get_context, set_context
+from core.gameplay.games import GameDetector
+from core.observability.logging_config import clear_context, get_context, set_context
 
 
 @pytest.fixture

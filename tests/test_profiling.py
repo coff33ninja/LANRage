@@ -11,8 +11,8 @@ import pytest
 
 # Import core modules for profiling
 from core.config import Config
-from core.ipam import IPAddressPool
-from core.metrics import MetricsCollector
+from core.networking.ipam import IPAddressPool
+from core.observability.metrics import MetricsCollector
 from core.utils import calculate_latency, format_bandwidth, parse_port_range
 
 
@@ -279,12 +279,12 @@ class TestBottleneckIdentification:
 
         modules_to_test = [
             "core.config",
-            "core.network",
-            "core.party",
-            "core.nat",
-            "core.broadcast",
-            "core.metrics",
-            "core.ipam",
+            "core.networking.network",
+            "core.control_plane.party",
+            "core.networking.nat",
+            "core.gameplay.broadcast",
+            "core.observability.metrics",
+            "core.networking.ipam",
             "core.utils",
         ]
 

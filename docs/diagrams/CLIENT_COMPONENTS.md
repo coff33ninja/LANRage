@@ -8,31 +8,31 @@ flowchart TB
     end
 
     subgraph APP["Application Layer"]
-        PARTY["Party Manager\ncore/party.py"]
-        CONN["Connection Manager\ncore/connection.py"]
-        CONTROL_CLIENT["Control Client\ncore/control_client.py"]
+        PARTY["Party Manager\ncore/control_plane/party.py"]
+        CONN["Connection Manager\ncore/networking/connection.py"]
+        CONTROL_CLIENT["Control Client\ncore/control_plane/control_client.py"]
         TASKS["Task Manager\ncore/task_manager.py"]
         LOCKS["Operation Lock / Conflict Resolver\ncore/operation_lock.py + core/conflict_resolver.py"]
     end
 
     subgraph NET["Networking Layer"]
-        NETMGR["Network Manager\ncore/network.py"]
-        NAT["NAT Traversal\ncore/nat.py"]
+        NETMGR["Network Manager\ncore/networking/network.py"]
+        NAT["NAT Traversal\ncore/networking/nat.py"]
         RELSEL["Relay Selector\ncore/relay_selector.py"]
-        BCAST["Broadcast Emulator\ncore/broadcast.py"]
+        BCAST["Broadcast Emulator\ncore/gameplay/broadcast.py"]
     end
 
     subgraph GAMEFEAT["Game Services"]
-        GAMES["Game Detector/Profile Manager\ncore/games.py"]
-        MODSYNC["Mod Sync Planner\ncore/mod_sync.py"]
-        BROWSER["Server Browser\ncore/server_browser.py"]
-        DISCORD_INT["Discord Integration\ncore/discord_integration.py"]
+        GAMES["Game Detector/Profile Manager\ncore/gameplay/games.py"]
+        MODSYNC["Mod Sync Planner\ncore/gameplay/mod_sync.py"]
+        BROWSER["Server Browser\ncore/gameplay/server_browser.py"]
+        DISCORD_INT["Discord Integration\ncore/integrations/discord_integration.py"]
     end
 
     subgraph DATA["Persistence + Observability"]
-        SETTINGS["Settings Store\ncore/settings.py (SQLite)"]
-        METRICS["Metrics\ncore/metrics.py"]
-        LOGS["Structured Logging\ncore/logging_config.py"]
+        SETTINGS["Settings Store\ncore/control_plane/settings.py (SQLite)"]
+        METRICS["Metrics\ncore/observability/metrics.py"]
+        LOGS["Structured Logging\ncore/observability/logging_config.py"]
     end
 
     WEB --> API
@@ -62,3 +62,4 @@ flowchart TB
     PARTY --> LOGS
     CONN --> LOGS
 ```
+

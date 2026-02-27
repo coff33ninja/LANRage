@@ -3,7 +3,7 @@
 import pytest
 
 from core.config import Config
-from core.metrics import MetricsCollector
+from core.observability.metrics import MetricsCollector
 
 
 @pytest.fixture

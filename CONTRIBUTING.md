@@ -393,7 +393,7 @@ All PRs must include:
 
 ```python
 import pytest
-from core.nat import NATTraversal
+from core.networking.nat import NATTraversal
 
 @pytest.mark.asyncio
 async def test_nat_detection():
@@ -473,11 +473,11 @@ lanrage/
 
 ### Key Modules
 
-- `core/network.py` - WireGuard management
-- `core/nat.py` - NAT traversal
-- `core/party.py` - Party management
-- `core/games.py` - Game detection
-- `core/control_client.py` - Control plane client
+- `core/networking/network.py` - WireGuard management
+- `core/networking/nat.py` - NAT traversal
+- `core/control_plane/party.py` - Party management
+- `core/gameplay/games.py` - Game detection
+- `core/control_plane/control_client.py` - Control plane client
 - `servers/control_server.py` - Control plane server
 
 ---

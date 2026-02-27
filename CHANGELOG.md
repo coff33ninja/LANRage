@@ -8,46 +8,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Architecture Diagram Pack** (`docs/diagrams/`)
-  - Added detailed diagram index and split Mermaid docs for context, components, runtime sequences, control loops, CI/CD flow, and failure domains.
-  - Added cross-links from `docs/README.md` and `docs/ARCHITECTURE.md` to improve architecture discoverability.
-- **Reusable Code Quality Runner** (`tools/run_code_quality.py`)
-  - Added single command entry-point for `isort`, `black`, and `ruff`.
-  - Supports check-only mode (`--check`) and Ruff autofix mode (`--ruff-fix`).
-  - Documented usage in developer-facing docs (`docs/CI_CD.md`, `docs/MODERNIZATION.md`).
-- **Unified Dashboard App Shell** (`static/index.html`)
-  - Added a new default `Dashboard` tab as the primary UI surface.
-  - Added cross-tab quick actions to jump into Party, Servers, and Settings flows.
-  - Added dashboard server snapshot with inline join actions.
-  - Added dashboard quick settings controls (mode + Discord/Metrics toggles) to reduce configuration friction.
-- **Versioning Playbook** (`docs/VERSIONING.md`)
-  - Added a practical Semantic Versioning strategy, release workflow, and changelog policy for this project.
-  - Added a reusable “Versioning Assistant Skill” template section for future Codex skill automation.
-- **In-App Self-Update Capability** (`core/updater.py`, `api/server.py`, `static/index.html`)
-  - Added safe git-based update status checks (behind/ahead/dirty branch state).
-  - Added API endpoints:
-    - `GET /api/system/update/status`
-    - `POST /api/system/update` (requires `confirm=true`)
-  - Added Dashboard UI update controls to check for updates and apply fast-forward updates.
-  - Added safeguards to block auto-update when local changes/divergence exist.
+- **Control server authentication and metrics endpoint** (`api/server.py`, `servers/control_server.py`, `core/control_plane/control_client.py`, `core/control_plane/party.py`)
+  - Added authentication enforcement for control-plane requests. (commit: `cd1f70b`)
+  - Added Prometheus metrics API coverage and tests. (commit: `cd1f70b`)
+- **Latency fallback paths for server browser** (`core/gameplay/server_browser.py`, `core/config.py`)
+  - Added TCP and DNS fallback probing to improve latency measurement resilience. (commit: `080c3d1`)
+- **Phase-5 quality, relay, and conflict improvements** (`core/conflict_resolver.py`, `core/relay_selector.py`, `core/observability/metrics.py`, `api/server.py`)
+  - Added enhancements for conflict handling, relay selection behavior, and metrics handling with test coverage. (commit: `b87bfe0`)
+- **Changelog commit trace helper** (`tools/docs/changelog_commits.py`)
+  - Added script to generate markdown-ready commit ID traces for release iterations.
 
 ### Changed
-- **Documentation Alignment (Core-accurate)**
-  - Updated major docs to reflect current database-first configuration model and removed stale `.env`/CLI-flag guidance.
-  - Updated architecture/docs module coverage to include current core components (`mod_sync`, `task_manager`, `operation_lock`, `conflict_resolver`, `relay_selector`, `profiler`).
-  - Fixed broken/missing internal doc references and refreshed docs flow consistency with current CI/release automation.
-- **Dashboard Visual Consistency** (`static/dashboard.html`, `static/index.html`)
-  - Reworked dashboard styling to align with the primary LANrage UI design language.
-  - Improved mobile responsiveness for metrics cards, peer rows, and chart containers.
-  - Switched to stable card-based layout primitives to reduce visual drift across tabs.
+- **Signaling and initialization flow hardening** (`api/server.py`, `core/control_plane/control.py`, `core/control_plane/party.py`, `static/servers.html`)
+  - Refactored signal handling and lazy initialization to reduce startup/join instability. (commit: `0802b0e`)
+- **Integrations package refactor with compatibility shims** (`core/integrations/discord_integration.py`, `core/integrations/updater.py`)
+  - Moved integrations modules into `core/integrations/` and kept legacy shim imports at `core/discord_integration.py` and `core/updater.py`.
+- **Observability package refactor with compatibility shims** (`core/observability/logging_config.py`, `core/observability/metrics.py`, `core/observability/profiler.py`)
+  - Moved observability modules into `core/observability/` and kept legacy shim imports at `core/logging_config.py`, `core/metrics.py`, and `core/profiler.py`.
+- **Gameplay package refactor with compatibility shims** (`core/gameplay/games.py`, `core/gameplay/mod_sync.py`, `core/gameplay/server_browser.py`, `core/gameplay/broadcast.py`)
+  - Moved gameplay modules into `core/gameplay/` and kept legacy shim imports at `core/games.py`, `core/mod_sync.py`, `core/server_browser.py`, and `core/broadcast.py`.
+- **Canonical import enforcement and shim deprecation warnings**
+  - Added deprecation warnings to legacy shim modules under `core/*.py`.
+  - Migrated internal imports to canonical package paths (`core/networking/*`, `core/control_plane/*`, `core/integrations/*`, `core/observability/*`, `core/gameplay/*`).
+  - Added regression guard test `tests/test_no_legacy_core_imports.py`.
+- **Breaking import-layout cleanup**
+  - Removed legacy shim modules in `core/*.py` and standardized all runtime/test imports on canonical package paths.
+- **CI lint and formatting stability** (`.github/workflows/ruff.yml`, related formatting touch-ups)
+  - Stabilized lint workflow behavior and aligned formatting across affected modules. (commits: `edcec5e`, `967e354`)
+- **Versioned docs sync to 1.4.0** (`docs/ARCHITECTURE.md`, `docs/CI_CD.md`, `docs/README.md`, `docs/QUICKSTART.md`, `docs/USER_GUIDE.md`, `docs/DISCORD_RICH_PRESENCE_SETUP.md`)
+  - Synced release-facing docs and metadata to the current tagged version. (commit: `92a68ba`)
+- **Documentation information architecture (workspace in progress)** (`docs/project/`, `docs/diagrams/`, `docs/*.md`)
+  - Consolidated planning/progress docs under `docs/project/`.
+  - Expanded deep-dive/diagram coverage and cross-linking to reduce root-level clutter.
+- **Script and tooling folderization**
+  - Moved Windows launch/install scripts to `scripts/windows/`.
+  - Split tooling into `tools/docs/` (doc/release helpers) and `tools/dev/` (quality/perf/dev utilities).
+  - Moved ad-hoc test utility scripts from `tests/` into `tools/dev/`.
 
 ### Fixed
-- **Windows Console Unicode Startup Crash** (`lanrage.py`)
-  - Added startup console stream reconfiguration to UTF-8 for `stdout`/`stderr` with safe fallback.
-  - Prevents `UnicodeEncodeError` crashes when printing Unicode status symbols in non-UTF8 Windows terminals.
-- **Settings Toggle Alignment** (`static/index.html`)
-  - Fixed checkbox/label misalignment in settings toggles caused by global input width styling.
-  - Added dedicated toggle row styling and checkbox-specific width overrides.
+- **Control and API regression fixes captured in CI stabilization pass**
+  - Addressed lint-breaking and format-breaking regressions in touched modules. (commits: `edcec5e`, `967e354`)
+
+### Commit Trace
+- Since `1.4.0`: `0802b0e`, `92a68ba`, `080c3d1`, `cd1f70b`, `b87bfe0`, `edcec5e`, `967e354`
 
 ## [1.4.0] - 2026-02-22
 
@@ -316,10 +319,6 @@ See dev/webui-advanced-settings branch for roadmap on making hardcoded values co
   - Discord integration now properly initializes and attempts to connect
   - Users will see "ℹ Discord Rich Presence not configured" message if App ID not set
   - Users will see "✓ Discord Rich Presence connected" when properly configured
-
-## [1.2.3] - 2026-01-31
-
-### Fixed
 - **Settings Tab Integration**: Integrated Settings as a tab in main UI instead of separate page
   - Settings now accessible via tab navigation, matching other tabs (Party, Servers, Metrics, Discord)
   - Added Discord App ID field to Settings tab for Rich Presence configuration
@@ -537,62 +536,6 @@ Complete documentation suite (1650+ lines):
 - Control plane is local-only (remote planned for v1.1)
 - IPv4 only (IPv6 planned for v1.1)
 - No mobile apps yet (planned for v2.0)
-
----
-
-## [Unreleased]
-
-### Added (v1.0.1 - In Progress)
-
-#### Game Profiles Expansion
-- **85 new game profiles** across 16 categories (27 → 112 games, 315% increase!)
-- **Original 6 categories** (27 games): Sandbox, Survival, Co-op, Party, Competitive, Strategy
-- **Phase 1 expansion** (26 games): FPS, Racing, RPG, MOBA, Sports, Horror
-- **Phase 2 expansion** (59 games): MMO, Battle Royale, Simulation, Fighting, Card/Board, Extraction, Roguelike, Tower Defense, Platformer
-- **Comprehensive validation suite**: 127 automated tests ensuring profile quality
-- **Notable additions**: Fortnite, PUBG, WoW, FFXIV, Street Fighter 6, Tekken 8, Escape from Tarkov, Hades, It Takes Two, and many more
-
-#### Documentation
-- Updated game profiles README with all new categories
-- Added genre-specific optimization guidelines
-- Troubleshooting flowcharts with Mermaid diagrams
-- Validation test suite documentation
-
-### Planned for v1.1 (Q1 2026)
-
-#### Infrastructure
-- Remote control plane with WebSocket-based peer discovery
-- IPv6 support (dual-stack networking)
-- Enhanced relay selection algorithms
-- Performance optimizations
-
-#### User Experience
-- Enhanced web UI (React/Vue rewrite)
-- Additional game profiles (50+ games)
-- Advanced metrics and analytics
-- Improved error messages
-
-### Planned for v2.0 (Q2-Q3 2026)
-
-#### Mobile & Social
-- Mobile apps (iOS/Android)
-- Voice chat integration
-- Screen sharing
-- Tournament mode with brackets
-- Game library integration
-- Friend lists and profiles
-- Achievement system
-
-### Planned for v3.0+ (Q4 2026+)
-
-#### Advanced & Enterprise
-- Plugin system for extensibility
-- Clan servers (persistent parties)
-- Advanced analytics and insights
-- Enterprise features (teams, organizations)
-- Custom domains and branding
-- API for third-party integrations
-- Marketplace for plugins
 
 ---
 

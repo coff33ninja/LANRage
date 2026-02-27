@@ -23,7 +23,7 @@ async def initialize_test_database():
     This fixture runs once per test session and is automatically used by all tests.
     It ensures that Config.load() will work in tests by populating the database.
     """
-    from core.settings import get_settings_db, init_default_settings
+    from core.control_plane.settings import get_settings_db, init_default_settings
 
     # Initialize database with defaults
     db = await get_settings_db()

@@ -14,7 +14,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent))
 
 from core.config import Config
-from core.network import NetworkManager, WireGuardError
+from core.networking.network import NetworkManager, WireGuardError
 from core.utils import check_admin_rights
 
 

@@ -3,9 +3,12 @@
 import pytest
 import pytest_asyncio
 
-import core.discord_integration as discord_module
+import core.integrations.discord_integration as discord_module
 from core.config import Config
-from core.discord_integration import DiscordIntegration, DiscordWebhookHelper
+from core.integrations.discord_integration import (
+    DiscordIntegration,
+    DiscordWebhookHelper,
+)
 
 
 @pytest_asyncio.fixture
@@ -217,7 +220,9 @@ async def test_send_webhook_retries_transient_status(discord, monkeypatch):
     async def fake_sleep(delay):
         sleeps.append(delay)
 
-    monkeypatch.setattr("core.discord_integration.asyncio.sleep", fake_sleep)
+    monkeypatch.setattr(
+        "core.integrations.discord_integration.asyncio.sleep", fake_sleep
+    )
 
     await discord._send_webhook("Title", "Message")
 
@@ -236,7 +241,9 @@ async def test_send_webhook_does_not_retry_non_transient_status(discord, monkeyp
     async def fake_sleep(_delay):
         raise AssertionError("sleep should not be called for non-transient errors")
 
-    monkeypatch.setattr("core.discord_integration.asyncio.sleep", fake_sleep)
+    monkeypatch.setattr(
+        "core.integrations.discord_integration.asyncio.sleep", fake_sleep
+    )
 
     await discord._send_webhook("Title", "Message")
 

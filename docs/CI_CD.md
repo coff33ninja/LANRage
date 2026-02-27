@@ -1,131 +1,47 @@
-# CI/CD Pipeline Documentation
+# CI/CD
 
-## Overview
+Quality gates and automation flow for LANrage changes.
 
-LANrage uses GitHub Actions for code quality, test execution, automated version tagging, release publishing, and documentation sync.
+## Scope
 
-## Active Workflows
+Covers lint/test/release automation expectations and troubleshooting entry points.
 
-### 1. Main CI (`.github/workflows/ci.yml`)
+Related docs:
+- [Testing](TESTING.md)
+- [Versioning](VERSIONING.md)
 
-**Triggers**
-- Push to `main` and `develop`
-- Pull requests to `main` and `develop`
+## Pipeline Goals
 
-**Jobs**
-- `code-quality`
-  - `isort --check-only`
-  - `black --check`
-  - `ruff check` (strict)
-- `test` (matrix)
-  - OS: `ubuntu-latest`, `windows-latest`
-  - Python: `3.12`, `3.13`
-  - Coverage artifact upload on Linux + Python 3.12
-- `security`
-  - `safety` vulnerability scan
-  - `bandit` static security scan
+- block regressions before merge
+- keep style/lint/test quality consistent
+- provide reproducible release artifacts
 
-## Release and Version Automation
+## Core Gates
 
-### 2. Auto Tag (`.github/workflows/auto-tag.yml`)
+- formatting and lint checks
+- unit/integration test runs
+- optional coverage thresholds
+- release packaging checks on tag/release paths
 
-**Purpose**
-- Creates and pushes a git tag (`vX.Y.Z`) when `pyproject.toml` version changes on `main`.
+## Recommended Flow
 
-**Trigger**
-- Push to `main` affecting `pyproject.toml`
-- Manual dispatch
+1. run local quality checks before push
+2. push branch and watch workflow statuses
+3. inspect failing job logs and patch root cause
+4. re-run until all required checks pass
 
-### 3. Release (`.github/workflows/release.yml`)
+## Failure Triage
 
-**Purpose**
-- Creates GitHub Releases from tags and generates release notes automatically.
+- lint failure: fix style/import/static issues first
+- test failure: isolate deterministic vs environment-sensitive failures
+- flaky failure: capture evidence and reduce nondeterminism before retrying blind
 
-**Triggers**
-- Push tags matching `v*.*.*`
-- Manual dispatch with `tag_name`
+## Release Safety
 
-**Key behavior**
-- Extracts version from tag
-- Uses `softprops/action-gh-release`
-- `generate_release_notes: true`
-- Builds source distribution and uploads `dist/*` assets
+- release only from green commit
+- ensure changelog/version metadata are aligned
+- validate produced artifacts before publish
 
-### 4. README Version Sync (`.github/workflows/update-readme-version.yml`)
+## Acceptance Criteria
 
-**Purpose**
-- Keeps README version badge/status aligned with the project version.
-
-**Triggers**
-- Push to `main`
-- Tag push `v*.*.*`
-- Manual dispatch
-
-### 5. Supported Games Sync (`.github/workflows/update-supported-games-readme.yml`)
-
-**Purpose**
-- Regenerates supported-games documentation from JSON profile data.
-
-**Triggers**
-- Push to `main` when:
-  - `game_profiles/**/*.json` changes
-  - `tools/update_supported_games_readme.py` changes
-  - `README.md` changes
-- Manual dispatch
-
-**Outputs**
-- Updates `README.md` supported games block
-- Updates `docs/SUPPORTED_GAMES.md`
-
-### 6. Ruff Workflow (`.github/workflows/ruff.yml`)
-
-Runs standalone Ruff checks for lint-focused validation.
-
-### 7. Pylint Workflow (`.github/workflows/pylint.yml`)
-
-Runs Pylint analysis as an additional quality gate.
-
-## Local Commands (Match CI)
-
-```bash
-# Linux/macOS
-source .venv/bin/activate
-python -m isort --check-only --diff .
-python -m black --check --diff .
-python -m ruff check .
-python -m pytest tests/ -v
-```
-
-```powershell
-# Windows (PowerShell)
-.venv\Scripts\Activate.ps1
-python -m isort --check-only --diff .
-python -m black --check --diff .
-python -m ruff check .
-python -m pytest tests/ -v
-```
-
-## Reusable Quality Script
-
-Use the project helper script to run formatting/lint in a consistent order:
-
-```bash
-# Format + lint
-python tools/run_code_quality.py
-
-# CI-style checks only
-python tools/run_code_quality.py --check
-
-# Format + Ruff autofix
-python tools/run_code_quality.py --ruff-fix
-```
-
-## Notes
-
-- `CHANGELOG.md` remains the manual source of truth for curated release notes.
-- GitHub auto-generated release notes are enabled in release workflow.
-- README and supported-games docs are auto-synced by CI workflows.
-
----
-
-**Last Updated**: February 27, 2026
+This doc is complete when contributors can diagnose failed checks and release from a green pipeline reliably.

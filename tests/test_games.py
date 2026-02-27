@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from core.config import Config
-from core.games import (
+from core.gameplay.games import (
     GAME_PROFILES,
     GameDetector,
     GameManager,

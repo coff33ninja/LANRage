@@ -5,8 +5,8 @@ from datetime import datetime
 import pytest
 
 from core.config import Config
-from core.control import ControlPlane
-from core.logging_config import clear_context, get_context, set_context
+from core.control_plane.control import ControlPlane
+from core.observability.logging_config import clear_context, get_context, set_context
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def control_plane():
 @pytest.mark.asyncio
 async def test_register_party_logging_sets_context(control_plane, caplog):
     """Test that register_party sets context for logging"""
-    from core.control import PeerInfo
+    from core.control_plane.control import PeerInfo
 
     party_id = "test_party_1"
     peer_id = "test_peer_1"
@@ -57,7 +57,7 @@ async def test_join_party_logs_peer_join(control_plane, caplog):
     """Test that join_party logs the peer joining event"""
     import logging
 
-    from core.control import PeerInfo
+    from core.control_plane.control import PeerInfo
 
     caplog.set_level(logging.DEBUG)
 
@@ -109,7 +109,7 @@ async def test_heartbeat_establishes_context(control_plane, caplog):
     """Test that heartbeat sets correlation context"""
     import logging
 
-    from core.control import PeerInfo
+    from core.control_plane.control import PeerInfo
 
     caplog.set_level(logging.DEBUG)
 

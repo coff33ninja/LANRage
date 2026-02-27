@@ -1,117 +1,39 @@
-# Discord Integration Clarification
+# Discord Integration Rationale
 
-**Date**: January 29, 2026
+Why LANrage integrates with Discord instead of building first-party chat/voice/screen features.
 
-## Summary
+## Decision Summary
 
-Voice chat, screen sharing, and text chat are **not** planned as built-in LANrage features. Instead, they are provided through **Discord integration**.
+LANrage focuses on low-latency virtual LAN transport and session orchestration. Discord integration provides communication features without diverting core networking effort.
 
----
+## Tradeoff Analysis
 
-## Why Discord?
+Benefits:
+- mature voice/chat/screen ecosystem
+- lower operational burden and cost
+- familiar user workflow for gaming communities
 
-LANrage uses Discord for party communication because:
+Costs:
+- dependency on external platform availability/policies
+- webhook/invite configuration burden
+- reduced control over communication UX internals
 
-1. **Best-in-class features**
-   - Voice chat: Crystal clear, optimized for gaming
-   - Screen sharing: Built-in and reliable
-   - Text chat: Full history and formatting
-   - File sharing: Seamless integration
+## Scope Boundary
 
-2. **No infrastructure needed**
-   - Discord handles all hosting
-   - No maintenance burden
-   - Always reliable (99.99% uptime)
+In current architecture:
+- LANrage handles networking, coordination, and observability
+- Discord handles social communication layer
 
-3. **Gamers already use it**
-   - Familiar interface
-   - No learning curve
-   - Works on phone too
+This boundary keeps complexity manageable while preserving core performance goals.
 
-4. **Cost savings**
-   - Free to use
-   - No server costs
-   - No bandwidth bills
+## When to Revisit
 
----
+Re-evaluate if:
+- Discord dependency becomes operationally risky for target deployments
+- product goals require fully self-hosted communication stack
+- enterprise/offline requirements disallow third-party comms integration
 
-## Features via Discord
-
-### ✅ Voice Chat
-- Click "Join Voice Chat" link in LANrage
-- Connects to Discord voice channel
-- Crystal clear audio
-- Low latency
-
-### ✅ Screen Sharing
-- Share your screen directly in Discord
-- Great for showing game problems
-- Troubleshoot together
-- Minimal latency
-
-### ✅ Text Chat
-- Party notifications in Discord channel
-- Discuss game strategy
-- Share videos/links
-- Search chat history
-
-### ✅ Mobile Support
-- Discord app on phone
-- Stay connected while AFK
-- Mobile voice chat
-- Mobile screen sharing
-
----
-
-## Documentation Updates
-
-The following docs have been updated to clarify this approach:
-
-- **ROADMAP.md** - Voice/screen sharing marked as complete (via Discord)
-- **ARCHITECTURE.md** - Removed from future enhancements
-- **PARTY.md** - Clarified that Discord provides these
-- **SESSION_PROGRESS.md** - Roadmap updated
-- **docs/README.md** - Roadmap updated
-
----
-
-## Implementation Details
-
-### Discord Integration Module
-- **File**: `core/discord_integration.py` (316 LOC)
-- **Features**:
-  - Webhook notifications for party events
-  - Rich Presence showing current game
-  - Automatic invite link sharing
-  - Optional pypresence support
-
-### API Endpoints
-- `POST /api/discord/webhook` - Set webhook URL
-- `POST /api/discord/invite` - Set invite link
-- `GET /api/discord/status` - Get configuration
-- `POST /api/discord/test` - Send test notification
-
-### Web UI
-- **File**: `static/discord.html`
-- Setup wizard for webhook and invite
-- One-click configuration
-- Test notification button
-
----
-
-## Why This Is Better Than Alternatives
-
-| Approach | Voice | Screen | Chat | Maintenance | Cost |
-|----------|-------|--------|------|-------------|------|
-| **Discord Integration** | ✅ | ✅ | ✅ | None | Free |
-| Built-in WebRTC | ⚠️ Limited | ❌ Hard | ⚠️ Basic | Complex | High |
-| Custom chat | ❌ | ❌ | ✅ | Very Hard | High |
-| Mumble/TeamSpeak | ✅ | ❌ | ⚠️ | Complex | Cost |
-
----
-
-## Conclusion
-
-By integrating with Discord, LANrage provides **best-in-class communication features without the maintenance burden**. This is the right architectural decision for a focused gaming-first VPN.
-
-**Result**: Users get the best voice/screen/chat experience while LANrage stays focused on its core mission: **making gaming feel like a LAN party**.
+See also:
+- [Discord Integration](/docs/core/integrations/DISCORD.md)
+- [Architecture](ARCHITECTURE.md)
+- [Roadmap](project/ROADMAP.md)

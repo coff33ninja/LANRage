@@ -8,7 +8,7 @@ from collections import deque
 import pytest
 
 from core.config import Config
-from core.metrics import ConnectionQualityMonitor, MetricsCollector
+from core.observability.metrics import ConnectionQualityMonitor, MetricsCollector
 
 
 @pytest.fixture

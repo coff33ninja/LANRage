@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from core.mod_sync import ModManifest, ModSyncService
+from core.gameplay.mod_sync import ModManifest, ModSyncService
 
 
 @pytest.mark.asyncio

@@ -2,7 +2,7 @@
 
 import ipaddress
 
-from core.ipam import IPAddressPool
+from core.networking.ipam import IPAddressPool
 
 
 class TestIPAddressPool:

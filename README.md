@@ -51,7 +51,7 @@ LANrage creates a virtual LAN over the internet with:
 - 🎯 **Game-aware profiles** - Auto-tuning per game
 - 🔒 **WireGuard security** - Military-grade encryption (but you don't need to know that)
 - 🌐 **Web UI** - Clean, simple, gamer-friendly
-- � **Discord integration** - Party notifications and voice chat
+- 💬 **Discord integration** - Party notifications and voice chat
 - 📊 **Statistics dashboard** - Real-time metrics and performance tracking
 - 🚀 **Oracle VPS ready** - Your free 1GB VPS makes a perfect relay
 
@@ -103,41 +103,37 @@ python lanrage.py
 └─────────────┘         └─────────────┘         └─────────────┘
 ```
 
-- **Control plane**: Peer discovery + key exchange (TODO)
+- **Control plane**: Peer discovery, party coordination, and auth-aware remote integration
 - **Data plane**: WireGuard tunnels (direct or relayed)
 - **Relay nodes**: Stateless packet forwarders
 
-## Documentation (1650+ Lines)
+## Documentation
 
-### Getting Started
-- **[User Guide](docs/USER_GUIDE.md)** - Complete user manual (400+ lines)
-- **[Quick Start](docs/QUICKSTART.md)** - 90-second setup guide
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Solutions to common problems (600+ lines)
+Use the docs hub for a clean, maintained map:
+- **[Docs Index](docs/README.md)** - canonical navigation for users, operators, and developers
 
-### Technical Documentation  
-- **[Architecture](docs/ARCHITECTURE.md)** - System design overview
-- **[Testing](docs/TESTING.md)** - Test procedures and benchmarks
-- **[Performance](docs/PERFORMANCE_OPTIMIZATION.md)** - Performance tuning guide
-- **[Production Ready](docs/PRODUCTION_READY.md)** - Production deployment checklist
-- **[Session Progress](docs/SESSION_PROGRESS.md)** - Development summary
+Recommended entry points:
+- **[Quick Start](docs/QUICKSTART.md)**
+- **[User Guide](docs/USER_GUIDE.md)**
+- **[Architecture](docs/ARCHITECTURE.md)**
+- **[API Reference](docs/API.md)**
+- **[Deep Dive](docs/DEEP_DIVE.md)** (expanded architecture, control/data plane flow, and operational behavior)
+- **[Project Planning Docs](docs/project/README.md)** (roadmap, progress, implementation/parity tracking)
 
-### Setup Guides
-- **[WireGuard Setup](docs/WIREGUARD_SETUP.md)** - Installation and configuration
-- **[Discord Setup](docs/DISCORD_SETUP_GUIDE.md)** - Discord integration guide
-- **[Startup Validation](docs/STARTUP_VALIDATION.md)** - Troubleshooting startup issues
+## Repository Layout
 
-### Advanced Topics
-- **[NAT Traversal](docs/NAT_TRAVERSAL.md)** - NAT traversal strategies
-- **[Control Plane](docs/CONTROL_PLANE.md)** - Peer discovery system
-- **[Relay Server](docs/RELAY_SERVER.md)** - Setting up relay servers
-- **[Server Browser](docs/SERVER_BROWSER.md)** - Game server discovery
-- **[Discord](docs/DISCORD.md)** - Discord integration details
-- **[Metrics](docs/METRICS.md)** - Statistics and monitoring
-
-### Development
-- **[Contributing](CONTRIBUTING.md)** - How to contribute
-- **[Roadmap](docs/ROADMAP.md)** - Future plans and vision
-- **[API Reference](docs/API.md)** - REST API documentation
+- `core/` - runtime logic grouped by subsystem packages and modules
+  - `core/networking/` - canonical networking stack (`network.py`, `nat.py`, `ipam.py`, `connection.py`)
+- `api/` - FastAPI server and web-facing endpoints
+- `servers/` - control-plane and relay server implementations
+- `static/` - web UI
+- `game_profiles/` - built-in and custom game profile definitions
+- `docs/` - authoritative documentation
+- `tests/` - automated test suite
+- `tools/docs/` - documentation and changelog helper scripts
+- `tools/dev/` - local quality/performance/dev utilities
+- `scripts/windows/` - Windows bootstrap and install launchers
+- `.kiro/` - local Kiro hooks/steering configuration
 
 ## Roadmap
 

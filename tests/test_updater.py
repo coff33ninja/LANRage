@@ -5,7 +5,7 @@ from subprocess import CompletedProcess
 
 import pytest
 
-from core.updater import UpdateError, UpdateManager
+from core.integrations.updater import UpdateError, UpdateManager
 
 
 def _cp(

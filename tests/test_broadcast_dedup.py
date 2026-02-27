@@ -4,8 +4,8 @@ import asyncio
 
 import pytest
 
-from core.broadcast import BroadcastDeduplicator, BroadcastPacket
 from core.config import Config
+from core.gameplay.broadcast import BroadcastDeduplicator, BroadcastPacket
 
 
 @pytest.fixture
@@ -269,7 +269,7 @@ async def test_cleanup_task_cancellation(deduplicator, sample_packet):
 @pytest.mark.asyncio
 async def test_broadcast_emulator_integration(config):
     """Test integration with BroadcastEmulator"""
-    from core.broadcast import BroadcastEmulator
+    from core.gameplay.broadcast import BroadcastEmulator
 
     emulator = BroadcastEmulator(config)
 

@@ -41,7 +41,7 @@ jobs:
           echo "version=${ver}" >> "$GITHUB_OUTPUT"
 
       - name: Update versioned docs
-        run: python tools/update_readme_version.py --version "${{ steps.version.outputs.version }}"
+        run: python tools/docs/update_readme_version.py --version "${{ steps.version.outputs.version }}"
 
       - name: Commit and push if changed
         run: |

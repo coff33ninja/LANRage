@@ -14,7 +14,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent))
 
 from core.config import Config
-from core.nat import NATError, NATTraversal, NATType
+from core.networking.nat import NATError, NATTraversal, NATType
 
 
 @pytest.mark.asyncio

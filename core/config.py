@@ -6,8 +6,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from core.observability.logging_config import get_logger, timing_decorator
+
 from .exceptions import ConfigError
-from .logging_config import get_logger, timing_decorator
 
 # from .exceptions import DatabaseConfigError  # Removed: No longer raised after database-first refactoring
 
@@ -60,7 +61,7 @@ class Config(BaseModel):
         """
         try:
             logger.info("Loading configuration from settings database")
-            from core.settings import get_settings_db
+            from core.control_plane.settings import get_settings_db
 
             db = await get_settings_db()
             settings = await db.get_all_settings()

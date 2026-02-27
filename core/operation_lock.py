@@ -6,7 +6,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
-from .logging_config import get_logger, timing_decorator
+from core.observability.logging_config import get_logger, timing_decorator
 
 logger = get_logger(__name__)
 

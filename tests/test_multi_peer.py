@@ -16,10 +16,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from datetime import datetime
 
 from core.config import Config
-from core.control import LocalControlPlane, PeerInfo
-from core.nat import NATTraversal
-from core.network import NetworkManager
-from core.party import PartyManager
+from core.control_plane.control import LocalControlPlane, PeerInfo
+from core.control_plane.party import PartyManager
+from core.networking.nat import NATTraversal
+from core.networking.network import NetworkManager
 
 
 class LANrageTestPeer:

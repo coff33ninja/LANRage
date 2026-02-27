@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "game_profiles/**/*.json"
-      - "tools/update_supported_games_readme.py"
+      - "tools/docs/update_supported_games_readme.py"
       - "README.md"
   workflow_dispatch:
 
@@ -28,7 +28,7 @@ jobs:
           python-version: "3.12"
 
       - name: Update README supported games block
-        run: python tools/update_supported_games_readme.py
+        run: python tools/docs/update_supported_games_readme.py
 
       - name: Commit and push if changed
         run: |

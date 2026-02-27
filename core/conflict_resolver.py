@@ -7,7 +7,8 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from .logging_config import get_logger, set_context, timing_decorator
+from core.observability.logging_config import get_logger, set_context, timing_decorator
+
 from .operation_lock import AtomicOperation, OperationLockManager
 from .task_manager import TaskPriority
 

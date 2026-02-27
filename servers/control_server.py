@@ -25,8 +25,8 @@ from pydantic import BaseModel, Field
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.config import Config
-from core.control import PartyInfo, PeerInfo
-from core.settings import get_settings_db
+from core.control_plane.control import PartyInfo, PeerInfo
+from core.control_plane.settings import get_settings_db
 
 # Database path
 DB_PATH = Path.home() / ".lanrage" / "control_plane.db"

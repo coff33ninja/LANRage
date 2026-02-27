@@ -25,7 +25,7 @@ async def initialize_database():
     """Initialize the settings database with defaults"""
     try:
         # Import here to avoid issues if dependencies not installed yet
-        from core.settings import get_settings_db, init_default_settings
+        from core.control_plane.settings import get_settings_db, init_default_settings
 
         print("Initializing settings database...")
         db = await get_settings_db()

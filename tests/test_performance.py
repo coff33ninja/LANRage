@@ -7,8 +7,8 @@ import psutil
 import pytest
 
 from core.config import Config
-from core.metrics import MetricsCollector
-from core.server_browser import ServerBrowser
+from core.gameplay.server_browser import ServerBrowser
+from core.observability.metrics import MetricsCollector
 
 
 @pytest.fixture

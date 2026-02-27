@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from core.config import Config
-from core.connection import ConnectionManager
 from core.exceptions import PeerConnectionError
+from core.networking.connection import ConnectionManager
 
 
 @pytest.fixture

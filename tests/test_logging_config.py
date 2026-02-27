@@ -14,7 +14,7 @@ from io import StringIO
 
 import pytest
 
-from core.logging_config import (
+from core.observability.logging_config import (
     PlainFormatter,
     StructuredFormatter,
     clear_context,

@@ -4,8 +4,8 @@ import asyncio
 
 import pytest
 
-from core.broadcast import BroadcastEmulator
 from core.config import Config
+from core.gameplay.broadcast import BroadcastEmulator
 
 
 @pytest.fixture

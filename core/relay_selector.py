@@ -6,7 +6,7 @@ import math
 import time
 from dataclasses import dataclass, field
 
-from .logging_config import get_logger, set_context, timing_decorator
+from core.observability.logging_config import get_logger, set_context, timing_decorator
 
 logger = get_logger(__name__)
 

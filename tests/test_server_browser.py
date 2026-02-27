@@ -7,7 +7,7 @@ import pytest
 import pytest_asyncio
 
 from core.config import Config
-from core.server_browser import GameServer, ServerBrowser
+from core.gameplay.server_browser import GameServer, ServerBrowser
 
 
 @pytest_asyncio.fixture

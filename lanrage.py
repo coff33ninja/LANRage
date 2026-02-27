@@ -13,12 +13,12 @@ from pathlib import Path
 
 from api.server import start_api_server
 from core.config import Config
-from core.discord_integration import DiscordIntegration
-from core.metrics import MetricsCollector
-from core.network import NetworkManager, WireGuardError
-from core.party import PartyManager
-from core.server_browser import ServerBrowser
-from core.settings import get_settings_db, init_default_settings
+from core.control_plane.party import PartyManager
+from core.control_plane.settings import get_settings_db, init_default_settings
+from core.gameplay.server_browser import ServerBrowser
+from core.integrations.discord_integration import DiscordIntegration
+from core.networking.network import NetworkManager, WireGuardError
+from core.observability.metrics import MetricsCollector
 from core.task_manager import cancel_all_background_tasks
 
 # Configure logging

@@ -31,4 +31,5 @@ keys/
 logs/
 coverage.json
 .coverage
-WHATS_MISSING.md
+docs/project/WHATS_MISSING.md
+docs/project/DOC_PARITY_TRACKER.md

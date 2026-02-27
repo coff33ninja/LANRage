@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from core.config import Config
-from core.connection import ConnectionManager
-from core.logging_config import clear_context
+from core.networking.connection import ConnectionManager
+from core.observability.logging_config import clear_context
 
 
 @pytest.fixture
@@ -68,7 +68,7 @@ async def test_disconnect_from_peer_logs_disconnection(connection_manager):
     """Test that disconnect_from_peer logs the disconnection"""
     from datetime import datetime
 
-    from core.connection import PeerConnection
+    from core.networking.connection import PeerConnection
 
     peer_id = "test_disconnect_peer"
 
@@ -102,7 +102,7 @@ async def test_get_connection_status_sets_context(connection_manager):
     """Test that get_connection_status sets peer context"""
     from datetime import datetime
 
-    from core.connection import PeerConnection
+    from core.networking.connection import PeerConnection
 
     peer_id = "status_peer"
 

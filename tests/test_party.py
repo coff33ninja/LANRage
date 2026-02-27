@@ -6,10 +6,10 @@ import pytest
 import pytest_asyncio
 
 from core.config import Config
-from core.control import PartyInfo, PeerInfo
-from core.nat import NATType
-from core.network import NetworkManager
-from core.party import Party, PartyManager, Peer
+from core.control_plane.control import PartyInfo, PeerInfo
+from core.control_plane.party import Party, PartyManager, Peer
+from core.networking.nat import NATType
+from core.networking.network import NetworkManager
 
 
 class TestPeerModel:

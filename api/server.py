@@ -10,10 +10,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from core.config import Config
-from core.network import NetworkManager
-from core.party import PartyManager
-from core.settings import get_settings_db, init_default_settings
-from core.updater import UpdateError, UpdateManager
+from core.control_plane.party import PartyManager
+from core.control_plane.settings import get_settings_db, init_default_settings
+from core.integrations.updater import UpdateError, UpdateManager
+from core.networking.network import NetworkManager
 
 app = FastAPI(title="LANrage API", version="0.1.0")
 
@@ -336,7 +336,7 @@ async def set_discord_webhook(req: DiscordWebhookRequest):
     if not discord_integration:
         raise HTTPException(500, "Discord integration not initialized")
 
-    from core.discord_integration import DiscordWebhookHelper
+    from core.integrations.discord_integration import DiscordWebhookHelper
 
     if not DiscordWebhookHelper.validate_webhook_url(req.webhook_url):
         raise HTTPException(400, "Invalid webhook URL format")
@@ -351,7 +351,7 @@ async def set_discord_invite(req: DiscordInviteRequest):
     if not discord_integration:
         raise HTTPException(500, "Discord integration not initialized")
 
-    from core.discord_integration import DiscordWebhookHelper
+    from core.integrations.discord_integration import DiscordWebhookHelper
 
     if not DiscordWebhookHelper.validate_invite_url(req.invite_url):
         raise HTTPException(400, "Invalid invite URL format")
@@ -384,7 +384,7 @@ async def get_discord_status():
 @app.get("/api/discord/instructions")
 async def get_discord_instructions():
     """Get instructions for setting up Discord integration"""
-    from core.discord_integration import DiscordWebhookHelper
+    from core.integrations.discord_integration import DiscordWebhookHelper
 
     return {
         "webhook": DiscordWebhookHelper.get_webhook_instructions(),

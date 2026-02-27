@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from core.settings import SettingsDatabase, get_settings_db
+from core.control_plane.settings import SettingsDatabase, get_settings_db
 
 
 @pytest_asyncio.fixture

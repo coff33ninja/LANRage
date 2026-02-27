@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 
 from core.config import Config
-from core.control import ControlPlane, PeerInfo
+from core.control_plane.control import ControlPlane, PeerInfo
 
 
 @pytest.mark.asyncio

@@ -5,7 +5,7 @@ from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import IntEnum
 
-from .logging_config import get_logger, timing_decorator
+from core.observability.logging_config import get_logger, timing_decorator
 
 logger = get_logger(__name__)
 
